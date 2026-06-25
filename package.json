@@ -1,0 +1,42 @@
+{
+    "name": "dropdeck",
+    "version": "0.0.0",
+    "author": "Brian Ferri",
+    "description": "Drop a Markdown file, get a presentation. A self-contained, themeable deck renderer that builds to a single HTML file.",
+    "type": "module",
+    "imports": {
+        "#/*": "./src/*"
+    },
+    "workspaces": [
+        "packages/*"
+    ],
+    "scripts": {
+        "dev": "vite",
+        "prebuild": "npm run build --workspace @dropdeck/html --workspace @dropdeck/pptx --workspace @dropdeck/markdown",
+        "build": "tsc --noEmit && vite build",
+        "preview": "vite preview",
+        "precheck": "npm run build --workspace @dropdeck/html --workspace @dropdeck/pptx --workspace @dropdeck/markdown",
+        "check": "npm run check --workspace @dropdeck/html --workspace @dropdeck/pptx --workspace @dropdeck/markdown && tsc --noEmit && eslint .",
+        "check:fix": "eslint . --fix",
+        "test": "vitest run",
+        "test:watch": "vitest"
+    },
+    "devDependencies": {
+        "@stylistic/eslint-plugin": "^5.10.0",
+        "@types/node": "^25.5.0",
+        "eslint": "^10.1.0",
+        "eslint-plugin-jsdoc": "^63.0.4",
+        "typescript": "^6.0.3",
+        "typescript-eslint": "^8.57.2",
+        "vite": "^6.1.0",
+        "vite-plugin-singlefile": "^2.3.3",
+        "vitest": "^4.1.9"
+    },
+    "dependencies": {
+        "@dropdeck/html": "*",
+        "@dropdeck/markdown": "*",
+        "@dropdeck/pptx": "*",
+        "@tailwindcss/browser": "^4.0.0"
+    },
+    "license": "ISC"
+}

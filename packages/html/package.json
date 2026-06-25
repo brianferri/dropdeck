@@ -1,0 +1,26 @@
+{
+    "name": "@dropdeck/html",
+    "version": "0.0.0",
+    "description": "Dependency-free, typed HTML parser and serializer built on a type-level HTML grammar",
+    "type": "module",
+    "exports": {
+        ".": "./dist/src/index.js",
+        "./css": "./dist/src/css/index.js",
+        "./tailwind": "./dist/src/tailwind/index.js"
+    },
+    "scripts": {
+        "check": "tsc --noEmit && eslint .",
+        "build": "rm -rf dist && tsc",
+        "test": "tsc --noEmit && node --test \"dist/tests/**/*.test.js\""
+    },
+    "author": "Brian Ferri",
+    "license": "ISC",
+    "devDependencies": {
+        "@stylistic/eslint-plugin": "^5.10.0",
+        "@types/node": "^25.5.0",
+        "eslint": "^10.1.0",
+        "eslint-plugin-jsdoc": "^63.0.4",
+        "typescript": "^6.0.3",
+        "typescript-eslint": "^8.57.2"
+    }
+}
