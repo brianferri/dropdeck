@@ -26,6 +26,7 @@ export type DeckConfig = {
     particles?: string,
     base?: string,
     layout?: string,
+    transition?: string,
     class?: string,
     [key: string]: string | undefined
 };
