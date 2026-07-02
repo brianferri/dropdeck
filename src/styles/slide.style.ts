@@ -27,6 +27,8 @@ export const slideStyle = [
         declaration("max-width", "1180px"),
         declaration("padding", "clamp(1.4rem, 3vw, 3rem)"),
         declaration("max-height", "100%"),
-        declaration("overflow", "auto")
+        // The slide already clips at its bounds, so the column stays visible: a morph flying a shape past the
+        // column edge must be cut only at the slide, not here, and a scaled title raises no scrollbar.
+        declaration("overflow", "visible")
     ])
 ] as const;

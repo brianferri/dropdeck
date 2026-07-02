@@ -5,10 +5,6 @@ export const ambientStyle = [
         rule(["0%", "100%"], [declaration("transform", "translateY(0)")]),
         rule(["50%"], [declaration("transform", "translateY(-12px)")])
     ]),
-    rule([".reveal"], [
-        declaration("opacity", "0"),
-        declaration("transform", "translateY(20px)")
-    ]),
     rule([".gradient-mesh"], [
         declaration("position", "absolute"),
         declaration("inset", "0"),

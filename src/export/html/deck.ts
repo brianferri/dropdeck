@@ -1,4 +1,5 @@
 import { div, mapUrlAttrs, serializeAll } from "#/dom";
+import { resolveTransition } from "#/animations/spec";
 import { slideNodes } from "#/export/html/slides";
 import { slideStyle } from "#/theme";
 import type { DomNode } from "#/dom";
@@ -9,7 +10,7 @@ export function deckSlideNodes(deck: Deck, particlesOn: boolean): Array<DomNode>
     return deck.slides.map((slide, index) => div(
         {
             class: index === 0 ? "slide active" : "slide",
-            data: { slide: String(index + 1) },
+            data: { slide: String(index + 1), transition: resolveTransition(slide.frontmatter) },
             style: slideStyle(deck.config, slide.frontmatter)
         },
         slideNodes(slide, index, total, particlesOn)

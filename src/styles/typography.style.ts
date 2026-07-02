@@ -14,33 +14,27 @@ export const typographyStyle = [
         declaration("font-size", "clamp(2rem, 4.4vw, 3.3rem)"),
         declaration("line-height", "1.08"),
         declaration("color", "var(--color-text)"),
-        declaration("margin", "0 0 1rem")
+        declaration("margin", "0")
     ]),
-    rule([".section-title::after"], [
-        declaration("content", "''"),
-        declaration("display", "block"),
+    // The accent underline is its own element, so the morph can capture it as a distinct
+    // target and glide it straight from one title's position to the next -- a pseudo-element is laid out at the
+    // arriving slide's edge from frame zero and would snap there. `inline-block` lets the column's text-align place
+    // it (centred under a cover/section title, left under a content title) with no per-layout rule.
+    rule([".title-rule"], [
+        declaration("display", "inline-block"),
         declaration("width", "64px"),
         declaration("height", "4px"),
         declaration("border-radius", "2px"),
         declaration("background", "var(--color-accent-1)"),
-        declaration("margin", "0.7rem auto 0")
+        declaration("margin", "0.6rem 0 1.2rem")
     ]),
     rule([".slide-title"], [
         declaration("font-family", "var(--font-display)"),
         declaration("font-size", "clamp(1.7rem, 3.4vw, 2.5rem)"),
         declaration("line-height", "1.1"),
         declaration("color", "var(--color-text)"),
-        declaration("margin", "0 0 1.3rem"),
+        declaration("margin", "0"),
         declaration("letter-spacing", "-0.01em")
-    ]),
-    rule([".slide-title::after"], [
-        declaration("content", "''"),
-        declaration("display", "block"),
-        declaration("width", "56px"),
-        declaration("height", "4px"),
-        declaration("border-radius", "2px"),
-        declaration("background", "var(--color-accent-1)"),
-        declaration("margin-top", "0.55rem")
     ]),
     rule([".eyebrow"], [
         declaration("text-transform", "uppercase"),

@@ -1,34 +1,44 @@
-import { cSld, element, fade, Namespace, slide, transition } from "@dropdeck/pptx";
+import { cSld, element, Namespace } from "@dropdeck/pptx";
 import { Align, Anchor, backgroundRect, idFactory, paragraphOf, pProps, relFactory, rule, spTreeOf, styledRun, textBox, txBodyOf } from "#/export/pptx/build";
 import { meshShapes, particleShapes } from "#/export/pptx/ambient";
 import { lowerBlocks, measuredHeight } from "#/export/pptx/blocks";
-import { AnimationKind, slideTiming } from "#/export/pptx/timing";
+import { Motion, slideTiming } from "#/export/pptx/animations/timing";
+import { slideTransition } from "#/export/pptx/animations/transition";
+import { morphName, resolveTransition, SlideTransition } from "#/animations/spec";
 import { isProse, proseText, resolveLayout } from "#/layout";
 import { SlideLayout } from "#/ir";
 import type { Palette } from "#/export/pptx/palette";
 import type { AnimatedShapeRef, Embed } from "#/export/pptx/blocks";
 import type { CT_CommonSlideData, CT_Shape, CT_Slide, CT_TextParagraph, DeckSlide, Node, SlideInput, SlideMedia } from "@dropdeck/pptx";
-import type { AnimatedShape } from "#/export/pptx/timing";
+import type { AnimatedShape } from "#/export/pptx/animations/timing";
 import type { AssetMap, Slide } from "#/ir";
 
 // Mirrored from `slide()` because `animatedSlide` builds the `p:sld` element directly.
 const SLIDE_NAMESPACES = [["xmlns:a", Namespace.a], ["xmlns:p", Namespace.p], ["xmlns:r", Namespace.r]] as const;
 
-// sp/pic/graphicFrame all nest cNvPr the same way, so one path reaches the drawing id for any of them.
-function shapeId(node: Node): number | null {
+// sp/pic/graphicFrame all nest cNvPr the same way, so one path reaches a drawing prop for any of them.
+function drawingAttr(node: Node, key: string): string | null {
     if (!("children" in node)) return null;
     const [nonVisual] = node.children;
     if (!("children" in nonVisual)) return null;
     const [drawingProps] = nonVisual.children;
     if (!("attrs" in drawingProps)) return null;
-    for (const attr of drawingProps.attrs) if (attr[0] === "id") return Number(attr[1]);
+    for (const attr of drawingProps.attrs) if (attr[0] === key) return String(attr[1]);
     return null;
 }
 
+function shapeId(node: Node): number | null {
+    const id = drawingAttr(node, "id");
+    return id === null ? null : Number(id);
+}
+
+// On a morph slide, a content-matched shape (named `morph:<key>`) moves via the transition itself, so it gets no
+// entrance; everything else -- bars, metrics, prose -- keeps its own animation, which thus overrides the morph.
 function collectAnimations(
     shapes: ReadonlyArray<Node>,
     contentStart: number,
-    requested: ReadonlyArray<AnimatedShapeRef>
+    requested: ReadonlyArray<AnimatedShapeRef>,
+    morph: boolean
 ): Array<AnimatedShape> {
     const claimed = new Set<Node>();
     const lead = new Map<Node, AnimatedShape>();
@@ -36,7 +46,7 @@ function collectAnimations(
         for (const shape of ref.shapes) claimed.add(shape);
         const ids = ref.shapes.map(shapeId).filter((id): id is number => id !== null);
         if (ids.length === 0) continue;
-        lead.set(ref.shapes[0], ref.kind === AnimationKind.Counter ? { kind: ref.kind, frames: ids } : { kind: ref.kind, id: ids[0] });
+        lead.set(ref.shapes[0], ref.kind === Motion.Counter ? { kind: ref.kind, frames: ids } : { kind: ref.kind, id: ids[0] });
     }
     const animations: Array<AnimatedShape> = [];
     for (let index = contentStart; index < shapes.length; index += 1) {
@@ -47,20 +57,25 @@ function collectAnimations(
             continue;
         }
         if (claimed.has(shape)) continue;
+        if (morph && (drawingAttr(shape, "name") ?? "").startsWith("morph:")) continue;
         const id = shapeId(shape);
-        if (id !== null) animations.push({ id, kind: AnimationKind.Fade });
+        if (id !== null) animations.push({ id, kind: Motion.Fade });
     }
     return animations;
 }
 
-// `slide()` stops at the transition, so the timing child is appended by hand.
+// `slide()` stops at the transition, so the transition and timing children are appended by hand, in schema order
+// (`cSld`, `transition`, `timing`); a cut slide omits the transition entirely.
 function animatedSlide(
     common: CT_CommonSlideData,
-    animatedIds: ReadonlyArray<AnimatedShape>
+    animatedIds: ReadonlyArray<AnimatedShape>,
+    transitionEl: Node | null
 ): CT_Slide {
     const timing = slideTiming(animatedIds);
-    if (timing === null) return slide(common, transition(fade()));
-    const children: ReadonlyArray<Node> = [common, transition(fade()), timing];
+    const children: ReadonlyArray<Node> =
+        transitionEl === null
+            ? (timing === null ? [common] : [common, timing])
+            : (timing === null ? [common, transitionEl] : [common, transitionEl, timing]);
     return element("p:sld", SLIDE_NAMESPACES, children) as CT_Slide;
 }
 
@@ -122,22 +137,26 @@ function centeredSlide(
         });
         shapes.push(textBox(nextId, CONTENT_X, 0, CONTENT_WIDTH, 720, txBodyOf(Anchor.Center, paragraphs)));
     } else {
-        const headHeight = slideEl.title !== null ? 150 : 0;
+        // The box wraps the line so the rule can sit a fixed ~0.6rem below the actual text, not below a fixed
+        // oversized frame -- otherwise the underline floats far under the title, unlike the tight HTML gap.
+        const titleHeight = Math.round(titleSize * 1.2);
+        const headHeight = slideEl.title !== null ? titleHeight + 32 : 0;
         const totalHeight = headHeight + measureBlocks(slideEl, embed);
         let cursorY = Math.max(80, Math.round((720 - totalHeight) / 2));
         if (slideEl.title !== null) {
-            shapes.push(textBox(nextId, CONTENT_X, cursorY, CONTENT_WIDTH, 110, txBodyOf(Anchor.Top, [titleParagraph(slideEl.title, titleSize, palette)])));
-            cursorY += 120;
-            shapes.push(rule(nextId, (1280 - 64) / 2, cursorY, 64, palette.accent1));
-            cursorY += 30;
+            shapes.push(textBox(nextId, CONTENT_X, cursorY, CONTENT_WIDTH, titleHeight, txBodyOf(Anchor.Top, [titleParagraph(slideEl.title, titleSize, palette)]), morphName(slideEl.title)));
+            cursorY += titleHeight + 8;
+            shapes.push(rule(nextId, (1280 - 64) / 2, cursorY, 64, palette.accent1, `${morphName(slideEl.title)}-rule`));
+            cursorY += 24;
         }
         const content = lowerBlocks(slideEl.blocks, embed, CONTENT_X, cursorY, CONTENT_WIDTH, Align.Center);
         for (const shape of content.shapes) shapes.push(shape);
         ({ media, anim } = content);
     }
 
-    const animatedIds = collectAnimations(shapes, contentStart, anim);
-    return { slide: animatedSlide(cSld(spTreeOf(shapes)), animatedIds), media };
+    const transitionKind = resolveTransition(slideEl.frontmatter);
+    const animatedIds = collectAnimations(shapes, contentStart, anim, transitionKind === SlideTransition.Morph);
+    return { slide: animatedSlide(cSld(spTreeOf(shapes)), animatedIds, slideTransition(transitionKind)), media };
 }
 
 function coverRole(
@@ -190,15 +209,16 @@ function contentSlide(slideEl: Slide, embed: Embed): DeckSlide {
                 })
             ])
         ]);
-        shapes.push(textBox(nextId, CONTENT_X, cursorY, CONTENT_WIDTH, 64, body));
+        shapes.push(textBox(nextId, CONTENT_X, cursorY, CONTENT_WIDTH, 64, body, morphName(slideEl.title)));
         cursorY += 70;
-        shapes.push(rule(nextId, CONTENT_X, cursorY, 56, palette.accent1));
+        shapes.push(rule(nextId, CONTENT_X, cursorY, 56, palette.accent1, `${morphName(slideEl.title)}-rule`));
         cursorY += 28;
     }
     const content = lowerBlocks(slideEl.blocks, embed, CONTENT_X, cursorY, CONTENT_WIDTH);
     for (const shape of content.shapes) shapes.push(shape);
-    const animatedIds = collectAnimations(shapes, contentStart, content.anim);
-    return { slide: animatedSlide(cSld(spTreeOf(shapes)), animatedIds), media: content.media };
+    const transitionKind = resolveTransition(slideEl.frontmatter);
+    const animatedIds = collectAnimations(shapes, contentStart, content.anim, transitionKind === SlideTransition.Morph);
+    return { slide: animatedSlide(cSld(spTreeOf(shapes)), animatedIds, slideTransition(transitionKind)), media: content.media };
 }
 
 export function lowerSlide(

@@ -1,10 +1,11 @@
 import { HtmlTag, NodeKind, attribute, childElements, findAll, findFirst, hasClass, parse, textContent } from "@dropdeck/html";
 import { CssProperty, colorClass, columnSpan, gridColumns as tailwindGridColumns, resolve as resolveTailwind } from "@dropdeck/html/tailwind";
-import { parseStyle, styleValue } from "@dropdeck/html/css";
+import { decompose, matrixOf, parseStyle, parseTransform, styleValue } from "@dropdeck/html/css";
 import { Align, Anchor, idFactory, imageShape, leftBarFrame, panel, paragraphOf, pProps, relFactory, styledRun, textBox, txBodyOf } from "#/export/pptx/build";
 import { inlineRuns, inlineRunsFromNodes, inlineSegments } from "#/export/pptx/inline";
 import { resolveImage } from "#/export/pptx/image";
-import { AnimationKind } from "#/export/pptx/timing";
+import { Motion } from "#/export/pptx/animations/timing";
+import { morphName } from "#/animations/spec";
 import { renderMarkdown } from "#/render/html";
 import { barFraction, gridCols, metricCols } from "#/layout";
 import { BlockKind } from "#/ir";
@@ -27,7 +28,7 @@ const CARD_TITLE_LINE = 28;
 // Bold runs wider than `lineCount`'s estimate, so overshoot a line of slack rather than overlap the body.
 const CARD_TITLE_CHAR_WIDTH = 0.62;
 
-export type AnimatedShapeRef = { shapes: ReadonlyArray<Node>, kind: AnimationKind };
+export type AnimatedShapeRef = { shapes: ReadonlyArray<Node>, kind: Motion };
 type Lowered = { shapes: ReadonlyArray<Node>, height: number, media: ReadonlyArray<SlideMedia>, anim: ReadonlyArray<AnimatedShapeRef> };
 
 export type Embed = {
@@ -92,9 +93,10 @@ function runBox(
     align: Align,
     text: string,
     style: RunStyle,
-    insetPx?: number
+    insetPx?: number,
+    name: string = "tx"
 ): ReturnType<typeof textBox> {
-    return textBox(nextId, x, y, width, height, txBodyOf(anchor, [paragraphOf(pProps(align, 0, 0), [styledRun(text, style)])], insetPx));
+    return textBox(nextId, x, y, width, height, txBodyOf(anchor, [paragraphOf(pProps(align, 0, 0), [styledRun(text, style)])], insetPx), name);
 }
 
 function stackDown<T>(
@@ -244,13 +246,13 @@ function imageWidthPx(image: ElementNode, columnWidth: number): number {
 function lowerImage(image: ElementNode, embed: Embed, x: number, y: number, width: number): Lowered {
     const { nextId, palette, nextRelId, assets } = embed;
     const alt = attribute(image, "alt") ?? "";
+    const style = attribute(image, "style");
     // resolveImage only reads data URIs, so map the reference to its inlined asset first; an unmapped src stays as-is.
     const src = attribute(image, "src") ?? "";
     const resolved = resolveImage(assets.get(src) ?? src);
     if (!resolved) {
         // A bordered img still occupies its frame in the browser when the source fails, so draw that empty box.
-        const style = (attribute(image, "style") ?? "") + (attribute(image, ":style") ?? "");
-        if (style.includes("border")) {
+        if (style?.includes("border")) {
             const boxHeight = Math.round(width * 0.52);
             return lowered([panel(nextId, x, y, width, boxHeight, palette.surface, 6, 100, palette.borderColor, palette.borderOpacity)], boxHeight);
         }
@@ -259,15 +261,26 @@ function lowerImage(image: ElementNode, embed: Embed, x: number, y: number, widt
     }
     const relationshipId = nextRelId();
     const media: SlideMedia = { relationshipId, extension: resolved.extension, contentType: resolved.contentType, data: resolved.bytes };
+    // The browser renders the deck 1180 px wide, the export lays it out 1280 px wide. Author dimensions -- the image
+    // size and the transform's translate -- are written for the browser, so they scale by this ratio to hold the
+    // same fraction of the slide. The centre is unaffected (it is the content centre plus the scaled translate).
+    const deckRatio = 1280 / 1180;
     const aspect = resolved.width / resolved.height;
-    let fitWidth = imageWidthPx(image, width);
+    let fitWidth = imageWidthPx(image, width) * deckRatio;
     let fitHeight = fitWidth / aspect;
     if (fitHeight > IMAGE_MAX_HEIGHT) {
         fitHeight = IMAGE_MAX_HEIGHT;
         fitWidth = fitHeight * aspect;
     }
     const fitX = x + ((width - fitWidth) / 2);
-    return lowered([imageShape(nextId, relationshipId, alt, fitX, y, fitWidth, fitHeight)], fitHeight, { media: [media] });
+    const transformValue = style === null ? null : styleValue(parseStyle(style), "transform");
+    const transform = decompose(matrixOf(parseTransform(transformValue)));
+    const drawWidth = fitWidth * transform.scaleX;
+    const drawHeight = fitHeight * transform.scaleY;
+    const centerX = fitX + (fitWidth / 2) + (transform.translateXPx * deckRatio);
+    const centerY = y + (fitHeight / 2) + (transform.translateYPx * deckRatio);
+    const shape = imageShape(nextId, relationshipId, morphName(src), centerX - (drawWidth / 2), centerY - (drawHeight / 2), drawWidth, drawHeight, transform.rotateDeg);
+    return lowered([shape], fitHeight, { media: [media] });
 }
 
 // Matched by substring, since these fragments appear within a longer class list.
@@ -484,12 +497,12 @@ function headingEl(element: ElementNode, embed: Embed, x: number, y: number, wid
     if (tag === HtmlTag.H1) {
         const sizePx = fontSizePx(element, 44);
         const height = Math.round(sizePx * 1.2);
-        return lowered([runBox(nextId, x, y, width, height, Anchor.Center, Align.Center, content, { sizePx, bold: true, color: palette.accent1, font: palette.display })], height);
+        return lowered([runBox(nextId, x, y, width, height, Anchor.Center, Align.Center, content, { sizePx, bold: true, color: palette.accent1, font: palette.display }, undefined, morphName(content))], height);
     }
     const sizePx = fontSizePx(element, tag === HtmlTag.H2 ? 28 : 22);
     const color = tag === HtmlTag.H3 ? palette.accent1 : palette.text;
     const height = Math.round(sizePx * 1.5);
-    return lowered([runBox(nextId, x, y, width, height, Anchor.Bottom, align, content, { sizePx, bold: true, color, font: palette.body })], height);
+    return lowered([runBox(nextId, x, y, width, height, Anchor.Bottom, align, content, { sizePx, bold: true, color, font: palette.body }, undefined, morphName(content))], height);
 }
 
 function paragraphEl(element: ElementNode, embed: Embed, x: number, y: number, width: number, align: Align): Lowered {
@@ -504,7 +517,7 @@ function paragraphEl(element: ElementNode, embed: Embed, x: number, y: number, w
     const paragraphs = segments.map((runs) => paragraphOf(pProps(align, 0, 0), runs));
     const lines = Math.max(segments.length, lineCount(content, width, sizePx));
     const height = lines * Math.round(sizePx * 1.55);
-    return lowered([textBox(nextId, x, y, width, height, txBodyOf(Anchor.Top, paragraphs))], height);
+    return lowered([textBox(nextId, x, y, width, height, txBodyOf(Anchor.Top, paragraphs), morphName(content))], height);
 }
 
 function trimTrailingNewlines(content: string): string {
@@ -655,6 +668,8 @@ function lowerMarkup(html: string, embed: Embed, x: number, y: number, width: nu
 // Capped at 24 steps so a large target steps in ~24 jumps, not a frame per integer; deduped for small targets.
 function countFrames(target: number): Array<number> {
     const steps = Math.min(target, 24);
+    // A target of 0 has no roll to animate, and dividing by `steps` below would be 0/0 -> NaN.
+    if (steps < 1) return [target];
     const values: Array<number> = [];
     for (let index = 0; index <= steps; index += 1) {
         const value = Math.round((target * index) / steps);
@@ -690,7 +705,7 @@ function lowerMetrics(rows: ReadonlyArray<MetricRow>, embed: Embed, x: number, y
                 shapes.push(frame);
                 frames.push(frame);
             }
-            anim.push({ shapes: frames, kind: AnimationKind.Counter });
+            anim.push({ shapes: frames, kind: Motion.Counter });
         } else
             shapes.push(runBox(nextId, innerX, valueY, innerWidth, 48, Anchor.Top, Align.Left, row.value, value));
 
@@ -729,7 +744,7 @@ function lowerCards(cards: ReadonlyArray<Card>, embed: Embed, x: number, y: numb
             const cellX = x + ((cellWidth + GAP) * index);
             parts.push(lowered([
                 glassPanel(nextId, cellX, rowY, cellWidth, rowHeight, palette, PANEL_RADIUS),
-                runBox(nextId, cellX + PANEL_PAD, rowY + PANEL_PAD, innerWidth, cell.titleHeight, Anchor.Top, Align.Left, cell.card.title, titleStyle)
+                runBox(nextId, cellX + PANEL_PAD, rowY + PANEL_PAD, innerWidth, cell.titleHeight, Anchor.Top, Align.Left, cell.card.title, titleStyle, undefined, morphName(cell.card.title))
             ], 0));
             parts.push(lowerElements(cell.blocks, embed, cellX + PANEL_PAD, rowY + PANEL_PAD + cell.titleHeight, innerWidth));
         }
@@ -754,7 +769,7 @@ function lowerBars(rows: ReadonlyArray<BarRow>, embed: Embed, x: number, y: numb
         const fillWidth = Math.max(7, Math.round(innerWidth * barFraction(row.percent)));
         const fill = panel(nextId, innerX, rowY + 24, fillWidth, 14, palette.accent1, 7);
         shapes.push(fill);
-        anim.push({ shapes: [fill], kind: AnimationKind.Wipe });
+        anim.push({ shapes: [fill], kind: Motion.Wipe });
     });
     return lowered(shapes, height, { anim });
 }

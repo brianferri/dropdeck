@@ -49,7 +49,7 @@ export function idFactory(): () => number {
     };
 }
 
-// Slide relationship ids for embedded media. rId1 is the slide layout, so media starts at rId2.
+// rId1 is the slide layout, so media starts at rId2.
 export function relFactory(): () => string {
     let next = 1;
     return () => {
@@ -218,22 +218,26 @@ export function rule(
     xPx: number,
     yPx: number,
     widthPx: number,
-    color: string
+    color: string,
+    name: string = "rule"
 ): CT_Shape {
     const geometry = spPr(xfrm(off(emu(xPx), emu(yPx)), ext(emu(widthPx), emu(4))), roundRect(50000), fill(color));
-    return sp(nvSpPr(cNvPr(nextId(), "rule")), geometry, emptyBody());
+    return sp(nvSpPr(cNvPr(nextId(), name)), geometry, emptyBody());
 }
 
+// `name` is the shape's identity for PowerPoint's morph transition: two slides whose title boxes share a name
+// tween into each other, so callers pass a stable name for anything that should morph.
 export function textBox(
     nextId: () => number,
     xPx: number,
     yPx: number,
     widthPx: number,
     heightPx: number,
-    body: CT_TextBody
+    body: CT_TextBody,
+    name: string = "tx"
 ): CT_Shape {
     const geometry = spPr(xfrm(off(emu(xPx), emu(yPx)), ext(emu(widthPx), emu(heightPx))));
-    return sp(nvSpPr(cNvPr(nextId(), "tx")), geometry, body);
+    return sp(nvSpPr(cNvPr(nextId(), name)), geometry, body);
 }
 
 // roundRect's adjust is a fraction (0..50000) of the shorter side, so the fixed 12px is scaled to that side.
@@ -248,9 +252,10 @@ export function imageShape(
     xPx: number,
     yPx: number,
     widthPx: number,
-    heightPx: number
+    heightPx: number,
+    rotationDeg: number = 0
 ): CT_Picture {
-    const transform = xfrm(off(emu(xPx), emu(yPx)), ext(emu(widthPx), emu(heightPx)));
+    const transform = xfrm(off(emu(xPx), emu(yPx)), ext(emu(widthPx), emu(heightPx)), Math.round(rotationDeg * 60000));
     const geometry = spPr(transform, roundRect(imageRadiusAdjust(widthPx, heightPx)));
     return pic(nvPicPr(cNvPr(nextId(), name)), picBlipFill(embed), geometry);
 }
