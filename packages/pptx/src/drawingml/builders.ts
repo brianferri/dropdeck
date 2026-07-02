@@ -24,6 +24,7 @@ import type {
     CT_TextCharacterProperties,
     CT_TextFont,
     CT_TextParagraph,
+    CT_Transform2D,
     ParagraphPropertyAttr,
     RunPropertyAttr,
     ST_Coordinate,
@@ -55,8 +56,18 @@ export function ext<
 export function xfrm<const O extends CT_Point2D, const E extends CT_PositiveSize2D>(
     offset: O,
     extent: E
-): Element<"a:xfrm", Empty, readonly [O, E]> {
-    return element("a:xfrm", [], [offset, extent]);
+): Element<"a:xfrm", Empty, readonly [O, E]>;
+
+// OOXML angles are 1/60000 of a degree. Rotation is a separate overload so an unrotated shape keeps the bare,
+// attribute-free `<a:xfrm>` its precise serialised type depends on.
+export function xfrm<const O extends CT_Point2D, const E extends CT_PositiveSize2D, const R extends number>(
+    offset: O,
+    extent: E,
+    rotation: R
+): Element<"a:xfrm", readonly [readonly ["rot", R]], readonly [O, E]>;
+export function xfrm(offset: CT_Point2D, extent: CT_PositiveSize2D, rotation?: number): CT_Transform2D {
+    if (rotation === undefined) return element("a:xfrm", [], [offset, extent]);
+    return element("a:xfrm", [["rot", rotation]], [offset, extent]);
 }
 
 // Opacity in thousandths of a percent (100000 = opaque).
