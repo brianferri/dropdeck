@@ -136,8 +136,6 @@ function parseBarRows(content: string): Array<BarRow> {
     });
 }
 
-// A line that is exactly `::right::` (trailing whitespace allowed) splits the slide; the segments before and
-// after such lines become the left and right columns.
 function splitColumns(text: string): Array<string> {
     const segments: Array<string> = [];
     let column: Array<string> = [];
@@ -178,8 +176,7 @@ function parseBlocks(text: string): Array<Block> {
     return blocks;
 }
 
-// The leading `---\n...\n---\n` block: its inner text and the offset the body starts at, or null. The closing
-// fence is sought past the opener, so a body that itself opens with `---` is not mistaken for the close.
+// The closing fence is sought past the opener, so a body that itself opens with `---` is not mistaken for the close.
 function frontMatterEnd(src: string): { config: string, bodyStart: number } | null {
     if (!src.startsWith("---\n")) return null;
     const close = src.indexOf("\n---\n", 4);
@@ -223,7 +220,6 @@ export function parse<const S extends string>(source: S): ParseDeck<S> {
     return { config, slides } as ParseDeck<S>;
 }
 
-// Kept beside `parse` so the two splits never drift; the editor maps a cursor offset to its slide via the result.
 export function slideStarts(source: string): Array<number> {
     const src = source.split("\r\n").join("\n");
     const head = frontMatterEnd(src);

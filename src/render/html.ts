@@ -19,7 +19,6 @@ function inlineText(nodes: Inlines): string {
     return out;
 }
 
-// Raw inline HTML passes through by re-parsing it to nodes; every other inline maps to a single node.
 function inlineList(nodes: Inlines): Array<DomNode> {
     const out: Array<DomNode> = [];
     for (const node of nodes) {
@@ -89,7 +88,6 @@ function blockNode(node: Block): DomNode {
     }
 }
 
-// Top level interleaves raw HTML blocks (verbatim) with serialized Markdown, so split HTML still nests correctly.
 function blocksHtml(blocks: Blocks): string {
     let out = "";
     for (const block of blocks) {
@@ -166,8 +164,6 @@ function tableAt(lines: ReadonlyArray<string>, start: number): { html: string, n
     return { html: serialize(table({}, [thead({}, [headRow]), tbody({}, bodyRows)])), next: index };
 }
 
-// Markdown to HTML by composing the two packages: `@dropdeck/markdown` parses to an AST, the `#/dom` builders
-// rebuild it, and `serialize` emits the HTML -- with raw HTML passed through and GFM tables handled here.
 export function renderMarkdown(source: string): string {
     const lines = fixHtml(source).split("\n");
     let out = "";
@@ -189,7 +185,6 @@ export function renderMarkdown(source: string): string {
     return out;
 }
 
-// The inline-only parse, as DomNodes -- for callers (table cells) that style runs from the tree, not from HTML.
 export function renderInlineNodes(source: string): ReadonlyArray<DomNode> {
     return inlineList(parseInlines(source));
 }

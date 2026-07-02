@@ -212,7 +212,6 @@ export function mountEditor(deck: Presenter): void {
         paint();
         panel.classList.remove("hidden");
         setWidth(WIDTH_DEFAULT_VW);
-        // Land the caret on the slide currently being viewed, so the editor opens on what the reader sees.
         const caret = slideStarts(text.value)[deck.index - 1] ?? 0;
         text.focus();
         text.setSelectionRange(caret, caret);

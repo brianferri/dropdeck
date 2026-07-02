@@ -13,7 +13,6 @@ export function lowerDeck(deck: Deck, assets: AssetMap): Array<SlideInput> {
     return deck.slides.map((slideEl, index) => lowerSlide(slideEl, index, deck.slides.length, palette, assets));
 }
 
-// Inline the deck's blob URLs to data URIs first, so each image lowers to embeddable bytes.
 export async function exportPptx(context: ExportContext): Promise<void> {
     const assets = await collectAssetDataUrls(context.deckEl, context.assets);
     const bytes = await toBytes(lowerDeck(context.deck, assets));

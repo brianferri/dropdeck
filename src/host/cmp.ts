@@ -213,7 +213,6 @@ function caretCoords(text: HTMLTextAreaElement, position: number): { left: numbe
     return result;
 }
 
-// Shift the snippet's remaining stops after an edit, so Tab keeps targeting the right field as the user types.
 function adjustStops(stops: Array<SnippetStop>, from: number, to: number, delta: number): void {
     for (const stop of stops) {
         if (stop.start >= to) {
@@ -243,7 +242,6 @@ export function mountCompletions(text: HTMLTextAreaElement, afterEdit: () => voi
     function render(): void {
         if (current === null) return;
         list.innerHTML = serializeAll(current.items.map((item, index) => completionItemView(item, index, index === activeItem)));
-        // Keep the active row inside the scrollable list, so arrowing past the visible window follows it.
         const active = list.children[activeItem];
         if (!(active instanceof HTMLElement)) return;
         const bottom = active.offsetTop + active.offsetHeight;

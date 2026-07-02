@@ -14,7 +14,6 @@ type SelectorTag<S extends string> =
 type QueryResult<S extends string> =
     SelectorTag<S> extends HtmlTag & keyof HTMLElementTagNameMap ? HTMLElementTagNameMap[SelectorTag<S>] : HTMLElement;
 
-// Sharpening the result from the selector's leading tag means no annotation at the call site and no assertion here.
 export function query<const S extends string>(root: ParentNode, selector: S): QueryResult<S> | null {
     return root.querySelector(selector);
 }

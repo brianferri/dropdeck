@@ -93,7 +93,6 @@ export const editorCss = [
         declaration("background", "#5cd0b3"),
         declaration("height", "5.625rem")
     ]),
-    // Anchored at the caret by `mountEditor`; absolute within #editorScroll so it tracks the scrolled text.
     rule(["#editorPopup"], [
         declaration("position", "absolute"),
         declaration("z-index", "5"),
