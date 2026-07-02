@@ -1,14 +1,5 @@
-import { growBars } from "#/animations/bars";
-import { countUp } from "#/animations/count";
-import { playMedia } from "#/animations/media";
-import { revealEntrance } from "#/animations/reveal";
-
-export { pauseMedia } from "#/animations/media";
-export { initAllParticles } from "#/animations/particles";
-
-export function playSlide(slide: HTMLElement): void {
-    revealEntrance(slide);
-    growBars(slide);
-    countUp(slide);
-    playMedia(slide);
-}
+export { finalizeSlide, finalizeSlides, playSlide } from "#/export/html/animations/entrance";
+export { transitionTo } from "#/export/html/animations/transitions";
+export { initAllParticles } from "#/export/html/animations/particles";
+export { tagMorphTargets } from "#/export/html/animations/morph";
+export { AnimationKind } from "#/export/html/animations/animation";

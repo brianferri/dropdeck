@@ -1,14 +1,11 @@
 import { element, text } from "@dropdeck/pptx";
+import { Motion } from "#/animations/spec";
 import type { Node } from "@dropdeck/pptx";
 
-export enum AnimationKind {
-    Fade = "fade",
-    Wipe = "wipe",
-    Counter = "counter"
-}
+export { Motion };
 
-type SingleShape = { kind: AnimationKind.Fade | AnimationKind.Wipe, id: number };
-type CounterShape = { kind: AnimationKind.Counter, frames: ReadonlyArray<number> };
+type SingleShape = { kind: Motion.Fade | Motion.Wipe, id: number };
+type CounterShape = { kind: Motion.Counter, frames: ReadonlyArray<number> };
 export type AnimatedShape = SingleShape | CounterShape;
 
 const FADE_MS = 420;
@@ -57,8 +54,8 @@ function animEffect(
 // The `filter` on the animEffect is what actually drives the render; the preset ids only label the effect in
 // PowerPoint's UI.
 const PRESET = {
-    [AnimationKind.Fade]: { id: 10, subtype: 0, filter: "fade", duration: FADE_MS },
-    [AnimationKind.Wipe]: { id: 22, subtype: 4, filter: "wipe(left)", duration: WIPE_MS }
+    [Motion.Fade]: { id: 10, subtype: 0, filter: "fade", duration: FADE_MS },
+    [Motion.Wipe]: { id: 22, subtype: 4, filter: "wipe(left)", duration: WIPE_MS }
 } as const;
 
 function entrance(shape: SingleShape, delay: number, nextNodeId: () => number): Node {
@@ -112,7 +109,7 @@ function counterEntrance(
 ): Node {
     const slot = Math.max(24, Math.round(COUNTER_MS / Math.max(1, frames.length)));
     const steps: Array<Node> = [];
-    steps.push(entrance({ kind: AnimationKind.Fade, id: frames[0] }, delay, nextNodeId));
+    steps.push(entrance({ kind: Motion.Fade, id: frames[0] }, delay, nextNodeId));
     // The roll waits a full fade past the entrance so it begins only once the first frame has faded in.
     const rollDelay = delay + FADE_MS;
     frames.forEach((id, index) => {
@@ -131,7 +128,7 @@ function counterEntrance(
 }
 
 function effectFor(shape: AnimatedShape, delay: number, nextNodeId: () => number): Node {
-    if (shape.kind === AnimationKind.Counter) return counterEntrance(shape.frames, delay, nextNodeId);
+    if (shape.kind === Motion.Counter) return counterEntrance(shape.frames, delay, nextNodeId);
     return entrance(shape, delay, nextNodeId);
 }
 

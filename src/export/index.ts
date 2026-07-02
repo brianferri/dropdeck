@@ -5,7 +5,7 @@ import { ExportFormat } from "#/export/format";
 import type { ExportContext } from "#/export/context";
 
 export { fromBase64, readBlob } from "#/export/assets";
-export { finalizeSlides } from "#/export/finalize";
+export { finalizeSlides } from "#/export/html/animations";
 export { ExportFormat };
 export type { ExportContext } from "#/export/context";
 

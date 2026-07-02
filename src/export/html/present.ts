@@ -1,6 +1,6 @@
 // Bundled to an IIFE and inlined into the exported artifact, which is why it may import only the animations.
 
-import { initAllParticles, pauseMedia, playSlide } from "#/animations";
+import { initAllParticles, playSlide, transitionTo } from "#/export/html/animations";
 
 const SWIPE_THRESHOLD = 50;
 
@@ -46,11 +46,9 @@ function present(): void {
         if (next < 0) next = slides.length - 1;
         if (next >= slides.length) next = 0;
         if (next === current) return;
-        slides[current].classList.remove("active");
-        pauseMedia(slides[current]);
+        const previous = slides[current];
         current = next;
-        slides[current].classList.add("active");
-        playSlide(slides[current]);
+        transitionTo(previous, slides[current]);
     }
 
     initAllParticles(accentRgb());

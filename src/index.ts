@@ -11,6 +11,7 @@ import { slideStyle } from "#/styles/slide.style";
 import { typographyStyle } from "#/styles/typography.style";
 import { blocksStyle } from "#/styles/blocks.style";
 import { ambientStyle } from "#/styles/ambient.style";
+import { animationStyle } from "#/styles/animation.style";
 import { printStyle } from "#/styles/print.style";
 
 const FONTS = "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800"
@@ -33,6 +34,7 @@ export function renderPage(): string {
             style({ id: "dropdeck-typography" }, serializeCss(typographyStyle)),
             style({ id: "dropdeck-blocks" }, serializeCss(blocksStyle)),
             style({ id: "dropdeck-ambient" }, serializeCss(ambientStyle)),
+            style({ id: "dropdeck-animation" }, serializeCss(animationStyle)),
             style({ id: "dropdeck-spotlight" }, serializeCss(spotlightCss)),
             style({ id: "dropdeck-stage" }, serializeCss(stageCss)),
             style({ id: "dropdeck-export-bar" }, serializeCss(exportBarCss)),

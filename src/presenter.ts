@@ -1,6 +1,5 @@
-import { initAllParticles, pauseMedia, playSlide } from "#/animations";
+import { finalizeSlide, initAllParticles, playSlide, tagMorphTargets, transitionTo } from "#/export/html/animations";
 import { DiagnosticSeverity, compile } from "#/front";
-import { finalizeSlide } from "#/export/finalize";
 import { renderDeckHtml } from "#/export/html";
 import { query } from "#/host/dom";
 import { applyConfig } from "#/theme";
@@ -30,6 +29,7 @@ export function createPresenter(deckEl: HTMLElement, dropEl: HTMLElement) {
         compiled = deck;
         sidecars = assets;
         deckEl.innerHTML = renderDeckHtml(deck, theme.particlesOn, assets);
+        tagMorphTargets(deckEl);
         total = deck.slides.length;
         current = 1;
         dropEl.classList.add("hidden");
@@ -38,8 +38,6 @@ export function createPresenter(deckEl: HTMLElement, dropEl: HTMLElement) {
         if (active) playSlide(active);
     }
 
-    // Reveal a slide without its entrance animation, clamped into range. The editor calls this as the cursor
-    // crosses slide boundaries, so the preview follows the part of the markdown being edited.
     function show(atSlide: number): void {
         let next = atSlide;
         if (next < 1) next = 1;
@@ -48,13 +46,12 @@ export function createPresenter(deckEl: HTMLElement, dropEl: HTMLElement) {
         if (!target) return;
         const shown = query(deckEl, ".slide.active");
         if (shown && shown !== target) shown.classList.remove("active");
+        target.classList.add("instant");
         target.classList.add("active");
         finalizeSlide(target);
         current = next;
     }
 
-    // Re-render for the live editor: a transient parse error is returned for inline display rather than
-    // alerting, and entrance animations are skipped so a keystroke is instant. `atSlide` follows the cursor.
     function update(source: string, atSlide?: number): string | null {
         const { deck, diagnostics } = compile(source);
         const error = diagnostics.find((diagnostic) => diagnostic.severity === DiagnosticSeverity.Error);
@@ -65,6 +62,7 @@ export function createPresenter(deckEl: HTMLElement, dropEl: HTMLElement) {
         compiled = deck;
         total = deck.slides.length;
         deckEl.innerHTML = renderDeckHtml(deck, theme.particlesOn, sidecars);
+        tagMorphTargets(deckEl);
         initAllParticles(theme.particleRgb);
         show(atSlide ?? current);
         return null;
@@ -74,14 +72,8 @@ export function createPresenter(deckEl: HTMLElement, dropEl: HTMLElement) {
         if (target < 1 || target > total) return;
         const previous = query(deckEl, ".slide.active");
         const next = query(deckEl, `.slide[data-slide="${target}"]`);
-        if (previous) {
-            previous.classList.remove("active");
-            pauseMedia(previous);
-        }
-        if (next) {
-            next.classList.add("active");
-            playSlide(next);
-        }
+        if (!next) return;
+        transitionTo(previous, next);
         current = target;
     }
 

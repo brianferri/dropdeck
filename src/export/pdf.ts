@@ -1,4 +1,4 @@
-import { finalizeSlides } from "#/export/finalize";
+import { finalizeSlides } from "#/export/html/animations";
 import type { ExportContext } from "#/export/context";
 
 // Slide colours render only if the user enables background graphics in the print dialog.
