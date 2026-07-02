@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { parse, parseStyle } from "../../src/css/Parser.js";
 import { serializeStyle } from "../../src/css/Serializer.js";
+import { declaration } from "../../src/css/builders.js";
 import type { Combinator, SelectorKind } from "../../src/css/Selector.js";
 import { declarationValue, rules } from "../../src/css/Query.js";
 import type { ParseStyle, ParseStylesheet } from "../../src/css/Parse.js";
@@ -15,6 +16,8 @@ type Expect<T extends true> = T;
 type Style = ParseStyle<"color: red; font-size: 2rem">;
 type Sheet = ParseStylesheet<".a { color: red }">;
 type Selector = ParseSelector<"div > .b">;
+
+const canonical = declaration("transform", "translate(300px,  55px)");
 
 export type Assertions = [
     Expect<Equal<Style[0]["property"], "color">>,
@@ -30,7 +33,9 @@ export type Assertions = [
     Expect<Equal<SerializeStyle<Style>, "color: red; font-size: 2rem">>,
     // A non-literal string widens to the general AST rather than a bogus tree.
     Expect<Equal<ParseStylesheet<string>, Stylesheet>>,
-    Expect<Equal<ParseStyle<string>, ReadonlyArray<Declaration>>>
+    Expect<Equal<ParseStyle<string>, ReadonlyArray<Declaration>>>,
+    Expect<Equal<(typeof canonical)["property"], "transform">>,
+    Expect<Equal<(typeof canonical)["value"], "translate(300px, 55px)">>
 ];
 
 await test("type-level: a stylesheet literal parses and queries at runtime as its type asserts", () => {
@@ -40,4 +45,8 @@ await test("type-level: a stylesheet literal parses and queries at runtime as it
 
 await test("type-level: an inline style round-trips at runtime", () => {
     assert.equal(serializeStyle(parseStyle("color: red; font-size: 2rem")), "color: red; font-size: 2rem");
+});
+
+await test("type-level: the declaration builder canonicalises its value at runtime as its type asserts", () => {
+    assert.equal(canonical.value, "translate(300px, 55px)");
 });
