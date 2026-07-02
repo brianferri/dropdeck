@@ -1,6 +1,9 @@
 // The `insert` strings deliberately contain `${n:placeholder}` snippet markers; they are parsed by the editor's
 // snippet engine, not interpolated, so the template-curly lint does not apply here.
 /* eslint-disable no-template-curly-in-string */
+import type { SlideTransition } from "#/animations/spec";
+import type { LayoutHint } from "#/config";
+
 export enum CompletionKind {
     Directive = "directive",
     Fence = "fence",
@@ -9,7 +12,6 @@ export enum CompletionKind {
     Asset = "asset"
 }
 
-// `insert` carries `${n:placeholder}`/`$0` snippet markers; `doc` drives both completions and hover.
 export type CompletionItem = {
     readonly label: string,
     readonly insert: string,
@@ -28,7 +30,6 @@ export const DIRECTIVES = [
     }
 ] as const;
 
-// These two langs render as components rather than code blocks.
 export const FENCES = [
     {
         label: "metrics",
@@ -48,6 +49,23 @@ export const FENCES = [
 
 function colorKey(label: string, doc: string): CompletionItem {
     return { label, insert: `${label}: \${0:#5cd0b3}`, detail: "colour", doc, kind: CompletionKind.Frontmatter };
+}
+
+const LAYOUT_DOC = {
+    center: "Center the content as a cover/section slide.",
+    default: "Top-aligned content layout."
+} as const satisfies Record<LayoutHint, string>;
+
+const TRANSITION_DOC = {
+    none: "Swap instantly, with no animation.",
+    fade: "Cross-fade from the previous slide (the default).",
+    morph: "Tween the elements this slide shares with the previous one between their two positions."
+} as const satisfies Record<SlideTransition, string>;
+
+function keyList(docs: Record<string, string>): string {
+    const keys = Object.keys(docs).map((key) => `\`${key}\``);
+    if (keys.length <= 2) return keys.join(" or ");
+    return `${keys.slice(0, -1).join(", ")}, or ${keys[keys.length - 1]}`;
 }
 
 // Mirror `theme.ts`'s keys -- a key the theme ignores would be a misleading suggestion.
@@ -109,7 +127,14 @@ export const FRONTMATTER = [
         label: "layout",
         insert: "layout: ${0:center}",
         detail: "slide layout",
-        doc: "Default slide layout: `center` or `default`.",
+        doc: `Default slide layout: ${keyList(LAYOUT_DOC)}.`,
+        kind: CompletionKind.Frontmatter
+    },
+    {
+        label: "transition",
+        insert: "transition: ${0:morph}",
+        detail: "slide transition",
+        doc: `How this slide arrives: ${keyList(TRANSITION_DOC)}.`,
         kind: CompletionKind.Frontmatter
     }
 ] as const;
@@ -118,13 +143,15 @@ function valueItem(label: string, doc: string): CompletionItem {
     return { label, insert: label, detail: "value", doc, kind: CompletionKind.Frontmatter };
 }
 
+function enumItems(docs: Record<string, string>): ReadonlyArray<CompletionItem> {
+    return Object.entries(docs).map(([value, doc]) => valueItem(value, doc));
+}
+
 // Keys whose value is a fixed set; the editor offers these once the caret is past the `key:`. Colour keys are
 // absent on purpose -- a hex is free-form, and the editor swatches it rather than suggesting from a list.
 export const FRONTMATTER_VALUES = {
-    layout: [
-        valueItem("center", "Center the content as a cover/section slide."),
-        valueItem("default", "Top-aligned content layout.")
-    ],
+    layout: enumItems(LAYOUT_DOC),
+    transition: enumItems(TRANSITION_DOC),
     dark: [
         valueItem("true", "Use the dark palette."),
         valueItem("false", "Use the light palette.")
@@ -141,7 +168,7 @@ export const FRONTMATTER_VALUES = {
         valueItem("true", "Show the animated particle backdrop."),
         valueItem("false", "Hide the animated particle backdrop.")
     ]
-} as const;
+};
 
 export const SNIPPETS = [
     {
@@ -195,7 +222,6 @@ export const SNIPPETS = [
     }
 ] as const;
 
-// Maps a highlighted directive/fence span back to its registry entry, so the same docs drive hover and completions.
 export function describe(spanText: string): CompletionItem | null {
     const trimmed = spanText.trim();
     for (const directive of DIRECTIVES) if (directive.label === trimmed) return directive;
