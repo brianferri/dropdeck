@@ -19,7 +19,7 @@ import type {
     CT_GroupTransform2D,
     CT_Point2D,
     CT_PositiveSize2D,
-    CT_PresetGeometry2D,
+    Geometry,
     CT_EffectList,
     CT_LineProperties,
     CT_SolidColorFillProperties,
@@ -57,7 +57,7 @@ export type CT_GroupShapeNonVisual = Element<
 export type CT_ShapeProperties = Element<
     QName<"p", "spPr">,
     Empty,
-    Seq<Opt<CT_Transform2D>, Seq<Opt<CT_PresetGeometry2D>, Seq<Opt<FillProperties>, Seq<Opt<CT_LineProperties>, Opt<CT_EffectList>>>>>
+    Seq<Opt<CT_Transform2D>, Seq<Opt<Geometry>, Seq<Opt<FillProperties>, Seq<Opt<CT_LineProperties>, Opt<CT_EffectList>>>>>
 >;
 
 export type CT_GroupShapeProperties = Element<

@@ -201,7 +201,8 @@ export type CT_RelativeRect = Element<
 export type CT_PathShadeProperties = Element<QName<"a", "path">, readonly [Attr<"path", "circle">], readonly [CT_RelativeRect]>;
 export type CT_LinearShadeProperties = Element<QName<"a", "lin">, readonly [Attr<"ang", ST_Angle>, Attr<"scaled", ST_Boolean>], Empty>;
 export type CT_GradientFillProperties = Element<QName<"a", "gradFill">, Empty, readonly [CT_GradientStopList, CT_PathShadeProperties | CT_LinearShadeProperties]>;
-export type FillProperties = CT_SolidColorFillProperties | CT_GradientFillProperties;
+export type CT_NoFill = Element<QName<"a", "noFill">, Empty, Empty>;
+export type FillProperties = CT_SolidColorFillProperties | CT_GradientFillProperties | CT_NoFill;
 
 export type CT_OuterShadow = Element<
     QName<"a", "outerShdw">,
@@ -224,6 +225,18 @@ export type CT_PresetGeometry2D = Element<
     readonly [Attr<"prst", ST_ShapeType>],
     readonly [CT_GeomGuideList]
 >;
+
+// Custom geometry (ECMA-376 20.1.9): a shape drawn from an explicit path instead of a preset, so PowerPoint's
+// morph can tween the geometry across slides. Only the moveTo/lnTo/close commands SVG lines and polygons need.
+export type CT_AdjPoint2D = Element<QName<"a", "pt">, readonly [Attr<"x", ST_Coordinate>, Attr<"y", ST_Coordinate>], Empty>;
+export type CT_Path2DMoveTo = Element<QName<"a", "moveTo">, Empty, readonly [CT_AdjPoint2D]>;
+export type CT_Path2DLineTo = Element<QName<"a", "lnTo">, Empty, readonly [CT_AdjPoint2D]>;
+export type CT_Path2DClose = Element<QName<"a", "close">, Empty, Empty>;
+export type CT_Path2DCommand = CT_Path2DMoveTo | CT_Path2DLineTo | CT_Path2DClose;
+export type CT_Path2D = Element<QName<"a", "path">, readonly [Attr<"w", ST_PositiveCoordinate>, Attr<"h", ST_PositiveCoordinate>], Many<CT_Path2DCommand>>;
+export type CT_Path2DList = Element<QName<"a", "pathLst">, Empty, Many<CT_Path2D>>;
+export type CT_CustomGeometry2D = Element<QName<"a", "custGeom">, Empty, readonly [CT_Path2DList]>;
+export type Geometry = CT_PresetGeometry2D | CT_CustomGeometry2D;
 
 export type CT_TextFont = Element<QName<"a", "latin">, readonly [Attr<"typeface", string>], Empty>;
 

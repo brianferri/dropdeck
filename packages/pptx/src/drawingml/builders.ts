@@ -2,7 +2,11 @@ import { element, text } from "../oox.js";
 import type { AssertUniqueAttrs, Element, Empty, Text } from "../oox.js";
 import type {
     BodyPropertyAttr,
+    CT_AdjPoint2D,
     CT_GeomGuide,
+    CT_Path2D,
+    CT_Path2DCommand,
+    CT_Path2DList,
     CT_GraphicalObjectData,
     CT_Highlight,
     CT_TextSpacingPercent,
@@ -105,6 +109,45 @@ export function roundRect<const A extends number>(adjust: A): Element<
     readonly [Element<"a:avLst", Empty, readonly [Element<"a:gd", readonly [readonly ["name", "adj"], readonly ["fmla", `val ${A}`]], Empty>]>]
 > {
     return prstGeom("roundRect", gd("adj", `val ${adjust}`));
+}
+
+export function noFill(): Element<"a:noFill", Empty, Empty> {
+    return element("a:noFill", [], []);
+}
+
+export function pt<const X extends number, const Y extends number>(
+    x: X,
+    y: Y
+): Element<"a:pt", readonly [readonly ["x", X], readonly ["y", Y]], Empty> {
+    return element("a:pt", [["x", x], ["y", y]], []);
+}
+
+export function moveTo<const P extends CT_AdjPoint2D>(point: P): Element<"a:moveTo", Empty, readonly [P]> {
+    return element("a:moveTo", [], [point]);
+}
+
+export function lnTo<const P extends CT_AdjPoint2D>(point: P): Element<"a:lnTo", Empty, readonly [P]> {
+    return element("a:lnTo", [], [point]);
+}
+
+export function closePath(): Element<"a:close", Empty, Empty> {
+    return element("a:close", [], []);
+}
+
+export function path2D<const W extends number, const H extends number, const C extends ReadonlyArray<CT_Path2DCommand>>(
+    w: W,
+    h: H,
+    commands: C
+): Element<"a:path", readonly [readonly ["w", W], readonly ["h", H]], C> {
+    return element("a:path", [["w", w], ["h", h]], commands);
+}
+
+export function pathLst<const P extends ReadonlyArray<CT_Path2D>>(...paths: P): Element<"a:pathLst", Empty, P> {
+    return element("a:pathLst", [], paths);
+}
+
+export function custGeom<const L extends CT_Path2DList>(paths: L): Element<"a:custGeom", Empty, readonly [L]> {
+    return element("a:custGeom", [], [paths]);
 }
 
 export function latin<const T extends string>(typeface: T): Element<"a:latin", readonly [readonly ["typeface", T]], Empty> {
