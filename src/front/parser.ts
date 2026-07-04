@@ -136,7 +136,7 @@ function parseBarRows(content: string): Array<BarRow> {
     });
 }
 
-// `::left::` optionally marks the first column; each `::right::` shifts the origin, starting the next column.
+// `::left::` is optional: the segment before the first `::right::` is already the first column.
 function splitColumns(text: string): Array<string> {
     const segments: Array<string> = [];
     let column: Array<string> = [];
@@ -156,7 +156,6 @@ function hasColumnBreak(text: string): boolean {
     return false;
 }
 
-// A blank line separates two blocks; consecutive non-blank lines belong to the same one.
 function blankLineGroups(text: string): Array<string> {
     const groups: Array<string> = [];
     let group: Array<string> = [];
