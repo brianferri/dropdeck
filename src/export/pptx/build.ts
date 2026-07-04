@@ -1,12 +1,13 @@
 import {
-    alpha, bodyPr, cNvPr, element, ext, gridCol, grpSpPr, highlight, latin, nvGrpSpPr, nvPicPr, nvSpPr, off, pic,
-    picBlipFill, prstGeom, roundRect, rPr, run, solidFill, sp, spcBef, spcPts, spPr, ST_TextAlignType, ST_TextAnchoringType,
-    ST_TextWrappingType, tableFrame, tbl, tblGrid, tc, tr, txBodyA, xfrm
+    alpha, bodyPr, cNvPr, closePath, custGeom, element, ext, gridCol, grpSpPr, highlight, latin, lnTo, moveTo, noFill,
+    nvGrpSpPr, nvPicPr, nvSpPr, off, path2D, pathLst, pic, picBlipFill, prstGeom, pt, roundRect, rPr, run, solidFill,
+    sp, spcBef, spcPts, spPr, ST_TextAlignType, ST_TextAnchoringType, ST_TextWrappingType, tableFrame, tbl, tblGrid,
+    tc, tr, txBodyA, xfrm
 } from "@dropdeck/pptx";
 import { emu, fontSize, SLIDE_HEIGHT_EMU, SLIDE_WIDTH_EMU } from "#/export/pptx/units";
 import type {
     BodyPropertyAttr, CT_EffectList, CT_GradientFillProperties, CT_GraphicalObjectFrame, CT_GroupShape,
-    CT_LineProperties, CT_Picture, CT_Shape, CT_SolidColorFillProperties, CT_SRgbColor,
+    CT_LineProperties, CT_Path2DCommand, CT_Picture, CT_Shape, CT_SolidColorFillProperties, CT_SRgbColor,
     CT_TableCellProperties,
     CT_TextBody, CT_TextParagraph, CT_TextParagraphProperties, Element, Empty, Node, RunPropertyAttr
 } from "@dropdeck/pptx";
@@ -222,6 +223,69 @@ export function rule(
     name: string = "rule"
 ): CT_Shape {
     const geometry = spPr(xfrm(off(emu(xPx), emu(yPx)), ext(emu(widthPx), emu(4))), roundRect(50000), fill(color));
+    return sp(nvSpPr(cNvPr(nextId(), name)), geometry, emptyBody());
+}
+
+// SVG strokes vary in width, unlike the fixed 1px `outline`.
+function svgStroke(color: string, widthPx: number): CT_LineProperties {
+    return element("a:ln", [["w", emu(Math.max(widthPx, 1))]], [fill(color)]);
+}
+
+// A native preset shape (ellipse, rect, ..) filling its box, named so PowerPoint's morph tweens it across slides.
+export function presetShape(
+    nextId: () => number,
+    name: string,
+    preset: "ellipse" | "rect" | "roundRect",
+    xPx: number,
+    yPx: number,
+    widthPx: number,
+    heightPx: number,
+    fillColor: string | null,
+    strokeColor: string | null,
+    strokeWidthPx: number
+): CT_Shape {
+    const transform = xfrm(off(emu(xPx), emu(yPx)), ext(emu(Math.max(widthPx, 1)), emu(Math.max(heightPx, 1))));
+    const paint = fillColor === null ? noFill() : fill(fillColor);
+    const geometry = strokeColor === null
+        ? spPr(transform, prstGeom(preset), paint)
+        : spPr(transform, prstGeom(preset), paint, svgStroke(strokeColor, strokeWidthPx));
+    return sp(nvSpPr(cNvPr(nextId(), name)), geometry, emptyBody());
+}
+
+// A custom-geometry shape drawn through slide-px points; its box is their bounding rect so the path fills it. Used
+// for lines, polylines and polygons, which have no matching preset.
+export function customShape(
+    nextId: () => number,
+    name: string,
+    points: ReadonlyArray<readonly [number, number]>,
+    closed: boolean,
+    fillColor: string | null,
+    strokeColor: string | null,
+    strokeWidthPx: number
+): CT_Shape {
+    const [[firstX, firstY]] = points;
+    let minX = firstX;
+    let minY = firstY;
+    let maxX = firstX;
+    let maxY = firstY;
+    for (const [px, py] of points) {
+        minX = Math.min(minX, px);
+        minY = Math.min(minY, py);
+        maxX = Math.max(maxX, px);
+        maxY = Math.max(maxY, py);
+    }
+    const commands: Array<CT_Path2DCommand> = [];
+    points.forEach(([px, py], index) => {
+        const point = pt(emu(px - minX), emu(py - minY));
+        commands.push(index === 0 ? moveTo(point) : lnTo(point));
+    });
+    if (closed) commands.push(closePath());
+    const geom = custGeom(pathLst(path2D(emu(Math.max(maxX - minX, 1)), emu(Math.max(maxY - minY, 1)), commands)));
+    const transform = xfrm(off(emu(minX), emu(minY)), ext(emu(Math.max(maxX - minX, 1)), emu(Math.max(maxY - minY, 1))));
+    const paint = fillColor === null ? noFill() : fill(fillColor);
+    const geometry = strokeColor === null
+        ? spPr(transform, geom, paint)
+        : spPr(transform, geom, paint, svgStroke(strokeColor, strokeWidthPx));
     return sp(nvSpPr(cNvPr(nextId(), name)), geometry, emptyBody());
 }
 

@@ -226,9 +226,10 @@ export function lowerSlide(
     index: number,
     total: number,
     palette: Palette,
-    assets: AssetMap
+    assets: AssetMap,
+    svgPngs: Map<string, string>
 ): SlideInput {
-    const embed: Embed = { nextId: idFactory(), nextRelId: relFactory(), palette, assets };
+    const embed: Embed = { nextId: idFactory(), nextRelId: relFactory(), palette, assets, svgPngs };
     const layout = resolveLayout(slideEl, index, total);
     if (layout === SlideLayout.Cover) return centeredSlide(slideEl, SIZE.coverTitle, true, embed);
     if (layout === SlideLayout.Section) return centeredSlide(slideEl, SIZE.sectionTitle, false, embed);

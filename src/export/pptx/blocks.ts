@@ -1,9 +1,10 @@
-import { HtmlTag, NodeKind, attribute, childElements, findAll, findFirst, hasClass, parse, textContent } from "@dropdeck/html";
+import { HtmlTag, NodeKind, attribute, childElements, findAll, findFirst, hasClass, parse, serialize, textContent } from "@dropdeck/html";
 import { CssProperty, colorClass, columnSpan, gridColumns as tailwindGridColumns, resolve as resolveTailwind } from "@dropdeck/html/tailwind";
 import { decompose, matrixOf, parseStyle, parseTransform, styleValue } from "@dropdeck/html/css";
 import { Align, Anchor, idFactory, imageShape, leftBarFrame, panel, paragraphOf, pProps, relFactory, styledRun, textBox, txBodyOf } from "#/export/pptx/build";
 import { inlineRuns, inlineRunsFromNodes, inlineSegments } from "#/export/pptx/inline";
 import { resolveImage } from "#/export/pptx/image";
+import { svgToShapes } from "#/export/pptx/svg-lower";
 import { Motion } from "#/export/pptx/animations/timing";
 import { morphName } from "#/animations/spec";
 import { renderMarkdown } from "#/render/html";
@@ -35,7 +36,8 @@ export type Embed = {
     nextId: () => number,
     nextRelId: () => string,
     palette: Palette,
-    assets: AssetMap
+    assets: AssetMap,
+    svgPngs: Map<string, string>
 };
 
 function lowered(
@@ -283,6 +285,36 @@ function lowerImage(image: ElementNode, embed: Embed, x: number, y: number, widt
     return lowered([shape], fitHeight, { media: [media] });
 }
 
+// A shape-only SVG lowers to native shapes that PowerPoint morphs (fill, size, geometry) across slides; anything
+// with a path, text or gradient falls back to a rasterised PNG that renders but cannot morph its content.
+function lowerSvg(svg: ElementNode, embed: Embed, x: number, y: number, width: number): Lowered {
+    const native = svgToShapes(svg, embed.nextId, x, y, width);
+    if (native !== null) return lowered(native.shapes, native.height);
+    return lowerSvgRaster(svg, embed, x, y, width);
+}
+
+// PowerPoint cannot embed SVG, so an inline SVG is placed as its pre-rasterised PNG (keyed by its markup). It
+// morphs by its `data-morph` name like any shape; the inner-shape tween the browser runs is baked into the PNG.
+function lowerSvgRaster(svg: ElementNode, embed: Embed, x: number, y: number, width: number): Lowered {
+    const { nextId, nextRelId, svgPngs } = embed;
+    const resolved = resolveImage(svgPngs.get(serialize(svg)) ?? "");
+    if (!resolved) return lowered([], 0);
+    const relationshipId = nextRelId();
+    const media: SlideMedia = { relationshipId, extension: resolved.extension, contentType: resolved.contentType, data: resolved.bytes };
+    const deckRatio = 1280 / 1180;
+    const aspect = resolved.width / resolved.height;
+    let fitWidth = imageWidthPx(svg, width) * deckRatio;
+    let fitHeight = fitWidth / aspect;
+    if (fitHeight > IMAGE_MAX_HEIGHT) {
+        fitHeight = IMAGE_MAX_HEIGHT;
+        fitWidth = fitHeight * aspect;
+    }
+    const morph = attribute(svg, "data-morph");
+    const name = morph === null ? `svg-${relationshipId}` : morphName(morph);
+    const shape = imageShape(nextId, relationshipId, name, x + ((width - fitWidth) / 2), y, fitWidth, fitHeight, 0);
+    return lowered([shape], fitHeight, { media: [media] });
+}
+
 // Matched by substring, since these fragments appear within a longer class list.
 const NOTE_CLASSES = ["border-l", "border-yellow", "italic"];
 
@@ -402,7 +434,7 @@ function isBordered(cell: ElementNode): boolean {
 // A row must know its content height before placing it. The dry pass lowers into a fresh embed so it consumes
 // none of the real pass's ids and discards the shapes it produced.
 export function measuredHeight(embed: Embed, lower: (trial: Embed) => Lowered): number {
-    return lower({ nextId: idFactory(), nextRelId: relFactory(), palette: embed.palette, assets: embed.assets }).height;
+    return lower({ nextId: idFactory(), nextRelId: relFactory(), palette: embed.palette, assets: embed.assets, svgPngs: embed.svgPngs }).height;
 }
 
 function measureColumn(items: ReadonlyArray<Placed>, embed: Embed, width: number): number {
@@ -508,6 +540,8 @@ function headingEl(element: ElementNode, embed: Embed, x: number, y: number, wid
 function paragraphEl(element: ElementNode, embed: Embed, x: number, y: number, width: number, align: Align): Lowered {
     const image = findFirst(element, HtmlTag.Img);
     if (image !== null) return lowerImage(image, embed, x, y, width);
+    const svg = findFirst(element, HtmlTag.Svg);
+    if (svg !== null) return lowerSvg(svg, embed, x, y, width);
     const content = textContent(element);
     if (content.trim().length === 0) return lowered([], 0);
     const { nextId, palette } = embed;
@@ -640,6 +674,7 @@ function lowerElement(element: ElementNode, embed: Embed, x: number, y: number, 
     if (tag === HtmlTag.Code) return codeLineEl(element, embed, x, y, width, align);
     if (tag === HtmlTag.Table) return tableEl(element, embed, x, y, width);
     if (tag === HtmlTag.Img) return lowerImage(element, embed, x, y, width);
+    if (tag === HtmlTag.Svg) return lowerSvg(element, embed, x, y, width);
     if (tag === HtmlTag.Div && isGrid(element)) return lowerGrid(childElements(element), gridColumns(element), embed, x, y, width, gridAlign(element, align), gapOf(element, GRID_GAP));
     if (tag === HtmlTag.Div && isNote(element)) return noteEl(element, embed, x, y, width);
     return paragraphEl(element, embed, x, y, width, align);
