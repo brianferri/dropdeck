@@ -59,6 +59,10 @@ export function origin(xPx: number, yPx: number): `${number}px ${number}px` {
     return serializeValue([pxOf(xPx), SPACE, pxOf(yPx)]);
 }
 
+export function rgbColor(red: number, green: number, blue: number): string {
+    return serializeValue([functionValue("rgb", commaList([numOf(red), numOf(green), numOf(blue)]))]);
+}
+
 export function flipTransform(dxPx: number, dyPx: number, scaleX: number, scaleY: number): string {
     const move: FunctionValue = functionValue("translate3d", commaList([pxOf(dxPx), pxOf(dyPx), numOf(0)]));
     const zoom: FunctionValue = functionValue("scale", commaList([numOf(scaleX), numOf(scaleY)]));

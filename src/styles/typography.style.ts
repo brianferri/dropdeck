@@ -103,6 +103,12 @@ export const typographyStyle = [
         declaration("display", "block"),
         declaration("margin", "0.6rem auto")
     ]),
+    // An inline SVG is a diagram like an image, so it centers in the flow the same way.
+    rule([".slide :where(svg)"], [
+        declaration("display", "block"),
+        declaration("margin", "0.6rem auto"),
+        declaration("max-width", "100%")
+    ]),
     rule([".slide :where(hr)"], [
         declaration("border", "none"),
         declaration("border-top", "1px solid var(--surface-border)"),
