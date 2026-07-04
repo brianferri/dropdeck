@@ -78,10 +78,13 @@ type FenceBlock<Lang extends string, Body extends string> =
 type ParseFence<Lang extends string, Body extends string, After extends string> =
     Trim<After> extends "" ? [FenceBlock<Trim<Lang>, Body>] : Array<Block>;
 
+type SplitColumns<S extends string, Acc extends ReadonlyArray<string> = []> =
+    S extends `${infer Head}\n::right::\n${infer Rest}` ? SplitColumns<Rest, [...Acc, Head]> : [...Acc, S];
+
 type ColumnsOf<Text extends string> =
-    (Text extends `::left::\n${infer Rest}` ? Rest : Text) extends `${infer Left}\n::right::\n${infer Right}`
-        ? { kind: BlockKind.Columns, left: ParseBlocks<Trim<Left>>, right: ParseBlocks<Trim<Right>> }
-        : { kind: BlockKind.Columns, left: Array<Block>, right: Array<Block> };
+    SplitColumns<Text extends `::left::\n${infer Rest}` ? Rest : Text> extends infer Cols extends ReadonlyArray<string>
+        ? { kind: BlockKind.Columns, columns: { [Index in keyof Cols]: ParseBlocks<Trim<Cols[Index] & string>> } }
+        : { kind: BlockKind.Columns, columns: Array<Array<Block>> };
 
 type StartsBlock<Line extends string> = Line extends `### ${string}` ? true : Line extends `${Fence}${string}` ? true : false;
 

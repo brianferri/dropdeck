@@ -5,8 +5,8 @@ import { morphKey } from "#/animations/spec";
 const MORPH_BLOCKS = "h1, h2, h3, p, li, blockquote, figcaption";
 const SELF_ANIMATED = ".bar-row, .metric";
 
-// A text block glides between layout boxes (FLIP); an image glides between its CSS transforms, which carries the
-// rotation and free scale/translate a bounding-box FLIP cannot express.
+// Most elements glide between layout boxes (FLIP). An image that carries its own `transform` glides between those
+// matrices instead, since a bounding-box FLIP cannot express the rotation and free scale/translate it may hold.
 enum MorphKind { Flow = "flow", Transform = "transform" }
 
 type MorphFrame =
@@ -36,7 +36,11 @@ function contentRect(el: HTMLElement): DOMRect {
 }
 
 function frameOf(el: HTMLElement): MorphFrame {
-    if (el instanceof HTMLImageElement) return { kind: MorphKind.Transform, matrix: getComputedStyle(el).transform };
+    if (el instanceof HTMLImageElement) {
+        const matrix = getComputedStyle(el).transform;
+        if (matrix !== "none") return { kind: MorphKind.Transform, matrix };
+    }
+    // A layout-positioned image (in a column, say) has no transform to interpolate, so it glides by its box.
     return { kind: MorphKind.Flow, rect: contentRect(el) };
 }
 

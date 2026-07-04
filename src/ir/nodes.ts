@@ -40,7 +40,7 @@ export type Block =
     | { kind: BlockKind.Metrics, rows: Array<MetricRow> }
     | { kind: BlockKind.Bars, rows: Array<BarRow> }
     | { kind: BlockKind.Code, lang: string, content: string }
-    | { kind: BlockKind.Columns, left: Array<Block>, right: Array<Block> };
+    | { kind: BlockKind.Columns, columns: Array<Array<Block>> };
 
 export type Slide = {
     frontmatter: DeckConfig,

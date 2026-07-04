@@ -56,24 +56,16 @@ function codeNode(content: string): ElementNode<"div"> {
 }
 
 function proseNode(markdown: string): ElementNode<"div"> {
-    const html = renderMarkdown(markdown);
-    // A list boxes into a panel that reveals as one unit; loose prose reveals each leaf on its own.
-    const boxed = (/<ul|<ol/).test(html);
-    return boxed
-        ? div({ class: "panel mt-3", data: { animation: "reveal" } }, markupNodes(html))
-        : div({ class: "mt-3" }, withReveal(markupNodes(html)));
+    return div({ class: "mt-3" }, withReveal(markupNodes(renderMarkdown(markdown))));
 }
 
 function htmlNode(markup: string): ElementNode<"div"> {
     return div({}, withReveal(markupNodes(renderMarkdown(convertFences(markup)))));
 }
 
-function columnsNode(left: ReadonlyArray<Block>, right: ReadonlyArray<Block>): ElementNode<"div"> {
-    return div(
-        { class: "grid grid-cols-2 gap-8 mt-2 items-start" },
-        div({}, renderBlocks(left)),
-        div({}, renderBlocks(right))
-    );
+function columnsNode(columns: ReadonlyArray<ReadonlyArray<Block>>): ElementNode<"div"> {
+    const cells = columns.map((column) => div({}, renderBlocks(column)));
+    return div({ class: `grid grid-cols-${columns.length} gap-8 mt-2 items-start` }, cells);
 }
 
 export function renderBlock(block: Block): DomNode {
@@ -91,7 +83,7 @@ export function renderBlock(block: Block): DomNode {
         case BlockKind.Code:
             return codeNode(block.content);
         case BlockKind.Columns:
-            return columnsNode(block.left, block.right);
+            return columnsNode(block.columns);
     }
 }
 

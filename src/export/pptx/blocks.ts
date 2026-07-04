@@ -790,17 +790,19 @@ function lowerBlock(block: Block, embed: Embed, x: number, y: number, width: num
         case BlockKind.Bars:
             return lowerBars(block.rows, embed, x, y, width);
         case BlockKind.Columns:
-            return lowerColumns(block.left, block.right, embed, x, y, width, align);
+            return lowerColumns(block.columns, embed, x, y, width, align);
         case BlockKind.Html:
             return lowerMarkup(renderMarkdown(block.markup), embed, x, y, width, align, false);
     }
 }
 
-function lowerColumns(left: ReadonlyArray<Block>, right: ReadonlyArray<Block>, embed: Embed, x: number, y: number, width: number, align: Align): Lowered {
-    const half = (width - GAP) / 2;
-    const leftCol = lowerBlocks(left, embed, x, y, half, align);
-    const rightCol = lowerBlocks(right, embed, x + half + GAP, y, half, align);
-    return combine([leftCol, rightCol], Math.max(leftCol.height, rightCol.height));
+function lowerColumns(columns: ReadonlyArray<ReadonlyArray<Block>>, embed: Embed, x: number, y: number, width: number, align: Align): Lowered {
+    const count = Math.max(columns.length, 1);
+    const columnWidth = (width - (GAP * (count - 1))) / count;
+    const loweredColumns = columns.map((column, index) => lowerBlocks(column, embed, x + (index * (columnWidth + GAP)), y, columnWidth, align));
+    let heightMax = 0;
+    for (const column of loweredColumns) heightMax = Math.max(heightMax, column.height);
+    return combine(loweredColumns, heightMax);
 }
 
 export function lowerBlocks(blocks: ReadonlyArray<Block>, embed: Embed, x: number, y: number, width: number, align: Align = Align.Left): Lowered {

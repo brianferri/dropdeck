@@ -136,10 +136,12 @@ function parseBarRows(content: string): Array<BarRow> {
     });
 }
 
+// `::left::` optionally marks the first column; each `::right::` shifts the origin, starting the next column.
 function splitColumns(text: string): Array<string> {
     const segments: Array<string> = [];
     let column: Array<string> = [];
     for (const line of text.split("\n")) {
+        if (line.trimEnd() === "::left::") continue;
         if (line.trimEnd() === "::right::") {
             segments.push(column.join("\n"));
             column = [];
@@ -149,17 +151,40 @@ function splitColumns(text: string): Array<string> {
     return segments;
 }
 
-function parseBlocks(text: string): Array<Block> {
-    const columns = splitColumns(text);
-    if (columns.length > 1) {
-        return [
-            {
-                kind: BlockKind.Columns,
-                left: parseBlocks((columns[0] ?? "").trim()),
-                right: parseBlocks(columns.slice(1).join("\n").trim())
-            }
-        ];
+function hasColumnBreak(text: string): boolean {
+    for (const line of text.split("\n")) if (line.trimEnd() === "::right::") return true;
+    return false;
+}
+
+// A blank line separates two blocks; consecutive non-blank lines belong to the same one.
+function blankLineGroups(text: string): Array<string> {
+    const groups: Array<string> = [];
+    let group: Array<string> = [];
+    for (const line of text.split("\n")) {
+        if (line.trim() !== "") group.push(line);
+        else if (group.length > 0) {
+            groups.push(group.join("\n"));
+            group = [];
+        }
     }
+    if (group.length > 0) groups.push(group.join("\n"));
+    return groups;
+}
+
+// A blank line ends the column row and resets the origin, so each `::right::` group is its own block and any
+// content after the blank line flows full-width below rather than falling into the last column.
+function parseColumnGroups(text: string): Array<Block> {
+    const blocks: Array<Block> = [];
+    for (const group of blankLineGroups(text)) {
+        if (hasColumnBreak(group))
+            blocks.push({ kind: BlockKind.Columns, columns: splitColumns(group).map((segment) => parseBlocks(segment.trim())) });
+        else for (const block of parseBlocks(group)) blocks.push(block);
+    }
+    return blocks;
+}
+
+function parseBlocks(text: string): Array<Block> {
+    if (hasColumnBreak(text)) return parseColumnGroups(text);
     if (hasHtmlBlock(text)) return [ { kind: BlockKind.Html, markup: text } ];
 
     const blocks: Array<Block> = [];

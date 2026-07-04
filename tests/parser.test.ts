@@ -58,11 +58,11 @@ test("a non-metrics/bars fence stays a Code block keeping its lang", () => {
     expect(block.content).toBe("const x = 1;");
 });
 
-test("::left:: / ::right:: collapse to one Columns block of prose", () => {
-    const deck = parse("# Cols\n\n::left::\nleft prose\n::right::\nright prose\n");
+test("::left:: / ::right:: split into one Columns block, one column per segment", () => {
+    const deck = parse("# Cols\n\n::left::\nleft prose\n::right::\nmid prose\n::right::\nright prose\n");
     const block = firstBlock(deck, BlockKind.Columns);
-    expect(block.left[0]?.kind).toBe(BlockKind.Prose);
-    expect(block.right[0]?.kind).toBe(BlockKind.Prose);
+    expect(block.columns.length).toBe(3);
+    expect(block.columns.every((column) => column[0]?.kind === BlockKind.Prose)).toBe(true);
 });
 
 test("a block-level HTML body is kept whole as one Html block", () => {
