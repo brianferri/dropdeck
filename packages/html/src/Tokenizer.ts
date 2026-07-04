@@ -34,7 +34,7 @@ function readBogus(c: Cursor): Token {
 
 function readEndTag(c: Cursor): Token {
     consume(c, "</");
-    const name = readWhile(c, isTagNameChar).toLowerCase();
+    const name = readWhile(c, isTagNameChar);
     readUntil(c, ">");
     consume(c, ">");
     return { kind: TokenKind.EndTag, name };
@@ -53,7 +53,7 @@ function readAttributeValue(c: Cursor): string {
 
 // Returns null when no name is present so the caller advances past the offending character rather than spinning.
 function readAttribute(c: Cursor): Attr | null {
-    const name = readWhile(c, isAttributeNameChar).toLowerCase();
+    const name = readWhile(c, isAttributeNameChar);
     if (name === "") return null;
     skipWhile(c, isWhitespace);
     if (!consume(c, "=")) return [name, ""];
@@ -76,7 +76,7 @@ function readAttributes(c: Cursor): AttrList {
 
 function readStartTag(c: Cursor): Token {
     advance(c);
-    const name = readWhile(c, isTagNameChar).toLowerCase();
+    const name = readWhile(c, isTagNameChar);
     const attrs = readAttributes(c);
     const selfClosing = consume(c, "/");
     readUntil(c, ">");

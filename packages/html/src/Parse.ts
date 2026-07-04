@@ -25,48 +25,64 @@ type OneAttr<S extends string> =
     ReadWord<S, Whitespace | "=" | ">" | "/"> extends [infer Name extends string, infer Rest1 extends string]
         ? SkipWhitespace<Rest1> extends `=${infer Rest2}`
             ? AttrValue<SkipWhitespace<Rest2>> extends [infer Value extends string, infer Rest3 extends string]
-                ? [Lowercase<Name>, Value, Rest3]
+                ? [Name, Value, Rest3]
                 : never
-            : [Lowercase<Name>, "", Rest1]
+            : [Name, "", Rest1]
         : never;
 
+type NextAttr<T extends string, Acc extends AttrList> =
+    OneAttr<T> extends [infer Name extends string, infer Value extends string, infer Rest extends string]
+        ? Attributes<Rest, readonly [...Acc, readonly [Name, Value]]>
+        : [Acc, "", false];
+
+// One `|` arm per case: every guard but the matching one collapses to `never`, so the union is that one result.
 type Attributes<S extends string, Acc extends AttrList = readonly []> =
-    SkipWhitespace<S> extends infer Trimmed extends string
-        ? Trimmed extends `/>${infer Rest}` ? [Acc, Rest, true]
-            : Trimmed extends `/${infer Rest}` ? [Acc, SkipPast<Rest, ">">, true]
-                : Trimmed extends `>${infer Rest}` ? [Acc, Rest, false]
-                    : Trimmed extends "" ? [Acc, "", false]
-                        : OneAttr<Trimmed> extends [infer Name extends string, infer Value extends string, infer Rest extends string]
-                            ? Attributes<Rest, readonly [...Acc, readonly [Name, Value]]>
-                            : [Acc, "", false]
+    SkipWhitespace<S> extends infer T extends string
+        ?
+            | (T extends "" ? [Acc, "", false] : never)
+            | (T extends `/${infer Rest}` ? [Acc, SkipPast<Rest, ">">, true] : never)
+            | (T extends `>${infer Rest}` ? [Acc, Rest, false] : never)
+            | (T extends "" | `/${string}` | `>${string}` ? never : NextAttr<T, Acc>)
         : never;
 
 type Lt = TextNode & { readonly value: "<" };
 
-type Element<Name extends string, A extends AttrList, Rest extends string, SelfClosing extends boolean> =
-    SelfClosing extends true ? { add: readonly [ElementNode<Name, A, readonly []>], rest: Rest }
-        : Name extends VoidTag ? { add: readonly [ElementNode<Name, A, readonly []>], rest: Rest }
-            : Nodes<Rest> extends { nodes: infer Children extends Content, rest: infer After extends string }
-                ? { add: readonly [ElementNode<Name, A, Children>], rest: SkipPast<After, ">"> }
-                : never;
+type Closed<Name extends string, A extends AttrList, Rest extends string> = { add: readonly [ElementNode<Name, A, readonly []>], rest: Rest };
 
+type Open<Name extends string, A extends AttrList, Rest extends string> =
+    Nodes<Rest> extends { nodes: infer Children extends Content, rest: infer After extends string }
+        ? { add: readonly [ElementNode<Name, A, Children>], rest: SkipPast<After, ">"> }
+        : never;
+
+// A void tag or a self-closing tag has no children; anything else parses its children until its close tag.
+type Element<Name extends string, A extends AttrList, Rest extends string, SelfClosing extends boolean> =
+    | (SelfClosing extends true ? Closed<Name, A, Rest> : never)
+    | (SelfClosing extends true ? never : Name extends VoidTag ? Closed<Name, A, Rest> : Open<Name, A, Rest>);
+
+type Text<S extends string> =
+    ReadWord<S, "<"> extends [infer Value extends string, infer Rest extends string]
+        ? { add: readonly [TextNode & { readonly value: Value }], rest: Rest }
+        : never;
+
+// After the leading `<`: a letter opens an element, anything else makes the `<` a literal character.
+type OpenTag<After extends string> =
+    After extends `${infer First}${string}`
+        ? IsLetter<First> extends true
+            ? ReadWord<After, Whitespace | ">" | "/"> extends [infer Name extends string, infer Rest extends string]
+                ? Attributes<Rest> extends [infer A extends AttrList, infer Body extends string, infer SelfClosing extends boolean]
+                    ? Element<Name, A, Body, SelfClosing>
+                    : never
+                : never
+            : { add: readonly [Lt], rest: After }
+        : { add: readonly [Lt], rest: "" };
+
+// Each arm excludes the more specific ones before it (`<!--` before `<!`, markup before a bare `<`), so the union
+// still resolves to exactly one case.
 type Node<S extends string> =
-    S extends `<!--${string}` ? { add: readonly [], rest: SkipPast<S, "-->"> }
-        : S extends `<!${string}` ? { add: readonly [], rest: SkipPast<S, ">"> }
-            : S extends `<?${string}` ? { add: readonly [], rest: SkipPast<S, ">"> }
-                : S extends `<${infer After}`
-                    ? After extends `${infer First}${string}`
-                        ? IsLetter<First> extends true
-                            ? ReadWord<After, Whitespace | ">" | "/"> extends [infer Name extends string, infer Rest extends string]
-                                ? Attributes<Rest> extends [infer A extends AttrList, infer Body extends string, infer SelfClosing extends boolean]
-                                    ? Element<Lowercase<Name>, A, Body, SelfClosing>
-                                    : never
-                                : never
-                            : { add: readonly [Lt], rest: After }
-                        : { add: readonly [Lt], rest: "" }
-                    : ReadWord<S, "<"> extends [infer Value extends string, infer Rest extends string]
-                        ? { add: readonly [TextNode & { readonly value: Value }], rest: Rest }
-                        : never;
+    | (S extends `<!--${string}` ? { add: readonly [], rest: SkipPast<S, "-->"> } : never)
+    | (S extends `<!--${string}` ? never : S extends `<!${string}` | `<?${string}` ? { add: readonly [], rest: SkipPast<S, ">"> } : never)
+    | (S extends `<!${string}` | `<?${string}` ? never : S extends `<${infer After}` ? OpenTag<After> : never)
+    | (S extends `<${string}` ? never : Text<S>);
 
 type Nodes<S extends string, Acc extends Content = readonly []> =
     S extends "" ? { nodes: Acc, rest: "" }

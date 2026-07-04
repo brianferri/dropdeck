@@ -58,6 +58,7 @@ await test("parse: a lone '<' that begins no tag is literal text", () => {
     assert.equal(textContent(parse("a < b")[0]), "a < b");
 });
 
-await test("parse: tag names are lowercased", () => {
-    assert.equal(firstElement("<DIV><SPAN>x</SPAN></DIV>").tag, HtmlTag.Div);
+await test("parse: names are kept verbatim, so case-sensitive SVG survives", () => {
+    assert.equal(firstElement("<svg viewBox=\"0 0 1 1\"></svg>").attrs[0][0], "viewBox");
+    assert.equal(firstElement("<DIV>x</DIV>").tag, "DIV");
 });
