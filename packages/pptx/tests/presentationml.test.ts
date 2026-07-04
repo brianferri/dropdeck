@@ -1,8 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { xml } from "../src/xml/Serializer.js";
-import { Namespace } from "../src/xml/Specification.js";
-import type { Serialize } from "../src/xml/Serializer.js";
+import { Namespace, xml } from "../src/oox.js";
+import type { Serialize } from "../src/oox.js";
 import { bodyPr, ext, off, paragraph, prstGeom, run, solidFill, srgbClr, xfrm } from "../src/drawingml/builders.js";
 import { cNvPr, cSld, grpSpPr, nvGrpSpPr, nvSpPr, slide, sp, spPr, spTree, txBody } from "../src/presentationml/builders.js";
 import type { CT_Slide } from "../src/presentationml/Specification.js";

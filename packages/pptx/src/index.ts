@@ -1,4 +1,4 @@
-export { Namespace, NamespaceByPrefix, element, text, xml } from "./xml/index.js";
+export { Namespace, NamespaceByPrefix, element, text, xml } from "./oox.js";
 export type {
     Attr,
     AttrList,
@@ -22,7 +22,7 @@ export type {
     ST_Boolean,
     ST_String,
     Text
-} from "./xml/index.js";
+} from "./oox.js";
 
 export {
     ST_CompoundLine,

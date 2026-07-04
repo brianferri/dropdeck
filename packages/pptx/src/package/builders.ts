@@ -1,5 +1,4 @@
-import { element } from "../xml/builders.js";
-import { Namespace } from "../xml/Specification.js";
+import { Namespace, element } from "../oox.js";
 import type { TargetMode } from "./Specification.js";
 import type { CT_Default, CT_Override, CT_Relationship, CT_Relationships, CT_Types } from "./Specification.js";
 

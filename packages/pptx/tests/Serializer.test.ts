@@ -1,8 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { xml } from "../src/xml/Serializer.js";
-import { text } from "../src/xml/builders.js";
-import type { Element, Serialize, Text } from "../src/xml/index.js";
+import { text, xml } from "../src/oox.js";
+import type { Element, Serialize, Text } from "../src/oox.js";
 import { ext, off, solidFill, srgbClr, xfrm } from "../src/drawingml/builders.js";
 
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends

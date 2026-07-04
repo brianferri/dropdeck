@@ -12,7 +12,7 @@ import type {
     Seq,
     ST_Boolean,
     ST_String
-} from "../xml/Specification.js";
+} from "../oox.js";
 import type {
     CT_Blip,
     CT_GraphicalObject,

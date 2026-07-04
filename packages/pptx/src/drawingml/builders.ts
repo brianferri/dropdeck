@@ -1,5 +1,5 @@
-import { element, text } from "../xml/builders.js";
-import type { AssertUniqueAttrs, Element, Empty, Text } from "../xml/Specification.js";
+import { element, text } from "../oox.js";
+import type { AssertUniqueAttrs, Element, Empty, Text } from "../oox.js";
 import type {
     BodyPropertyAttr,
     CT_GeomGuide,

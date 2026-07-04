@@ -1,7 +1,6 @@
-import { element } from "../xml/builders.js";
-import { Namespace } from "../xml/Specification.js";
+import { Namespace, element } from "../oox.js";
 import { blip, ext, graphic, graphicData, off, prstGeom, xfrm } from "../drawingml/builders.js";
-import type { Element, Empty, ST_String } from "../xml/Specification.js";
+import type { Element, Empty, ST_String } from "../oox.js";
 import type {
     CT_GraphicalObject,
     CT_Point2D,

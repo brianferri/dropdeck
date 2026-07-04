@@ -1,8 +1,8 @@
-import { xml } from "../xml/Serializer.js";
+import { xml } from "../oox.js";
 import { contentTypes, defaultType, override } from "./builders.js";
 import { ContentType } from "./constants.js";
 import { buildZip } from "./zip.js";
-import type { Node } from "../xml/Specification.js";
+import type { Node } from "../oox.js";
 import type { CT_Default, CT_Override, CT_Types } from "./Specification.js";
 import type { ZipEntry } from "./zip.js";
 

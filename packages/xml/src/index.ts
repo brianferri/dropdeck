@@ -1,5 +1,5 @@
-export { Namespace, NamespaceByPrefix } from "./Specification.js";
 export type {
+    AssertUniqueAttrs,
     Attr,
     AttrList,
     AttrScalar,
@@ -12,14 +12,9 @@ export type {
     One,
     Opt,
     OptAttr,
-    ParseQName,
-    Prefix,
-    QName,
     ReqAttr,
     Seq,
     Some,
-    ST_Boolean,
-    ST_String,
     Text
 } from "./Specification.js";
 

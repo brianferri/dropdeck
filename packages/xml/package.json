@@ -1,17 +1,11 @@
 {
-    "name": "@dropdeck/pptx",
+    "name": "@dropdeck/xml",
     "version": "0.0.0",
-    "description": "Type-level OOXML/PresentationML specification and serializer for building .pptx documents",
+    "description": "Dependency-free, typed XML element tree and serializer, with an SVG element vocabulary",
     "type": "module",
     "exports": {
         ".": "./dist/src/index.js",
-        "./drawingml": "./dist/src/drawingml/index.js",
-        "./presentationml": "./dist/src/presentationml/index.js",
-        "./package": "./dist/src/package/index.js",
-        "./document": "./dist/src/document/index.js"
-    },
-    "dependencies": {
-        "@dropdeck/xml": "*"
+        "./svg": "./dist/src/svg/index.js"
     },
     "scripts": {
         "check": "tsc --noEmit && eslint .",

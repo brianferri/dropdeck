@@ -1,7 +1,6 @@
-import { element } from "../xml/builders.js";
-import { Namespace } from "../xml/Specification.js";
+import { Namespace, element } from "../oox.js";
 import { cNvPr, cSld, grpSpPr, nvGrpSpPr, spTree } from "../presentationml/builders.js";
-import type { Element } from "../xml/Specification.js";
+import type { Element } from "../oox.js";
 
 const SLIDE_WIDTH_EMU = 12192000;
 const SLIDE_HEIGHT_EMU = 6858000;

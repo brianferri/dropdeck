@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention -- CT_* mirror the OPC schema names; OPC attributes are TitleCase by spec. */
 
-import type { Attr, AttrSeq, Element, Empty, Many, OptAttr, ST_String } from "../xml/Specification.js";
+import type { Attr, AttrSeq, Element, Empty, Many, OptAttr, ST_String } from "../oox.js";
 
 export enum TargetMode {
     Internal = "Internal",

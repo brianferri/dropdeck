@@ -14,7 +14,7 @@ import type {
     Seq,
     ST_Boolean,
     Text
-} from "../xml/Specification.js";
+} from "../oox.js";
 
 // EMU (English Metric Unit): 914400 per inch, 12700 per point. https://ooxml.info/docs/20/20.1/20.1.2/20.1.2.1/
 export type ST_Coordinate = number; // A signed length in EMU.

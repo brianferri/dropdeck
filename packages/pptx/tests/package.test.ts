@@ -1,7 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { xml } from "../src/xml/Serializer.js";
-import { Namespace, element } from "../src/xml/index.js";
+import { Namespace, element, xml } from "../src/oox.js";
 import { contentTypes, defaultType, override, relationship, relationships } from "../src/package/builders.js";
 import { ContentType, RelationshipType } from "../src/package/constants.js";
 import { TargetMode } from "../src/package/Specification.js";
