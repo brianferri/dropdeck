@@ -1,3 +1,4 @@
+import { imageToPngDataUrl } from "#/export/rasterize";
 import type { AssetMap } from "#/ir";
 
 // btoa only handles Latin-1, so encode to bytes first.
@@ -103,22 +104,12 @@ async function assetToDataUrl(url: string, rendered: HTMLImageElement | undefine
     }
     if (rendered && rendered.complete && rendered.naturalWidth > 0) {
         try {
-            return imageToDataUrl(rendered);
+            return imageToPngDataUrl(rendered);
         } catch {
             // The canvas is tainted by a cross-origin image; this one can't be read.
         }
     }
     return null;
-}
-
-function imageToDataUrl(img: HTMLImageElement): string {
-    const canvas = document.createElement("canvas");
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    const context = canvas.getContext("2d");
-    if (!context) throw new Error("no 2d context");
-    context.drawImage(img, 0, 0);
-    return canvas.toDataURL("image/png");
 }
 
 // Fetching from the page's own User-Agent yields the modern woff2 the browser already uses.
