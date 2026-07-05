@@ -23,15 +23,10 @@ A plain Markdown image, referenced by its path relative to this file:
 # Side by side
 
 The logo is a raw `<img>` tag, sized with an attribute.
-
 <img src="assets/logo.png" alt="Mint disc logo" width="240">
-
 ::right::
-
 ### Same bytes, no server
-The image lives only in your browser as a blob URL once you drop the folder --
-nothing is uploaded anywhere.
-
+The image lives only in your browser as a blob URL once you drop the folder -- nothing is uploaded anywhere.
 ### Exports keep it
 Export to offline HTML or PowerPoint and the picture is baked right in.
 

@@ -65,14 +65,10 @@ export function compile(source: string) {
     return { deck, diagnostics: check(deck) };
 }
 ```
-
 ::right::
-
-Whatever comes before `::right::` is the left column.
-
-Everything after it is the right column.
-
-Use it for **code beside an explanation**, or two lists side by side.
+- Everything before `::right::` is the **left column**.
+- Everything after it is the **right column**.
+- Great for code beside an explanation, or two lists side by side.
 
 ---
 
