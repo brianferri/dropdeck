@@ -214,7 +214,7 @@ export function tblGrid<const C extends ReadonlyArray<CT_TableCol>>(...columns: 
     return element("a:tblGrid", [], columns);
 }
 
-export function tableStyleId<const G extends string>(guid: G): CT_TableStyleId {
+export function tableStyleId<const G extends string>(guid: G): Element<"a:tableStyleId", Empty, readonly [Text & { readonly text: G }]> {
     return element("a:tableStyleId", [], [text(guid)]);
 }
 
