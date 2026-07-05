@@ -12,11 +12,11 @@
     ],
     "scripts": {
         "dev": "vite",
-        "prebuild": "npm run build --workspace @dropdeck/xml --workspace @dropdeck/html --workspace @dropdeck/pptx --workspace @dropdeck/markdown",
+        "prebuild": "npm run build --workspace @dropdeck/xml --workspace @dropdeck/html --workspace @dropdeck/pptx --workspace @dropdeck/xlsx --workspace @dropdeck/markdown",
         "build": "tsc --noEmit && vite build",
         "preview": "vite preview",
-        "precheck": "npm run build --workspace @dropdeck/xml --workspace @dropdeck/html --workspace @dropdeck/pptx --workspace @dropdeck/markdown",
-        "check": "npm run check --workspace @dropdeck/xml --workspace @dropdeck/html --workspace @dropdeck/pptx --workspace @dropdeck/markdown && tsc --noEmit && eslint .",
+        "precheck": "npm run build --workspace @dropdeck/xml --workspace @dropdeck/html --workspace @dropdeck/pptx --workspace @dropdeck/xlsx --workspace @dropdeck/markdown",
+        "check": "npm run check --workspace @dropdeck/xml --workspace @dropdeck/html --workspace @dropdeck/pptx --workspace @dropdeck/xlsx --workspace @dropdeck/markdown && tsc --noEmit && eslint .",
         "check:fix": "eslint . --fix",
         "test": "vitest run",
         "test:watch": "vitest"
