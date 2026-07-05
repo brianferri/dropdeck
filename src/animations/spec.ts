@@ -31,10 +31,11 @@ export function morphKey<const T extends string>(text: T): Lowercase<Trimmed<T>>
     return text.trim().toLowerCase() as Lowercase<Trimmed<T>>;
 }
 
-// The `morph:` prefix marks a shape morphable, so the timing pass drops its entrance on a morph slide (the
-// transition moves it instead); PowerPoint tweens shapes that share a name.
-export function morphName<const T extends string>(text: T): `morph:${Lowercase<Trimmed<T>>}` {
-    return `morph:${morphKey(text)}`;
+// The leading `!!` forces PowerPoint to morph by name; without it, it pairs shapes by a fuzzy appearance heuristic
+// and slides one bar's colour onto another's box. The rest marks a shape morphable, so the timing pass drops its
+// entrance on a morph slide -- the transition moves it instead.
+export function morphName<const T extends string>(text: T): `!!morph:${Lowercase<Trimmed<T>>}` {
+    return `!!morph:${morphKey(text)}`;
 }
 
 // One clock for a whole slide transition: the morph glide and every entrance fade that rides alongside it share

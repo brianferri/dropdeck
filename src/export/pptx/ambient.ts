@@ -14,9 +14,9 @@ function makeRandom(seed: number): () => number {
 // Radii run larger than the CSS blobs because the radial fade concentrates colour at the centre.
 export function meshShapes(nextId: () => number, palette: Palette): Array<Node> {
     return [
-        blob(nextId, 1200, 20, 360, palette.accent2, 22),
-        blob(nextId, 60, 700, 300, palette.accent1, 18),
-        blob(nextId, 330, 380, 220, palette.accent3, 13)
+        blob(nextId, "blob:0", 1200, 20, 360, palette.accent2, 22),
+        blob(nextId, "blob:1", 60, 700, 300, palette.accent1, 18),
+        blob(nextId, "blob:2", 330, 380, 220, palette.accent3, 13)
     ];
 }
 
@@ -28,7 +28,7 @@ export function particleShapes(nextId: () => number, palette: Palette): Array<No
         const y = random() * 720;
         const radius = 1.4 + (random() * 1.8);
         const opacity = 8 + (random() * 16);
-        dots.push(ellipse(nextId, x, y, radius, palette.accent1, opacity));
+        dots.push(ellipse(nextId, `dot:${index}`, x, y, radius, palette.accent1, opacity));
     }
     return dots;
 }

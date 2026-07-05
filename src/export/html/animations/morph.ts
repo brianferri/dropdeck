@@ -1,3 +1,4 @@
+import { numberList } from "@dropdeck/xml/svg";
 import { flipRest, flipTransform, origin, rgbColor, transitionOf } from "#/export/html/animations/css";
 import { TRANSITION_MS, morphKey } from "#/animations/spec";
 
@@ -6,11 +7,6 @@ type Morphable = HTMLElement | SVGElement;
 // Self-animated components are skipped so their own motion wins over the morph glide.
 const MORPH_BLOCKS = "h1, h2, h3, p, li, blockquote, figcaption";
 const SELF_ANIMATED = ".bar-row, .metric";
-
-// The SVG presentation attributes that read well when interpolated: colours, stroke, and the CSS-animatable
-// geometry of the basic shapes. Line endpoints (`x1`..) are not CSS geometry, so a changed line snaps instead.
-const SVG_TWEEN_PROPS = ["fill", "stroke", "stroke-width", "opacity", "cx", "cy", "r", "rx", "ry", "x", "y", "width", "height"];
-const SVG_COLOR_PROPS = new Set(["fill", "stroke"]);
 
 // A block glides between layout boxes (FLIP). An image or root SVG carrying its own `transform` glides between
 // those matrices instead. A shape inside a keyed SVG interpolates its presentation attributes in place.
@@ -66,11 +62,13 @@ function morphRect(el: Morphable): DOMRect {
     return contentRect(el);
 }
 
+// Every attribute is captured; `svgInto` keeps only the ones that turn out interpolatable, so any colour or numeric
+// attribute an author animates crosses without being named in advance.
 function svgProps(el: SVGElement): Map<string, string> {
     const props = new Map<string, string>();
-    for (const prop of SVG_TWEEN_PROPS) {
-        const value = el.getAttribute(prop);
-        if (value !== null) props.set(prop, value);
+    for (const name of el.getAttributeNames()) {
+        const value = el.getAttribute(name);
+        if (value !== null) props.set(name, value);
     }
     return props;
 }
@@ -130,21 +128,27 @@ function parseColor(value: string): [number, number, number] | null {
     return channels.some((channel) => Number.isNaN(channel)) ? null : channels;
 }
 
-function interpolate(prop: string, from: string, to: string, t: number): string {
-    if (SVG_COLOR_PROPS.has(prop)) {
-        const a = parseColor(from);
-        const b = parseColor(to);
-        // A non-colour value (`none`, a name) has no channels to cross, so hold it and let the shape snap at the end.
-        if (a === null || b === null) return t < 1 ? from : to;
-        const red = Math.round(a[0] + ((b[0] - a[0]) * t));
-        const green = Math.round(a[1] + ((b[1] - a[1]) * t));
-        const blue = Math.round(a[2] + ((b[2] - a[2]) * t));
+// Any two values a shape presents cross the same way: a colour lerps its channels, and anything that reads as a
+// list of numbers (a coordinate, a `points` path, a dash array) crosses pairwise once both sides agree on the
+// count. A `none`, a keyword, or a mismatched list has no path between the two, so it returns null and is left out.
+function interpolate(from: string, to: string, t: number): string | null {
+    const fromColor = parseColor(from);
+    const toColor = parseColor(to);
+    if (fromColor !== null && toColor !== null) {
+        const red = Math.round(fromColor[0] + ((toColor[0] - fromColor[0]) * t));
+        const green = Math.round(fromColor[1] + ((toColor[1] - fromColor[1]) * t));
+        const blue = Math.round(fromColor[2] + ((toColor[2] - fromColor[2]) * t));
         return rgbColor(red, green, blue);
     }
-    const start = parseFloat(from);
-    const end = parseFloat(to);
-    if (Number.isNaN(start) || Number.isNaN(end)) return to;
-    return String(start + ((end - start) * t));
+    const fromList = numberList(from);
+    const toList = numberList(to);
+    if (fromList.length === 0 || fromList.length !== toList.length) return null;
+    const out: Array<string> = [];
+    for (let index = 0; index < fromList.length; index += 1) {
+        if (!Number.isFinite(fromList[index]) || !Number.isFinite(toList[index])) return null;
+        out.push(String(fromList[index] + ((toList[index] - fromList[index]) * t)));
+    }
+    return out.join(" ");
 }
 
 function easeInOut(t: number): number {
@@ -162,7 +166,7 @@ function animateSvg(el: SVGElement, pairs: ReadonlyArray<readonly [string, strin
         const t = Math.min((nowMs - startMs) / TRANSITION_MS, 1);
         const eased = easeInOut(t);
         // At rest restore the authored value, so the attribute stays hex rather than the tween's `rgb(..)`.
-        for (const [prop, from, to] of pairs) el.setAttribute(prop, t < 1 ? interpolate(prop, from, to, eased) : to);
+        for (const [prop, from, to] of pairs) el.setAttribute(prop, t < 1 ? (interpolate(from, to, eased) ?? to) : to);
         if (t < 1) requestAnimationFrame(step);
     }
     requestAnimationFrame(step);
@@ -194,14 +198,13 @@ function transformInto(el: HTMLImageElement | SVGSVGElement, fromMatrix: string)
     clearHintOn(el);
 }
 
-// A shape present on both slides tweens from its previous attributes to its own -- so fill and stroke gradient
-// between colours and the geometry eases across.
+// A shape present on both slides tweens from its previous attributes to its own -- colours gradient and geometry
+// eases across, while an attribute with no path between its two values simply carries its target value.
 function svgInto(el: SVGElement, from: Map<string, string>): void {
     const pairs: Array<readonly [string, string, string]> = [];
-    for (const prop of SVG_TWEEN_PROPS) {
-        const to = el.getAttribute(prop);
-        const start = from.get(prop);
-        if (to !== null && start !== undefined && to !== start) pairs.push([prop, start, to]);
+    for (const [name, start] of from) {
+        const to = el.getAttribute(name);
+        if (to !== null && to !== start && interpolate(start, to, 0) !== null) pairs.push([name, start, to]);
     }
     animateSvg(el, pairs);
 }

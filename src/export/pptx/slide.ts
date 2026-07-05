@@ -57,7 +57,7 @@ function collectAnimations(
             continue;
         }
         if (claimed.has(shape)) continue;
-        if (morph && (drawingAttr(shape, "name") ?? "").startsWith("morph:")) continue;
+        if (morph && (drawingAttr(shape, "name") ?? "").startsWith("!!morph:")) continue;
         const id = shapeId(shape);
         if (id !== null) animations.push({ id, kind: Motion.Fade });
     }

@@ -1,4 +1,5 @@
 import { attribute, childElements } from "@dropdeck/html";
+import { numberList } from "@dropdeck/xml/svg";
 import { customShape, presetShape } from "#/export/pptx/build";
 import { morphName } from "#/animations/spec";
 import type { ElementNode } from "@dropdeck/html";
@@ -8,21 +9,7 @@ const DECK_RATIO = 1280 / 1180;
 const PRESET_TAGS = new Set(["circle", "ellipse", "rect"]);
 const PATH_TAGS = new Set(["line", "polyline", "polygon"]);
 
-type Frame = { originX: number, originY: number, scale: number, height: number };
-
-// A number list from a viewBox or a points attribute, split on the whitespace and commas SVG allows, without regex.
-function numbers(value: string): Array<number> {
-    const out: Array<number> = [];
-    let current = "";
-    for (const character of value) {
-        if (character === " " || character === "," || character === "\t" || character === "\n" || character === "\r") {
-            if (current !== "") out.push(parseFloat(current));
-            current = "";
-        } else current += character;
-    }
-    if (current !== "") out.push(parseFloat(current));
-    return out;
-}
+type Frame = { originX: number, originY: number, scale: number, width: number, height: number };
 
 function attrNumber(element: ElementNode, name: string, fallback: number): number {
     const value = parseFloat(attribute(element, name) ?? "");
@@ -52,12 +39,12 @@ function convertible(svg: ElementNode): boolean {
 }
 
 function frameOf(svg: ElementNode, x: number, y: number, width: number): Frame {
-    const box = numbers(attribute(svg, "viewBox") ?? "");
+    const box = numberList(attribute(svg, "viewBox") ?? "");
     const viewWidth = box.length === 4 && box[2] > 0 ? box[2] : attrNumber(svg, "width", 300);
     const viewHeight = box.length === 4 && box[3] > 0 ? box[3] : attrNumber(svg, "height", 300);
     const placedWidth = Math.min(attrNumber(svg, "width", viewWidth), width) * DECK_RATIO;
     const scale = placedWidth / viewWidth;
-    return { originX: x + ((width - placedWidth) / 2), originY: y, scale, height: viewHeight * scale };
+    return { originX: x + ((width - placedWidth) / 2), originY: y, scale, width: placedWidth, height: viewHeight * scale };
 }
 
 function presetFor(tag: string, element: ElementNode): "ellipse" | "rect" | "roundRect" {
@@ -95,7 +82,7 @@ function presetBox(tag: string, element: ElementNode, frame: Frame): Box {
 function pointsFor(tag: string, element: ElementNode, frame: Frame): Array<readonly [number, number]> {
     const coordinates = tag === "line"
         ? [attrNumber(element, "x1", 0), attrNumber(element, "y1", 0), attrNumber(element, "x2", 0), attrNumber(element, "y2", 0)]
-        : numbers(attribute(element, "points") ?? "");
+        : numberList(attribute(element, "points") ?? "");
     const points: Array<readonly [number, number]> = [];
     for (let index = 0; (index + 1) < coordinates.length; index += 2) points.push([frame.originX + (coordinates[index] * frame.scale), frame.originY + (coordinates[index + 1] * frame.scale)]);
     return points;
@@ -111,7 +98,8 @@ function shapeFor(element: ElementNode, name: string, frame: Frame, nextId: () =
     }
     const points = pointsFor(element.tag, element, frame);
     if (points.length < 2) return null;
-    return customShape(nextId, name, points, element.tag === "polygon", fillColor, strokeColor, strokeWidth);
+    const box = { x: frame.originX, y: frame.originY, width: frame.width, height: frame.height };
+    return customShape(nextId, name, points, box, element.tag === "polygon", fillColor, strokeColor, strokeWidth);
 }
 
 // Lowers each SVG primitive to a native shape keyed per shape, so PowerPoint's morph tweens fill and geometry

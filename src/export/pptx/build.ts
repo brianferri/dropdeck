@@ -69,8 +69,11 @@ export function fill(hex: string, opacityPct?: number): CT_SolidColorFillPropert
     return solidFill(srgb(hex, opacityPct));
 }
 
+// `name` is per-shape so a background scatter pairs one-to-one across slides: identically named shapes let
+// PowerPoint's morph glide each dot to an arbitrary other, swirling a background that should hold still.
 export function ellipse(
     nextId: () => number,
+    name: string,
     cxPx: number,
     cyPx: number,
     radiusPx: number,
@@ -79,7 +82,7 @@ export function ellipse(
 ): CT_Shape {
     const diameter = radiusPx * 2;
     const geometry = spPr(xfrm(off(emu(cxPx - radiusPx), emu(cyPx - radiusPx)), ext(emu(diameter), emu(diameter))), prstGeom("ellipse"), fill(color, opacityPct));
-    return sp(nvSpPr(cNvPr(nextId(), "dot")), geometry, emptyBody());
+    return sp(nvSpPr(cNvPr(nextId(), name)), geometry, emptyBody());
 }
 
 // A radial fade to transparent gives the soft glow of the deck's blurred mesh blobs; a solid ellipse would be a
@@ -98,6 +101,7 @@ function blur(radiusPx: number): Element<"a:effectLst", Empty, readonly [Element
 
 export function blob(
     nextId: () => number,
+    name: string,
     cxPx: number,
     cyPx: number,
     radiusPx: number,
@@ -106,7 +110,7 @@ export function blob(
 ): CT_Shape {
     const diameter = radiusPx * 2;
     const geometry = spPr(xfrm(off(emu(cxPx - radiusPx), emu(cyPx - radiusPx)), ext(emu(diameter), emu(diameter))), prstGeom("ellipse"), glowFill(color, opacityPct), blur(48));
-    return sp(nvSpPr(cNvPr(nextId(), "blob")), geometry, emptyBody());
+    return sp(nvSpPr(cNvPr(nextId(), name)), geometry, emptyBody());
 }
 
 export type RunStyle = {
@@ -254,34 +258,28 @@ export function presetShape(
 
 // A custom-geometry shape drawn through slide-px points; its box is their bounding rect so the path fills it. Used
 // for lines, polylines and polygons, which have no matching preset.
+// `box` is the whole SVG frame, shared by every shape lowered from it rather than tight around these points, so
+// PowerPoint's morph interpolates only the path vertices; a per-shape box would move and resize and tangle the tween.
 export function customShape(
     nextId: () => number,
     name: string,
     points: ReadonlyArray<readonly [number, number]>,
+    box: { x: number, y: number, width: number, height: number },
     closed: boolean,
     fillColor: string | null,
     strokeColor: string | null,
     strokeWidthPx: number
 ): CT_Shape {
-    const [[firstX, firstY]] = points;
-    let minX = firstX;
-    let minY = firstY;
-    let maxX = firstX;
-    let maxY = firstY;
-    for (const [px, py] of points) {
-        minX = Math.min(minX, px);
-        minY = Math.min(minY, py);
-        maxX = Math.max(maxX, px);
-        maxY = Math.max(maxY, py);
-    }
+    const width = Math.max(box.width, 1);
+    const height = Math.max(box.height, 1);
     const commands: Array<CT_Path2DCommand> = [];
     points.forEach(([px, py], index) => {
-        const point = pt(emu(px - minX), emu(py - minY));
+        const point = pt(emu(px - box.x), emu(py - box.y));
         commands.push(index === 0 ? moveTo(point) : lnTo(point));
     });
     if (closed) commands.push(closePath());
-    const geom = custGeom(pathLst(path2D(emu(Math.max(maxX - minX, 1)), emu(Math.max(maxY - minY, 1)), commands)));
-    const transform = xfrm(off(emu(minX), emu(minY)), ext(emu(Math.max(maxX - minX, 1)), emu(Math.max(maxY - minY, 1))));
+    const geom = custGeom(pathLst(path2D(emu(width), emu(height), commands)));
+    const transform = xfrm(off(emu(box.x), emu(box.y)), ext(emu(width), emu(height)));
     const paint = fillColor === null ? noFill() : fill(fillColor);
     const geometry = strokeColor === null
         ? spPr(transform, geom, paint)
