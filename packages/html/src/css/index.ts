@@ -19,7 +19,7 @@ export type { ComplexSelector, SelectorStep, SimpleSelector } from "./Selector.j
 export type { ParseSelector } from "./ParseSelector.js";
 
 export {
-    atRule, block, declaration, delimiter, dimension, functionValue, hash,
+    atRule, block, cssVar, declaration, delimiter, dimension, functionValue, hash,
     importRule, keyword, numberValue, percentage, rule, separator, stringValue
 } from "./builders.js";
 export type { ClassNames, MatchClassNames } from "./Classes.js";

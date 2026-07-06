@@ -62,3 +62,9 @@ export function functionValue<const Name extends string, const Value extends Com
 export function block<const Open extends "(" | "[" | "{", const Value extends ComponentValues>(open: Open, value: Value): Block<Open, Value> {
     return { kind: CssValueKind.Block, open, value };
 }
+
+export function cssVar<const Name extends string>(name: Name): `var(${Name})`;
+export function cssVar<const Name extends string, const Fallback extends string>(name: Name, fallback: Fallback): `var(${Name}, ${Fallback})`;
+export function cssVar(name: string, fallback?: string): string {
+    return fallback === undefined ? `var(${name})` : `var(${name}, ${fallback})`;
+}
