@@ -5,6 +5,7 @@ import type {
     Element,
     Empty,
     Many,
+    Node,
     One,
     Opt,
     OptAttr,
@@ -467,7 +468,8 @@ export type CT_Table = Element<
     Seq<Opt<CT_TableProperties>, Seq<readonly [CT_TableGrid], Many<CT_TableRow>>>
 >;
 
-export type CT_GraphicalObjectData = Element<QName<"a", "graphicData">, readonly [Attr<"uri", string>], readonly [CT_Table]>;
+// `a:graphicData` is open content: the child is whatever the `uri`'s namespace defines (a table, a chart ref, ...).
+export type CT_GraphicalObjectData = Element<QName<"a", "graphicData">, readonly [Attr<"uri", string>], readonly [Node]>;
 export type CT_GraphicalObject = Element<QName<"a", "graphic">, Empty, readonly [CT_GraphicalObjectData]>;
 
 export type DrawingMLElement =

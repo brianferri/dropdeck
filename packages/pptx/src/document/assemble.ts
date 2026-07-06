@@ -5,6 +5,7 @@ import { presentation, presentationProperties, slideLayout, slideMaster } from "
 import { theme } from "./theme.js";
 import type { CT_Slide } from "../presentationml/Specification.js";
 import type { CT_Relationship } from "../package/Specification.js";
+import type { Node } from "../oox.js";
 import type { Part } from "../package/parts.js";
 
 const RELS = ContentType.Relationships;
@@ -17,7 +18,15 @@ export type SlideMedia = {
     readonly data: Uint8Array
 };
 
-export type DeckSlide = { readonly slide: CT_Slide, readonly media: ReadonlyArray<SlideMedia> };
+// A chart is a separate part with its own workbook: `relationshipId` links the slide's `graphicFrame` to the
+// chart part, and `workbook` is a complete `.xlsx` package the chart embeds so a viewer can edit its data.
+export type SlideChart = {
+    readonly relationshipId: string,
+    readonly chart: Node,
+    readonly workbook: Uint8Array
+};
+
+export type DeckSlide = { readonly slide: CT_Slide, readonly media: ReadonlyArray<SlideMedia>, readonly charts?: ReadonlyArray<SlideChart> };
 
 export type SlideInput = CT_Slide | DeckSlide;
 
@@ -53,6 +62,7 @@ export function toParts(slides: ReadonlyArray<SlideInput>): ReadonlyArray<Part> 
     parts.push(xmlPart("ppt/slideLayouts/_rels/slideLayout1.xml.rels", RELS, relationships([relationship("rId1", RelationshipType.SlideMaster, "../slideMasters/slideMaster1.xml")])));
 
     let mediaCount = 0;
+    let chartCount = 0;
     for (let index = 0; index < deckSlides.length; index += 1) {
         const number = index + 1;
         const entry = deckSlides[index];
@@ -63,6 +73,14 @@ export function toParts(slides: ReadonlyArray<SlideInput>): ReadonlyArray<Part> 
             const mediaPath = `media/image${mediaCount}.${item.extension}`;
             slideRels.push(relationship(item.relationshipId, RelationshipType.Image, `../${mediaPath}`));
             parts.push(bytesPart(`ppt/${mediaPath}`, item.contentType, item.data));
+        }
+        for (const item of entry.charts ?? []) {
+            chartCount += 1;
+            const workbookPath = `embeddings/Microsoft_Excel_Sheet${chartCount}.xlsx`;
+            slideRels.push(relationship(item.relationshipId, RelationshipType.Chart, `../charts/chart${chartCount}.xml`));
+            parts.push(xmlPart(`ppt/charts/chart${chartCount}.xml`, ContentType.Chart, item.chart));
+            parts.push(xmlPart(`ppt/charts/_rels/chart${chartCount}.xml.rels`, RELS, relationships([relationship("rId1", RelationshipType.Package, `../${workbookPath}`)])));
+            parts.push(bytesPart(`ppt/${workbookPath}`, ContentType.Xlsx, item.workbook));
         }
         parts.push(xmlPart(`ppt/slides/_rels/slide${number}.xml.rels`, RELS, relationships(slideRels)));
     }

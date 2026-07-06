@@ -1,5 +1,6 @@
 import { Namespace, element } from "../oox.js";
 import { blip, ext, graphic, graphicData, off, prstGeom, xfrm } from "../drawingml/builders.js";
+import { chartRef } from "../drawingml/chart/index.js";
 import type { Element, Empty, ST_String } from "../oox.js";
 import type {
     CT_GraphicalObject,
@@ -40,6 +41,7 @@ import type {
 } from "./Specification.js";
 
 const TABLE_URI = "http://schemas.openxmlformats.org/drawingml/2006/table";
+const CHART_URI = "http://schemas.openxmlformats.org/drawingml/2006/chart";
 
 export function cNvPr<const I extends ST_DrawingElementId, const N extends ST_String>(
     id: I,
@@ -144,6 +146,19 @@ export function tableFrame<const T extends CT_Table>(
     table: T
 ): CT_GraphicalObjectFrame {
     return graphicFrame(nvGraphicFramePr(cNvPr(id, name)), graphicFrameXfrm(off(offsetX, offsetY), ext(extentX, extentY)), graphic(graphicData(TABLE_URI, table)));
+}
+
+// A chart lives in its own part; the frame only carries a `<c:chart r:id>` reference resolved via the slide rels.
+export function chartFrame(
+    id: ST_DrawingElementId,
+    name: ST_String,
+    offsetX: ST_Coordinate,
+    offsetY: ST_Coordinate,
+    extentX: ST_PositiveCoordinate,
+    extentY: ST_PositiveCoordinate,
+    chartRelId: string
+): CT_GraphicalObjectFrame {
+    return graphicFrame(nvGraphicFramePr(cNvPr(id, name)), graphicFrameXfrm(off(offsetX, offsetY), ext(extentX, extentY)), graphic(graphicData(CHART_URI, chartRef(chartRelId))));
 }
 
 // The `cNvPicPr` child is spelled as the exact element built (a non-aspect lock), not the schema's

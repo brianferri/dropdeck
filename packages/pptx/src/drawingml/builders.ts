@@ -1,5 +1,5 @@
 import { element, text } from "../oox.js";
-import type { AssertUniqueAttrs, Element, Empty, Text } from "../oox.js";
+import type { AssertUniqueAttrs, Element, Empty, Node, Text } from "../oox.js";
 import type {
     BodyPropertyAttr,
     CT_AdjPoint2D,
@@ -16,7 +16,6 @@ import type {
     CT_RegularTextRun,
     CT_SolidColorFillProperties,
     CT_SRgbColor,
-    CT_Table,
     CT_TableCell,
     CT_TableCellProperties,
     CT_TableCol,
@@ -251,11 +250,12 @@ export function tbl<const C extends ReadonlyArray<CT_TableProperties | CT_TableG
     return element("a:tbl", [], children);
 }
 
-export function graphicData<const U extends string, const T extends CT_Table>(
+// The child is the URI-specific payload -- a `CT_Table` for a table graphic, a `<c:chart>` reference for a chart.
+export function graphicData<const U extends string, const T extends Node>(
     uri: U,
-    table: T
+    child: T
 ): Element<"a:graphicData", readonly [readonly ["uri", U]], readonly [T]> {
-    return element("a:graphicData", [["uri", uri]], [table]);
+    return element("a:graphicData", [["uri", uri]], [child]);
 }
 
 export function graphic<const D extends CT_GraphicalObjectData>(data: D): Element<"a:graphic", Empty, readonly [D]> {

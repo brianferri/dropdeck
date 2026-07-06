@@ -9,7 +9,9 @@ export const ContentType = {
     Slide: `${PML}.slide+xml`,
     SlideMaster: `${PML}.slideMaster+xml`,
     SlideLayout: `${PML}.slideLayout+xml`,
-    Theme: "application/vnd.openxmlformats-officedocument.theme+xml"
+    Theme: "application/vnd.openxmlformats-officedocument.theme+xml",
+    Chart: "application/vnd.openxmlformats-officedocument.drawingml.chart+xml",
+    Xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 } as const satisfies Record<string, string>;
 
 export const RelationshipType = {
@@ -19,5 +21,8 @@ export const RelationshipType = {
     SlideMaster: `${REL}/slideMaster`,
     SlideLayout: `${REL}/slideLayout`,
     Theme: `${REL}/theme`,
-    Image: `${REL}/image`
+    Image: `${REL}/image`,
+    Chart: `${REL}/chart`,
+    // The embedded workbook behind a chart is referenced as an OPC "package".
+    Package: `${REL}/package`
 } as const satisfies Record<string, string>;

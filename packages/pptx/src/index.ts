@@ -191,6 +191,7 @@ export {
     sp,
     spPr,
     spTree,
+    chartFrame,
     tableFrame,
     transition,
     txBody,
@@ -263,7 +264,7 @@ export type {
 } from "./package/index.js";
 
 export { presentation, presentationProperties, slideLayout, slideMaster, theme, toBytes, toParts } from "./document/index.js";
-export type { DeckSlide, SlideInput, SlideMedia } from "./document/index.js";
+export type { DeckSlide, SlideChart, SlideInput, SlideMedia } from "./document/index.js";
 
 export {
     ST_BarDir,

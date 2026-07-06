@@ -72,6 +72,7 @@ export {
     sp,
     spPr,
     spTree,
+    chartFrame,
     tableFrame,
     transition,
     txBody,
