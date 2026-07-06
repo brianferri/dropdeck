@@ -19,6 +19,7 @@ const FONTS = "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700
 
 export function renderPage(): string {
     const document = html(
+        // Light is the `:root` default; `applyConfig` adds `data-theme="dark"` when a dark deck loads.
         { lang: "en" },
         head(
             {},

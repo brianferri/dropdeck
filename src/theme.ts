@@ -11,6 +11,7 @@ type ThemeValues = {
     vars: Array<readonly [string, string]>,
     fonts: Array<string>,
     bg: string,
+    dark: boolean,
     theme: Theme
 };
 
@@ -68,24 +69,28 @@ function themeValues(config: DeckConfig): ThemeValues {
     const fonts: Array<string> = [];
     for (const font of [body, display, mono]) if (font) fonts.push(font);
 
-    return { vars, fonts, bg, theme: { particlesOn: config.particles !== "false", particleRgb: hexToRgb(accent1) ?? "15,118,110" } };
+    return { vars, fonts, bg, dark, theme: { particlesOn: config.particles !== "false", particleRgb: hexToRgb(accent1) ?? "15,118,110" } };
 }
 
-function applyValues(style: CSSStyleDeclaration, values: ThemeValues): void {
-    for (const [key, value] of values.vars) style.setProperty(key, value);
+// `data-theme` selects the palette in `rootStyle`; the resolved variables (with any frontmatter overrides) are then
+// set inline over it, and `color-scheme` follows via the same attribute.
+function applyValues(target: HTMLElement, values: ThemeValues): void {
+    if (values.dark) target.dataset.theme = "dark";
+    else delete target.dataset.theme;
+    for (const [key, value] of values.vars) target.style.setProperty(key, value);
     for (const font of values.fonts) loadFont(font);
 }
 
 export function applyConfig(config: DeckConfig): Theme {
     const values = themeValues(config);
-    applyValues(document.documentElement.style, values);
+    applyValues(document.documentElement, values);
     document.body.style.background = values.bg;
     return values.theme;
 }
 
 export function applyTheme(target: HTMLElement, config: DeckConfig): Theme {
     const values = themeValues(config);
-    applyValues(target.style, values);
+    applyValues(target, values);
     target.style.background = values.bg;
     return values.theme;
 }

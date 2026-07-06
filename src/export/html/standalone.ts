@@ -102,15 +102,18 @@ function leanDocument(
     // stylesheet resolves against the same values.
     const bodyBg = document.body.style.background;
     const bodyStyle = bodyBg.length > 0 ? [declaration("background", bodyBg)] : [];
-    const tree = html(
-        { lang: "en", style: parseStyle(rootStyle) },
-        head({}, headNodes(name, css, fonts)),
-        body(
-            { style: bodyStyle },
-            div({ class: "mouse-spotlight" }),
-            div({ id: "stage" }, div({ class: "deck", id: "deck" }, slides)),
-            script({}, presentRuntime)
-        )
+    const headNode = head({}, headNodes(name, css, fonts));
+    const bodyNode = body(
+        { style: bodyStyle },
+        div({ class: "mouse-spotlight" }),
+        div({ id: "stage" }, div({ class: "deck", id: "deck" }, slides)),
+        script({}, presentRuntime)
     );
+    // The mode defaults are captured with the stylesheet, keyed on `data-theme`; carry the dark attribute (light is
+    // the `:root` default, so it needs none) so the exported page opens in the same palette.
+    const rootDecls = parseStyle(rootStyle);
+    const tree = document.documentElement.dataset.theme === "dark"
+        ? html({ lang: "en", data: { theme: "dark" }, style: rootDecls }, headNode, bodyNode)
+        : html({ lang: "en", style: rootDecls }, headNode, bodyNode);
     return `<!DOCTYPE html>\n${serialize(tree)}`;
 }
