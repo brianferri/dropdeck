@@ -16,6 +16,7 @@ export type Attrs = {
     name?: string,
     content?: string,
     rel?: string,
+    target?: string,
     type?: string,
     href?: string,
     src?: string,
@@ -45,6 +46,7 @@ function attrTuples(attrs: Attrs): Array<readonly [string, string]> {
     if (attrs.name !== undefined) tuples.push(["name", attrs.name]);
     if (attrs.content !== undefined) tuples.push(["content", attrs.content]);
     if (attrs.rel !== undefined) tuples.push(["rel", attrs.rel]);
+    if (attrs.target !== undefined) tuples.push(["target", attrs.target]);
     if (attrs.type !== undefined) tuples.push(["type", attrs.type]);
     if (attrs.href !== undefined) tuples.push(["href", attrs.href]);
     if (attrs.src !== undefined) tuples.push(["src", attrs.src]);

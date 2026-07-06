@@ -1,6 +1,7 @@
 import { body, head, html, link, meta, script, serialize, style, title } from "#/dom";
 import { serialize as serializeCss } from "@dropdeck/html/css";
 import { dropzoneCss, dropzoneView } from "#/host/components/dropzone.component";
+import { githubBannerCss } from "#/host/components/github-banner.component";
 import { editorCss, editorPopupCss, editorTokenCss, editorView } from "#/host/components/editor.component";
 import { exportBarCss, exportBarView } from "#/host/components/export-bar.component";
 import { spotlightCss, spotlightView } from "#/host/components/spotlight.component";
@@ -45,6 +46,7 @@ export function renderPage(): string {
             style({ id: "dropdeck-editor" }, serializeCss(editorCss)),
             style({ id: "dropdeck-editor-tokens" }, serializeCss(editorTokenCss)),
             style({ id: "dropdeck-editor-popup" }, serializeCss(editorPopupCss)),
+            style({ id: "dropdeck-github" }, serializeCss(githubBannerCss)),
             style({ id: "dropdeck-print" }, serializeCss(printStyle))
         ),
         body(

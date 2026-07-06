@@ -1,5 +1,6 @@
 import { button, div, h1, input, p, styled } from "#/dom";
 import { declaration, rule } from "@dropdeck/html/css";
+import { githubBannerView } from "#/host/components/github-banner.component";
 
 const ACCEPT = ".md,.markdown,.mdown,.mkd,text/markdown,text/plain,image/*";
 
@@ -96,7 +97,8 @@ const dropzone = styled(
             button({ type: "button", id: "examplesBtn", class: "drop-examples" }, "Browse examples")
         ),
         input({ type: "file", id: "fileInput", accept: ACCEPT, multiple: true, hidden: true }),
-        input({ type: "file", id: "folderInput", webkitdirectory: true, hidden: true })
+        input({ type: "file", id: "folderInput", webkitdirectory: true, hidden: true }),
+        githubBannerView()
     ),
     dropzoneCss,
     ["hidden", "dragging"]
