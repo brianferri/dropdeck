@@ -10,6 +10,7 @@ import { baseStyle } from "#/styles/base.style";
 import { slideStyle } from "#/styles/slide.style";
 import { typographyStyle } from "#/styles/typography.style";
 import { blocksStyle } from "#/styles/blocks.style";
+import { chartStyle } from "#/styles/chart.style";
 import { ambientStyle } from "#/styles/ambient.style";
 import { animationStyle } from "#/styles/animation.style";
 import { printStyle } from "#/styles/print.style";
@@ -34,6 +35,7 @@ export function renderPage(): string {
             style({ id: "dropdeck-slide" }, serializeCss(slideStyle)),
             style({ id: "dropdeck-typography" }, serializeCss(typographyStyle)),
             style({ id: "dropdeck-blocks" }, serializeCss(blocksStyle)),
+            style({ id: "dropdeck-chart" }, serializeCss(chartStyle)),
             style({ id: "dropdeck-ambient" }, serializeCss(ambientStyle)),
             style({ id: "dropdeck-animation" }, serializeCss(animationStyle)),
             style({ id: "dropdeck-spotlight" }, serializeCss(spotlightCss)),

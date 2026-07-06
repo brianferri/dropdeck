@@ -57,6 +57,85 @@ Everything else | tiny | 8
 
 ---
 
+# Compare series side by side
+
+```chart
+    | Signups | Active
+Jan | 120     | 90
+Feb | 180     | 130
+Mar | 240     | 200
+Apr | 210     | 190
+```
+
+- The header row names each series.
+- Every later row is `category | value | ...`, one number per series.
+- Bars scale to a rounded axis maximum.
+
+---
+
+# Stack the parts
+
+```chart stacked
+   | Mobile | Desktop | Tablet
+Q1 | 80     | 40      | 20
+Q2 | 110    | 70      | 30
+Q3 | 140    | 90      | 40
+Q4 | 160    | 100     | 45
+```
+
+- `chart stacked` sums each series into one column.
+- The axis scales to the tallest total.
+- Good for part-of-whole across categories.
+
+---
+
+# Trend over time
+
+```chart line
+    | Signups | Active
+Jan | 120     | 90
+Feb | 180     | 130
+Mar | 240     | 200
+Apr | 210     | 190
+```
+
+- `chart line` connects each series as a polyline.
+- Each point sits at the centre of its category.
+- Good for trends read left to right.
+
+---
+
+# Volume under the curve
+
+```chart area
+    | Traffic | Converted
+Jan | 120     | 40
+Feb | 180     | 70
+Mar | 240     | 120
+Apr | 210     | 95
+```
+
+- `chart area` fills beneath each line.
+- Overlapping fills stay translucent.
+- Reads as cumulative volume.
+
+---
+
+# Share of the whole
+
+```chart pie
+        | Share
+Mobile  | 60
+Desktop | 30
+Tablet  | 10
+```
+
+- `chart pie` draws the first series as slices.
+- Each slice is sized by its share of the total.
+- The legend lists the categories.
+
+---
+
 # Code beside prose
 
 ```ts

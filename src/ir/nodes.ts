@@ -6,6 +6,7 @@ export enum BlockKind {
     Cards = "cards",
     Metrics = "metrics",
     Bars = "bars",
+    Chart = "chart",
     Code = "code",
     Columns = "columns"
 }
@@ -33,12 +34,34 @@ export type BarRow = {
     percent: number
 };
 
+export enum ChartKind {
+    Bars = "bars",
+    Stacked = "stacked",
+    Line = "line",
+    Area = "area",
+    Pie = "pie"
+}
+
+export type ChartSeries = {
+    name: string,
+    values: Array<number>
+};
+
+// A chart over `categories` with one or more `series`. `kind` picks the geometry; Pie reads only the first series,
+// the cartesian kinds read all of them.
+export type ChartData = {
+    kind: ChartKind,
+    categories: Array<string>,
+    series: Array<ChartSeries>
+};
+
 export type Block =
     | { kind: BlockKind.Prose, markdown: string }
     | { kind: BlockKind.Html, markup: string }
     | { kind: BlockKind.Cards, cards: Array<Card> }
     | { kind: BlockKind.Metrics, rows: Array<MetricRow> }
     | { kind: BlockKind.Bars, rows: Array<BarRow> }
+    | { kind: BlockKind.Chart, chart: ChartData }
     | { kind: BlockKind.Code, lang: string, content: string }
     | { kind: BlockKind.Columns, columns: Array<Array<Block>> };
 

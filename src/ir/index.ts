@@ -1,2 +1,2 @@
-export { BlockKind, SlideLayout } from "#/ir/nodes";
-export type { Block, Card, MetricRow, BarRow, Slide, Deck, AssetMap } from "#/ir/nodes";
+export { BlockKind, ChartKind, SlideLayout } from "#/ir/nodes";
+export type { Block, Card, MetricRow, BarRow, ChartData, ChartSeries, Slide, Deck, AssetMap } from "#/ir/nodes";

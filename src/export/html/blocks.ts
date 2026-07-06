@@ -1,6 +1,7 @@
 import { code, div, h3, parse, pre, sanitize, span } from "#/dom";
 import { NodeField, element } from "@dropdeck/html";
 import { gridCols, metricCols } from "#/layout";
+import { chartNode } from "#/export/html/chart";
 import { renderMarkdown } from "#/render/html";
 import { convertFences } from "#/render/markdown";
 import { BlockKind } from "#/ir";
@@ -80,6 +81,8 @@ export function renderBlock(block: Block): DomNode {
             return metricsNode(block.rows);
         case BlockKind.Bars:
             return barsNode(block.rows);
+        case BlockKind.Chart:
+            return chartNode(block.chart);
         case BlockKind.Code:
             return codeNode(block.content);
         case BlockKind.Columns:

@@ -1,7 +1,7 @@
 // Where the type system cannot compute a value, this widens to the general IR type rather than guess, keeping the
 // runtime cast in `parse` sound: a guess that disagreed with the runtime would make that cast a lie.
 
-import type { BlockKind } from "#/ir";
+import type { BlockKind, ChartKind } from "#/ir";
 import type { Block, Card, Deck, Slide } from "#/ir";
 import type { DeckConfig } from "#/config";
 import type { Cell, Contains, FromEntries, Normalize, SplitOn, Trim, TrimEnd, TrimStart } from "#/front/strings";
@@ -75,8 +75,14 @@ type FenceBlock<Lang extends string, Body extends string> =
         ? { kind: BlockKind.Code, lang: Lang, content: TrimEnd<Body> }
         : RowFence<Extract<FenceSpec, { kind: Lang }>, Body>;
 
+// A chart fence -- bare `chart` (grouped bars) or `chart <type>` for a known `ChartKind` -- has a header row plus
+// category rows, not the uniform cell-per-field shape `RowFence` models, so it widens to the general block array
+// rather than being computed precisely (sound, since a widened type is never wrong). An unknown tag is not a chart.
+type ChartFenceTag = BlockKind.Chart | `${BlockKind.Chart} ${ChartKind}`;
+
 type ParseFence<Lang extends string, Body extends string, After extends string> =
-    Trim<After> extends "" ? [FenceBlock<Trim<Lang>, Body>] : Array<Block>;
+    Trim<Lang> extends ChartFenceTag ? Array<Block>
+        : Trim<After> extends "" ? [FenceBlock<Trim<Lang>, Body>] : Array<Block>;
 
 type SplitColumns<S extends string, Acc extends ReadonlyArray<string> = []> =
     S extends `${infer Head}\n::right::\n${infer Rest}` ? SplitColumns<Rest, [...Acc, Head]> : [...Acc, S];

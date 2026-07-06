@@ -36,15 +36,22 @@ export function resolvePalette(config: DeckConfig) {
     const bgHex = pick(config.bg, "#0b1220", "#f8fafc", dark);
     const bg = parseHex(bgHex, dark ? [11, 18, 32] : [248, 250, 252]);
     const accent1 = parseHex(pick(config.accent, "#5cd0b3", "#0f766e", dark), WHITE);
+    // The named accents index this list, and charts cycle series through it, so accent order lives in one place.
+    const accents = [
+        toHex(accent1),
+        toHex(parseHex(pick(config.accent2, "#58c4dd", "#14b8a6", dark), WHITE)),
+        toHex(parseHex(config.highlight ?? config.accent3 ?? "#f59e0b", WHITE))
+    ];
     return {
         dark,
         bg: toHex(bg),
         text: toHex(parseHex(pick(config.text, "#e6edf3", "#0f172a", dark), WHITE)),
         secondary: toHex(parseHex(pick(config.textSecondary, "#aab6c4", "#334155", dark), SLATE)),
         muted: toHex(parseHex(pick(config.muted, "#7e8ca0", "#64748b", dark), SLATE)),
-        accent1: toHex(accent1),
-        accent2: toHex(parseHex(pick(config.accent2, "#58c4dd", "#14b8a6", dark), WHITE)),
-        accent3: toHex(parseHex(config.highlight ?? config.accent3 ?? "#f59e0b", WHITE)),
+        accents,
+        accent1: accents[0],
+        accent2: accents[1],
+        accent3: accents[2],
         surface: dark ? flatten(WHITE, 0.06, bg) : flatten(WHITE, 0.92, bg),
         track: dark ? flatten(WHITE, 0.12, bg) : flatten(SLATE, 0.08, bg),
         glassColor: "FFFFFF",

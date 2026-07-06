@@ -1,5 +1,5 @@
 import {
-    alpha, bodyPr, cNvPr, closePath, custGeom, element, ext, gridCol, grpSpPr, highlight, latin, lnTo, moveTo, noFill,
+    alpha, bodyPr, cNvPr, closePath, custGeom, element, ext, gd, gridCol, grpSpPr, highlight, latin, lnTo, moveTo, noFill,
     nvGrpSpPr, nvPicPr, nvSpPr, off, path2D, pathLst, pic, picBlipFill, prstGeom, pt, roundRect, rPr, run, solidFill,
     sp, spcBef, spcPts, spPr, ST_TextAlignType, ST_TextAnchoringType, ST_TextWrappingType, tableFrame, tbl, tblGrid,
     tc, tr, txBodyA, xfrm
@@ -218,6 +218,14 @@ export function panel(
     return sp(nvSpPr(cNvPr(nextId(), "panel")), geometry, emptyBody());
 }
 
+export function barRect(nextId: () => number, xPx: number, yPx: number, widthPx: number, heightPx: number, color: string, radiusPx: number): CT_Shape {
+    const shorter = Math.min(widthPx, heightPx);
+    const adjust = Math.min(Math.round((radiusPx / shorter) * 100000), 50000);
+    const transform = xfrm(off(emu(xPx), emu(yPx)), ext(emu(widthPx), emu(heightPx)));
+    const geometry = spPr(transform, prstGeom("round2SameRect", gd("adj1", `val ${adjust}`), gd("adj2", "val 0")), fill(color));
+    return sp(nvSpPr(cNvPr(nextId(), "bar")), geometry, emptyBody());
+}
+
 export function rule(
     nextId: () => number,
     xPx: number,
@@ -268,7 +276,8 @@ export function customShape(
     closed: boolean,
     fillColor: string | null,
     strokeColor: string | null,
-    strokeWidthPx: number
+    strokeWidthPx: number,
+    fillOpacityPct?: number
 ): CT_Shape {
     const width = Math.max(box.width, 1);
     const height = Math.max(box.height, 1);
@@ -280,7 +289,7 @@ export function customShape(
     if (closed) commands.push(closePath());
     const geom = custGeom(pathLst(path2D(emu(width), emu(height), commands)));
     const transform = xfrm(off(emu(box.x), emu(box.y)), ext(emu(width), emu(height)));
-    const paint = fillColor === null ? noFill() : fill(fillColor);
+    const paint = fillColor === null ? noFill() : fill(fillColor, fillOpacityPct);
     const geometry = strokeColor === null
         ? spPr(transform, geom, paint)
         : spPr(transform, geom, paint, svgStroke(strokeColor, strokeWidthPx));

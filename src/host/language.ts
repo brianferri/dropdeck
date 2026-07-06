@@ -1,6 +1,7 @@
 // The `insert` strings deliberately contain `${n:placeholder}` snippet markers; they are parsed by the editor's
 // snippet engine, not interpolated, so the template-curly lint does not apply here.
 /* eslint-disable no-template-curly-in-string */
+import { ChartKind } from "#/ir";
 import type { SlideTransition } from "#/animations/spec";
 import type { LayoutHint } from "#/config";
 
@@ -30,7 +31,27 @@ export const DIRECTIVES = [
     }
 ] as const;
 
-export const FENCES = [
+// Detail and doc per chart kind; the completions and their inserts are generated from `ChartKind`, so a new kind
+// surfaces in the editor automatically.
+const CHART_KIND_INFO = {
+    [ChartKind.Bars]: { detail: "grouped bar chart", doc: "Grouped bars with a value axis. The header row names the series; each later row is `category | value | ...`, one number per series." },
+    [ChartKind.Stacked]: { detail: "stacked bar chart", doc: "Series stacked into one bar per category; same data shape as `chart`, and the axis scales to the tallest total." },
+    [ChartKind.Line]: { detail: "line chart", doc: "One polyline per series over the categories -- good for trends read left to right." },
+    [ChartKind.Area]: { detail: "area chart", doc: "Like `chart line` but filled beneath each series; reads as cumulative volume." },
+    [ChartKind.Pie]: { detail: "pie chart", doc: "The first series drawn as slices, each sized by its share of the total." }
+} as const satisfies Record<ChartKind, { detail: string, doc: string }>;
+
+// Bare `chart` is the grouped bar chart; the others carry their kind as `chart <type>`. Pie reads a single series.
+function chartFence(kind: ChartKind): CompletionItem {
+    const tag = kind === ChartKind.Bars ? "chart" : `chart ${kind}`;
+    const data = kind === ChartKind.Pie
+        ? " | ${1:Share}\n${2:Mobile} | ${3:60}\n${4:Desktop} | ${5:30}"
+        : " | ${1:Series}\n${2:Jan} | ${3:120}\n${4:Feb} | ${5:180}";
+    const info = CHART_KIND_INFO[kind];
+    return { label: tag, insert: `${tag}\n${data}\n\`\`\`\n$0`, detail: info.detail, doc: info.doc, kind: CompletionKind.Fence };
+}
+
+const FENCE_ROWS: ReadonlyArray<CompletionItem> = [
     {
         label: "metrics",
         insert: "metrics\n${1:42} | ${2:label} | ${3:detail}\n```\n$0",
@@ -45,7 +66,9 @@ export const FENCES = [
         doc: "A horizontal bar chart. Each row is `label | tag | percent` (0-100); bars grow on slide entry.",
         kind: CompletionKind.Fence
     }
-] as const;
+];
+
+export const FENCES: ReadonlyArray<CompletionItem> = FENCE_ROWS.concat(Object.values(ChartKind).map(chartFence));
 
 function colorKey(label: string, doc: string): CompletionItem {
     return { label, insert: `${label}: \${0:#5cd0b3}`, detail: "colour", doc, kind: CompletionKind.Frontmatter };

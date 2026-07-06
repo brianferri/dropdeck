@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 import { parse } from "#/front/parser";
+import { chartStyle } from "#/styles/chart.style";
 import { BlockKind } from "#/ir";
 import type { Deck } from "#/ir";
 import type { ParseDeck } from "#/front/Parse";
@@ -34,8 +35,16 @@ export type Assertions = [
     Expect<Equal<Config, { accent: "#7befeb", font: "Manrope", dark: "true" }>>,
     Expect<Equal<Config["accent"], "#7befeb">>,
     Expect<Equal<Config["font"], "Manrope">>,
-    Expect<Equal<Config["dark"], "true">>
+    Expect<Equal<Config["dark"], "true">>,
+    // The accent rules are `cycleRule` calls in the `as const` literal; these pin the shape so its `const` generics
+    // keep the selectors and values literal (the accent rules follow the 19 static rules).
+    Expect<Equal<ChartStyle["length"], 28>>,
+    Expect<Equal<ChartStyle[19]["selectors"][0], ".chart .chart-bar:nth-child(3n+1)">>,
+    Expect<Equal<ChartStyle[25]["selectors"][0], ".chart .chart-bar:nth-child(3n+3)">>,
+    Expect<Equal<ChartStyle[27]["declarations"][0]["value"], "var(--color-accent-3)">>
 ];
+
+type ChartStyle = typeof chartStyle;
 
 test("type-level: a literal deck's inferred IR matches its runtime value", () => {
     const deck = parse("# Code\n\n```ts\nconst x = 1;\n```\n");

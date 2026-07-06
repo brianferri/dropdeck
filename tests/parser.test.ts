@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { parse } from "#/front/parser";
-import { BlockKind } from "#/ir";
+import { BlockKind, ChartKind } from "#/ir";
 import type { Block, Deck } from "#/ir";
 
 function firstBlock<K extends BlockKind>(deck: Deck, kind: K): Extract<Block, { kind: K }> {
@@ -41,6 +41,27 @@ test("bars fence -> Bars rows with a parsed percent, defaulting to 0", () => {
     const block = firstBlock(deck, BlockKind.Bars);
     expect(block.rows[0]?.percent).toBe(95);
     expect(block.rows[1]?.percent).toBe(0);
+});
+
+test("chart fence -> a Chart with series named by the header and category rows of numbers", () => {
+    const deck = parse("# G\n\n```chart\n | Signups | Active\nJan | 120 | 90\nFeb | 180 | n/a\n```\n");
+    const block = firstBlock(deck, BlockKind.Chart);
+    expect(block.chart.kind).toBe(ChartKind.Bars);
+    expect(block.chart.categories).toEqual(["Jan", "Feb"]);
+    expect(block.chart.series.map((series) => series.name)).toEqual(["Signups", "Active"]);
+    expect(block.chart.series[0]?.values).toEqual([120, 180]);
+    // A non-numeric cell defaults to 0 rather than NaN, matching the bars fence.
+    expect(block.chart.series[1]?.values).toEqual([90, 0]);
+});
+
+test("chart fence type -> the kind from the fence tag; an unknown type is not a chart", () => {
+    const line = firstBlock(parse("# L\n\n```chart line\n | A\nJan | 1\n```\n"), BlockKind.Chart);
+    expect(line.chart.kind).toBe(ChartKind.Line);
+    const pie = firstBlock(parse("# P\n\n```chart pie\n | A\nJan | 1\n```\n"), BlockKind.Chart);
+    expect(pie.chart.kind).toBe(ChartKind.Pie);
+    // An unrecognised type is not a chart fence, so it stays a code block keeping its info string.
+    const unknown = firstBlock(parse("# U\n\n```chart bogus\ncontent\n```\n"), BlockKind.Code);
+    expect(unknown.lang).toBe("chart bogus");
 });
 
 test("### runs -> a Cards block with title and trimmed body", () => {

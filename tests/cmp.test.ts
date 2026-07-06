@@ -10,11 +10,13 @@ function labels(source: string, caret: number): Array<string> {
 }
 
 suite("completionsAt context", () => {
-    test("fence opener offers component fences", () => {
+    test("fence opener offers component fences, chart typed by kind", () => {
         const src = "# Slide\n\n```";
-        expect(labels(src, src.length)).toEqual(["metrics", "bars"]);
+        expect(labels(src, src.length)).toEqual(["metrics", "bars", "chart", "chart stacked", "chart line", "chart area", "chart pie"]);
         const partial = "# Slide\n\n```ba";
         expect(labels(partial, partial.length)).toEqual(["bars"]);
+        const chart = "# Slide\n\n```chart ";
+        expect(labels(chart, chart.length)).toEqual(["chart stacked", "chart line", "chart area", "chart pie"]);
     });
 
     test("directive line offers the column split", () => {

@@ -2,6 +2,8 @@ import { HtmlTag, NodeField, attribute, childElements, findAll, findFirst, hasCl
 import { CssProperty, colorClass, columnSpan, gridColumns as tailwindGridColumns, resolve as resolveTailwind } from "@dropdeck/html/tailwind";
 import { decompose, matrixOf, parseStyle, parseTransform, styleValue } from "@dropdeck/html/css";
 import { Align, Anchor, idFactory, imageShape, leftBarFrame, panel, paragraphOf, pProps, relFactory, styledRun, textBox, txBodyOf } from "#/export/pptx/build";
+import { PANEL_PAD, PANEL_RADIUS, glassPanel, lowered, runBox } from "#/export/pptx/lower";
+import { lowerChart } from "#/export/pptx/chart";
 import { inlineRuns, inlineRunsFromNodes, inlineSegments } from "#/export/pptx/inline";
 import { resolveImage } from "#/export/pptx/image";
 import { svgToShapes } from "#/export/pptx/svg-lower";
@@ -10,16 +12,17 @@ import { morphName } from "#/animations/spec";
 import { renderMarkdown } from "#/render/html";
 import { barFraction, gridCols, metricCols } from "#/layout";
 import { BlockKind } from "#/ir";
+import type { AnimatedShapeRef, Embed, Lowered } from "#/export/pptx/lower";
 import type { Content, DomNode, ElementNode } from "@dropdeck/html";
 import type { Palette } from "#/export/pptx/palette";
 import type { RunStyle } from "#/export/pptx/build";
-import type { AssetMap, Block, BarRow, Card, MetricRow } from "#/ir";
+import type { Block, BarRow, Card, MetricRow } from "#/ir";
 import type { ColorClass } from "@dropdeck/html/tailwind";
 import type { Node, SlideMedia } from "@dropdeck/pptx";
 
+export type { AnimatedShapeRef, Embed } from "#/export/pptx/lower";
+
 const GAP = 20;
-const PANEL_PAD = 22;
-const PANEL_RADIUS = 20;
 const LINE = 26;
 const SUB_LINE = 20;
 const IMAGE_MAX_HEIGHT = 340;
@@ -28,25 +31,6 @@ const CARD_TITLE_SIZE = 20;
 const CARD_TITLE_LINE = 28;
 // Bold runs wider than `lineCount`'s estimate, so overshoot a line of slack rather than overlap the body.
 const CARD_TITLE_CHAR_WIDTH = 0.62;
-
-export type AnimatedShapeRef = { shapes: ReadonlyArray<Node>, kind: Motion };
-type Lowered = { shapes: ReadonlyArray<Node>, height: number, media: ReadonlyArray<SlideMedia>, anim: ReadonlyArray<AnimatedShapeRef> };
-
-export type Embed = {
-    nextId: () => number,
-    nextRelId: () => string,
-    palette: Palette,
-    assets: AssetMap,
-    svgPngs: Map<string, string>
-};
-
-function lowered(
-    shapes: ReadonlyArray<Node>,
-    height: number,
-    side: { media?: ReadonlyArray<SlideMedia>, anim?: ReadonlyArray<AnimatedShapeRef> } = {}
-): Lowered {
-    return { shapes, height, media: side.media ?? [], anim: side.anim ?? [] };
-}
 
 // Order matters: a panel drawn before its content keeps painting behind it.
 function combine(parts: ReadonlyArray<Lowered>, height: number): Lowered {
@@ -71,34 +55,6 @@ function lineCount(text: string, widthPx: number, sizePx: number): number {
     let lines = 0;
     for (const raw of text.split("\n")) lines += Math.max(1, Math.ceil(raw.length / perLine));
     return Math.max(1, lines);
-}
-
-function glassPanel(
-    nextId: () => number,
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    palette: Palette,
-    radiusPx: number
-): ReturnType<typeof panel> {
-    return panel(nextId, x, y, width, height, palette.glassColor, radiusPx, palette.glassOpacity, palette.borderColor, palette.borderOpacity);
-}
-
-function runBox(
-    nextId: () => number,
-    x: number,
-    y: number,
-    width: number,
-    height: number,
-    anchor: Anchor,
-    align: Align,
-    text: string,
-    style: RunStyle,
-    insetPx?: number,
-    name: string = "tx"
-): ReturnType<typeof textBox> {
-    return textBox(nextId, x, y, width, height, txBodyOf(anchor, [paragraphOf(pProps(align, 0, 0), [styledRun(text, style)])], insetPx), name);
 }
 
 function stackDown<T>(
@@ -684,20 +640,9 @@ function lowerElements(items: ReadonlyArray<Placed>, embed: Embed, x: number, y:
     return stackDown(items, y, BLOCK_GAP, true, (item, cursorY) => lowerElement(item.element, embed, x, cursorY, width, item.align));
 }
 
-function hasList(html: string): boolean {
-    const roots = parse(html);
-    return findAll(roots, HtmlTag.Ul).length > 0 || findAll(roots, HtmlTag.Ol).length > 0;
-}
-
-function lowerMarkup(html: string, embed: Embed, x: number, y: number, width: number, align: Align, boxed: boolean): Lowered {
-    if (!boxed) {
-        const inner = lowerElements(blockElements(parse(html), align), embed, x, y, width);
-        return combine([inner], Math.max(LINE, inner.height));
-    }
-    const inner = lowerElements(blockElements(parse(html), align), embed, x + PANEL_PAD, y + PANEL_PAD, width - (2 * PANEL_PAD));
-    const height = inner.height + (2 * PANEL_PAD);
-    const surface = lowered([glassPanel(embed.nextId, x, y, width, height, embed.palette, PANEL_RADIUS)], 0);
-    return combine([surface, inner], height);
+function lowerMarkup(html: string, embed: Embed, x: number, y: number, width: number, align: Align): Lowered {
+    const inner = lowerElements(blockElements(parse(html), align), embed, x, y, width);
+    return combine([inner], Math.max(LINE, inner.height));
 }
 
 // Capped at 24 steps so a large target steps in ~24 jumps, not a frame per integer; deduped for small targets.
@@ -811,11 +756,8 @@ function lowerBars(rows: ReadonlyArray<BarRow>, embed: Embed, x: number, y: numb
 
 function lowerBlock(block: Block, embed: Embed, x: number, y: number, width: number, align: Align): Lowered {
     switch (block.kind) {
-        case BlockKind.Prose: {
-            // A prose block that renders any list is boxed in one glass panel, mirroring `renderProse`.
-            const html = renderMarkdown(block.markdown);
-            return lowerMarkup(html, embed, x, y, width, align, hasList(html));
-        }
+        case BlockKind.Prose:
+            return lowerMarkup(renderMarkdown(block.markdown), embed, x, y, width, align);
         case BlockKind.Code:
             return lowerCode(block.content, embed, x, y, width);
         case BlockKind.Metrics:
@@ -824,10 +766,12 @@ function lowerBlock(block: Block, embed: Embed, x: number, y: number, width: num
             return lowerCards(block.cards, embed, x, y, width);
         case BlockKind.Bars:
             return lowerBars(block.rows, embed, x, y, width);
+        case BlockKind.Chart:
+            return lowerChart(block.chart, embed, x, y, width);
         case BlockKind.Columns:
             return lowerColumns(block.columns, embed, x, y, width, align);
         case BlockKind.Html:
-            return lowerMarkup(renderMarkdown(block.markup), embed, x, y, width, align, false);
+            return lowerMarkup(renderMarkdown(block.markup), embed, x, y, width, align);
     }
 }
 

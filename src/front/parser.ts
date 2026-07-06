@@ -1,6 +1,6 @@
 import { RawBlockKind, tokenize } from "#/front/lexer";
-import { BlockKind } from "#/ir";
-import type { BarRow, Block, MetricRow, Slide } from "#/ir";
+import { BlockKind, ChartKind } from "#/ir";
+import type { BarRow, Block, ChartData, ChartSeries, MetricRow, Slide } from "#/ir";
 import type { DeckConfig } from "#/config";
 import type { ParseDeck } from "#/front/Parse";
 
@@ -122,18 +122,63 @@ function extractParts(body: string): { title: string | null, emojis: Array<strin
     return { title, emojis, rest: lines.join("\n").trim() };
 }
 
+// A fence body's non-empty trimmed lines, and one line's `|`-separated trimmed cells -- shared by the row parsers.
+function contentLines(content: string): Array<string> {
+    return content.split("\n").map((line) => line.trim()).filter(Boolean);
+}
+
+function cellsOf(line: string): Array<string> {
+    return line.split("|").map((cell) => cell.trim());
+}
+
 function parseMetricRows(content: string): Array<MetricRow> {
-    return content.split("\n").map((l) => l.trim()).filter(Boolean).map((line) => {
-        const parts = line.split("|").map((c) => c.trim());
+    return contentLines(content).map((line) => {
+        const parts = cellsOf(line);
         return { value: parts[0] ?? "", label: parts[1] ?? "", sub: parts[2] ?? "" };
     });
 }
 
 function parseBarRows(content: string): Array<BarRow> {
-    return content.split("\n").map((l) => l.trim()).filter(Boolean).map((line) => {
-        const parts = line.split("|").map((c) => c.trim());
-        return { label: parts[0] ?? "", tag: parts[1] ?? "", percent: parseFloat(parts[2] ?? "0") || 0 };
+    return contentLines(content).map((line) => {
+        const parts = cellsOf(line);
+        return {
+            label: parts[0] ?? "",
+            tag: parts[1] ?? "",
+            percent: parseFloat(parts[2] ?? "0") || 0
+        };
     });
+}
+
+// `ChartKind`'s values are exactly the fence tags (```chart line), so the enum is the list of supported types.
+const CHART_KINDS = new Set<string>(Object.values(ChartKind));
+
+function isChartKind(tag: string): tag is ChartKind {
+    return CHART_KINDS.has(tag);
+}
+
+// A chart fence is bare `chart` (grouped bars) or `chart <type>` for a known `ChartKind`. A different fence lang or
+// an unknown type is `null` -- not a chart -- so the caller renders it as a code block rather than guessing bars.
+function chartFenceKind(lang: string): ChartKind | null {
+    const chart = `${BlockKind.Chart}`;
+    if (lang === chart) return ChartKind.Bars;
+    if (!lang.startsWith(`${chart} `)) return null;
+    const tag = lang.slice(chart.length + 1);
+    return isChartKind(tag) ? tag : null;
+}
+
+// The header row names the series (its leading cell is the axis corner, dropped); each later row is a category
+// followed by one numeric cell per series.
+function parseChartData(kind: ChartKind, content: string): ChartData {
+    const lines = contentLines(content);
+    const header = cellsOf(lines[0] ?? "");
+    const series: Array<ChartSeries> = header.slice(1).map((name) => ({ name, values: [] }));
+    const categories: Array<string> = [];
+    for (const line of lines.slice(1)) {
+        const cells = cellsOf(line);
+        categories.push(cells[0] ?? "");
+        series.forEach((entry, index) => entry.values.push(parseFloat(cells[index + 1] ?? "0") || 0));
+    }
+    return { kind, categories, series };
 }
 
 // `::left::` is optional: the segment before the first `::right::` is already the first column.
@@ -193,7 +238,11 @@ function parseBlocks(text: string): Array<Block> {
         else if (raw.kind === RawBlockKind.Fence) {
             if (raw.lang === "metrics") blocks.push({ kind: BlockKind.Metrics, rows: parseMetricRows(raw.content) });
             else if (raw.lang === "bars") blocks.push({ kind: BlockKind.Bars, rows: parseBarRows(raw.content) });
-            else blocks.push({ kind: BlockKind.Code, lang: raw.lang, content: raw.content });
+            else {
+                const chartKind = chartFenceKind(raw.lang);
+                if (chartKind !== null) blocks.push({ kind: BlockKind.Chart, chart: parseChartData(chartKind, raw.content) });
+                else blocks.push({ kind: BlockKind.Code, lang: raw.lang, content: raw.content });
+            }
         } else
             blocks.push({ kind: BlockKind.Prose, markdown: raw.content });
     }
