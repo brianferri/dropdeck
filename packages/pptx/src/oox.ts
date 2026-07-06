@@ -26,6 +26,7 @@ export type {
 
 export enum Namespace {
     a = "http://schemas.openxmlformats.org/drawingml/2006/main",
+    c = "http://schemas.openxmlformats.org/drawingml/2006/chart",
     p = "http://schemas.openxmlformats.org/presentationml/2006/main",
     r = "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
     ct = "http://schemas.openxmlformats.org/package/2006/content-types",
@@ -34,6 +35,7 @@ export enum Namespace {
 
 export const NamespaceByPrefix = {
     a: Namespace.a,
+    c: Namespace.c,
     p: Namespace.p,
     r: Namespace.r,
     ct: Namespace.ct,

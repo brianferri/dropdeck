@@ -264,3 +264,51 @@ export type {
 
 export { presentation, presentationProperties, slideLayout, slideMaster, theme, toBytes, toParts } from "./document/index.js";
 export type { DeckSlide, SlideInput, SlideMedia } from "./document/index.js";
+
+export {
+    ST_BarDir,
+    ST_BarGrouping,
+    ST_Orientation,
+    ST_AxPos,
+    barChart,
+    barSeries,
+    categories,
+    categoryAxis,
+    chart,
+    chartRef,
+    chartSpace,
+    ctext,
+    cval,
+    externalData,
+    numbers,
+    numCache,
+    numRef,
+    plotArea,
+    point,
+    seriesName,
+    strCache,
+    strRef,
+    valueAxis
+} from "./drawingml/chart/index.js";
+export type {
+    CT_AxDataSource,
+    CT_BarChart,
+    CT_BarSer,
+    CT_CatAx,
+    CT_Chart,
+    CT_ChartSpace,
+    CT_ExternalData,
+    CT_NumData,
+    CT_NumDataSource,
+    CT_NumRef,
+    CT_NumVal,
+    CT_PlotArea,
+    CT_RelId,
+    CT_Scaling,
+    CT_SerTx,
+    CT_StrData,
+    CT_StrRef,
+    CT_StrVal,
+    CT_ValAx,
+    CT_Value
+} from "./drawingml/chart/index.js";
