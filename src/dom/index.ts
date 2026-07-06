@@ -1,4 +1,4 @@
-import { NodeKind, element, parse, sanitize, serialize, serializeAll, text } from "@dropdeck/html";
+import { NodeField, element, parse, sanitize, serialize, serializeAll, text } from "@dropdeck/html";
 import { serializeStyle } from "@dropdeck/html/css";
 import type { DomNode, ElementNode, TextNode } from "@dropdeck/html";
 import type { Declaration, MatchesStylesheet, Stylesheet } from "@dropdeck/html/css";
@@ -85,7 +85,7 @@ type AttrPair<A, K extends keyof A> =
 type BuiltAttrs<A> = ReadonlyArray<{ [K in keyof A]: AttrPair<A, K> }[keyof A]>;
 
 type BuiltChild<C> =
-    C extends string ? readonly [TextNode & { readonly value: C }]
+    C extends string ? readonly [TextNode & { readonly text: C }]
         : C extends ReadonlyArray<DomNode> ? C
             : C extends DomNode ? readonly [C]
                 : readonly [];
@@ -158,7 +158,7 @@ export function mapUrlAttrs(
     assets: ReadonlyMap<string, string>
 ): Array<DomNode> {
     return nodes.map((node) => {
-        if (node.kind === NodeKind.Text) return node;
+        if (NodeField.Text in node) return node;
         const attrs = node.attrs.map((attr) => (URL_ATTRS.has(attr[0].toLowerCase()) ? [attr[0], assets.get(attr[1]) ?? attr[1]] as const : attr));
         return element(node.tag, attrs, mapUrlAttrs(node.children, assets));
     });

@@ -1,4 +1,4 @@
-import { HtmlTag, NodeKind, attribute, childElements, findAll, findFirst, hasClass, parse, serialize, textContent } from "@dropdeck/html";
+import { HtmlTag, NodeField, attribute, childElements, findAll, findFirst, hasClass, parse, serialize, textContent } from "@dropdeck/html";
 import { CssProperty, colorClass, columnSpan, gridColumns as tailwindGridColumns, resolve as resolveTailwind } from "@dropdeck/html/tailwind";
 import { decompose, matrixOf, parseStyle, parseTransform, styleValue } from "@dropdeck/html/css";
 import { Align, Anchor, idFactory, imageShape, leftBarFrame, panel, paragraphOf, pProps, relFactory, styledRun, textBox, txBodyOf } from "#/export/pptx/build";
@@ -642,7 +642,7 @@ function blockElements(roots: Content, align: Align): Array<Placed> {
         guard += 1;
         const top = stack.pop();
         if (top === undefined) break;
-        if (top.node.kind !== NodeKind.Element) continue;
+        if (!(NodeField.Tag in top.node)) continue;
         const element = top.node;
         if (isWrapper(element)) {
             const childAlign = centersChildren(element) ? Align.Center : top.align;

@@ -1,4 +1,4 @@
-export { HtmlTag, NodeKind, ESCAPABLE_RAW_TEXT_TAGS, RAW_TEXT_TAGS, VOID_TAGS } from "./Specification.js";
+export { HtmlTag, NodeField, ESCAPABLE_RAW_TEXT_TAGS, RAW_TEXT_TAGS, VOID_TAGS } from "./Specification.js";
 export type {
     Attr,
     AttrList,

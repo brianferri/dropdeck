@@ -1,6 +1,6 @@
 import { decodeEntities } from "./Entities.js";
 import { cursor } from "./scan/Cursor.js";
-import { NodeKind, ESCAPABLE_RAW_TEXT_TAGS, RAW_TEXT_TAGS, VOID_TAGS } from "./Specification.js";
+import { ESCAPABLE_RAW_TEXT_TAGS, NodeField, RAW_TEXT_TAGS, VOID_TAGS } from "./Specification.js";
 import { TokenKind, nextToken, readRawText } from "./Tokenizer.js";
 import type { Parse } from "./Parse.js";
 import type { Cursor } from "./scan/Cursor.js";
@@ -12,9 +12,9 @@ const RAW_TEXT = new Set<string>(RAW_TEXT_TAGS);
 const ESCAPABLE_RAW_TEXT = new Set<string>(ESCAPABLE_RAW_TEXT_TAGS);
 
 // The public `DomNode`/`Content` types are a read-only structural widening of these, so the finished `root`
-// returns as `Content` with no cast.
-type BuildText = { kind: NodeKind.Text, value: string };
-type BuildElement = { kind: NodeKind.Element, tag: string, attrs: AttrList, children: Array<BuildNode> };
+// returns as `Content` with no cast. A text node is discriminated by its `text` field, an element by `tag`.
+type BuildText = { text: string };
+type BuildElement = { tag: string, attrs: AttrList, children: Array<BuildNode> };
 type BuildNode = BuildElement | BuildText;
 
 function siblings(root: Array<BuildNode>, open: ReadonlyArray<BuildElement>): Array<BuildNode> {
@@ -25,8 +25,8 @@ function siblings(root: Array<BuildNode>, open: ReadonlyArray<BuildElement>): Ar
 function appendText(into: Array<BuildNode>, value: string): void {
     if (value.length === 0) return;
     const last = into.at(-1);
-    if (last?.kind === NodeKind.Text) last.value += value;
-    else into.push({ kind: NodeKind.Text, value });
+    if (last !== undefined && NodeField.Text in last) last.text += value;
+    else into.push({ text: value });
 }
 
 function closeElement(open: Array<BuildElement>, tag: string): void {
@@ -39,7 +39,7 @@ function closeElement(open: Array<BuildElement>, tag: string): void {
 }
 
 function openTag(c: Cursor, root: Array<BuildNode>, open: Array<BuildElement>, name: string, attrs: AttrList, selfClosing: boolean): void {
-    const element: BuildElement = { kind: NodeKind.Element, tag: name, attrs, children: [] };
+    const element: BuildElement = { tag: name, attrs, children: [] };
     siblings(root, open).push(element);
     if (RAW_TEXT.has(name) && !selfClosing) {
         const raw = readRawText(c, name);

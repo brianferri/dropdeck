@@ -1,5 +1,5 @@
 import { escapeAttribute, escapeText } from "./Entities.js";
-import { ESCAPABLE_RAW_TEXT_TAGS, NodeKind, RAW_TEXT_TAGS, VOID_TAGS } from "./Specification.js";
+import { ESCAPABLE_RAW_TEXT_TAGS, NodeField, RAW_TEXT_TAGS, VOID_TAGS } from "./Specification.js";
 import type { Attr, AttrList, Content, DomNode, ElementNode, EscapableRawTextTag, RawTextTag, TextNode, VoidTag } from "./Specification.js";
 
 const VOID = new Set<string>(VOID_TAGS);
@@ -28,11 +28,11 @@ type SerializeChildren<C extends Content> = C extends readonly [infer Head exten
 
 type RawVerbatimTag = Exclude<RawTextTag, EscapableRawTextTag>;
 type SerializeRawChildren<C extends Content> = C extends readonly [infer Head extends DomNode, ...infer Rest extends Content]
-    ? `${Head extends TextNode ? Head["value"] : Serialize<Head>}${SerializeRawChildren<Rest>}`
+    ? `${Head extends TextNode ? Head["text"] : Serialize<Head>}${SerializeRawChildren<Rest>}`
     : "";
 
 export type Serialize<N extends DomNode> = N extends TextNode
-    ? EscapeTextType<N["value"]>
+    ? EscapeTextType<N["text"]>
     : N extends ElementNode<infer Tag extends string, infer A extends AttrList, infer C extends Content>
         ? Tag extends VoidTag
             ? `<${Tag}${SerializeAttrs<A>}>`
@@ -48,7 +48,7 @@ function attribute(attr: Attr): string {
 }
 
 function render(node: DomNode): string {
-    if (node.kind === NodeKind.Text) return escapeText(node.value);
+    if (NodeField.Text in node) return escapeText(node.text);
     let out = `<${node.tag}`;
     for (const attr of node.attrs) out += attribute(attr);
     out += ">";
@@ -63,7 +63,7 @@ function render(node: DomNode): string {
 
 // The spec says a raw-text element holds only text, but recurse defensively in case a builder placed an element child inside.
 function rawChild(node: DomNode): string {
-    return node.kind === NodeKind.Text ? node.value : render(node);
+    return NodeField.Text in node ? node.text : render(node);
 }
 
 // The cast is sound because `render` produces the exact markup literal `Serialize<N>` computes, by construction.

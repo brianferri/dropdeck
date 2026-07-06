@@ -1,4 +1,4 @@
-import { HtmlTag, NodeKind, textContent } from "@dropdeck/html";
+import { HtmlTag, NodeField, textContent } from "@dropdeck/html";
 import { styledRun } from "#/export/pptx/build";
 import { renderInlineNodes } from "#/render/html";
 import type { DomNode } from "@dropdeck/html";
@@ -76,8 +76,8 @@ export function inlineSegments(
         if (frame === undefined) break;
         const { node } = frame;
         const line = segments[segments.length - 1];
-        if (node.kind === NodeKind.Text) {
-            const collapsed = collapseWhitespace(node.value);
+        if (NodeField.Text in node) {
+            const collapsed = collapseWhitespace(node.text);
             if (collapsed.length > 0) line.push(styledRun(collapsed, emphasisStyle(base, frame.bold, frame.italic, frame.link, palette)));
             continue;
         }

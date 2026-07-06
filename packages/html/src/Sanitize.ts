@@ -1,4 +1,4 @@
-import { NodeKind } from "./Specification.js";
+import { NodeField } from "./Specification.js";
 import type { Attr, DomNode } from "./Specification.js";
 
 // `style` is dropped too: a stylesheet can exfiltrate via `url(...)`.
@@ -41,9 +41,9 @@ function safeAttr(attr: Attr): boolean {
 }
 
 function sanitizeNode(node: DomNode): DomNode | null {
-    if (node.kind === NodeKind.Text) return node;
+    if (NodeField.Text in node) return node;
     if (FORBIDDEN_TAGS.has(node.tag.toLowerCase())) return null;
-    return { kind: NodeKind.Element, tag: node.tag, attrs: node.attrs.filter(safeAttr), children: sanitize(node.children) };
+    return { tag: node.tag, attrs: node.attrs.filter(safeAttr), children: sanitize(node.children) };
 }
 
 export function sanitize(nodes: ReadonlyArray<DomNode>): Array<DomNode> {

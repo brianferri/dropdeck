@@ -3,14 +3,14 @@ import assert from "node:assert/strict";
 import { element, text } from "../src/builders.js";
 import { parse } from "../src/Parser.js";
 import { serialize, serializeAll } from "../src/Serializer.js";
-import { HtmlTag, NodeKind } from "../src/Specification.js";
+import { HtmlTag, NodeField } from "../src/Specification.js";
 
-await test("builders: element and text produce the tagged node shapes", () => {
+await test("builders: element and text produce the structural node shapes", () => {
     const node = element("p", [["class", "lead"]], [text("hi")]);
-    assert.equal(node.kind, NodeKind.Element);
+    assert.ok(NodeField.Tag in node);
     assert.equal(node.tag, "p");
     assert.deepEqual(node.attrs, [["class", "lead"]]);
-    assert.equal(node.children[0].kind, NodeKind.Text);
+    assert.ok(NodeField.Text in node.children[0]);
 });
 
 await test("serialize: element with attributes, escaping text and attribute values", () => {

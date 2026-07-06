@@ -1,5 +1,5 @@
 import { isWhitespace } from "./Characters.js";
-import { NodeKind } from "./Specification.js";
+import { NodeField } from "./Specification.js";
 import type { Content, DomNode, ElementNode } from "./Specification.js";
 
 export function attribute(element: ElementNode, name: string): string | null {
@@ -22,7 +22,7 @@ export function hasClass(element: ElementNode, token: string): boolean {
 
 export function childElements(element: ElementNode): Array<ElementNode> {
     const out: Array<ElementNode> = [];
-    for (const child of element.children) if (child.kind === NodeKind.Element) out.push(child);
+    for (const child of element.children) if (NodeField.Tag in child) out.push(child);
     return out;
 }
 
@@ -41,7 +41,7 @@ export function textContent(node: DomNode): string {
     while (stack.length > 0) {
         const current = stack.pop();
         if (current === undefined) break;
-        if (current.kind === NodeKind.Text) out += current.value;
+        if (NodeField.Text in current) out += current.text;
         else pushReversed(stack, current.children);
     }
     return out;
@@ -54,7 +54,7 @@ export function findAll<const Tag extends string>(roots: Content, tag: Tag): Arr
     while (stack.length > 0) {
         const node = stack.pop();
         if (node === undefined) break;
-        if (node.kind !== NodeKind.Element) continue;
+        if (!(NodeField.Tag in node)) continue;
         if (hasTag(node, tag)) out.push(node);
         pushReversed(stack, node.children);
     }

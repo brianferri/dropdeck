@@ -1,5 +1,5 @@
-export enum NodeKind {
-    Element = "element",
+export enum NodeField {
+    Tag = "tag",
     Text = "text"
 }
 
@@ -124,8 +124,7 @@ export type AttrList = ReadonlyArray<Attr>;
 
 // Named to avoid colliding with the DOM lib's global `Node`/`Element`/`Text` (and the OOXML package's `Node`) at a consumer's import site.
 export type TextNode = {
-    readonly kind: NodeKind.Text,
-    readonly value: string
+    readonly text: string
 };
 
 export type ElementNode<
@@ -133,7 +132,6 @@ export type ElementNode<
     Attributes extends AttrList = AttrList,
     Children extends Content = Content
 > = {
-    readonly kind: NodeKind.Element,
     readonly tag: Tag,
     readonly attrs: Attributes,
     readonly children: Children

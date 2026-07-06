@@ -1,5 +1,5 @@
 import { code, div, h3, parse, pre, sanitize, span } from "#/dom";
-import { NodeKind, element } from "@dropdeck/html";
+import { NodeField, element } from "@dropdeck/html";
 import { gridCols, metricCols } from "#/layout";
 import { renderMarkdown } from "#/render/html";
 import { convertFences } from "#/render/markdown";
@@ -17,7 +17,7 @@ function markupNodes(html: string): Array<DomNode> {
 // while the other still fades.
 function withReveal(nodes: ReadonlyArray<DomNode>): Array<DomNode> {
     return nodes.map((node) => {
-        if (node.kind === NodeKind.Text) return node;
+        if (NodeField.Text in node) return node;
         const kind = node.tag === "video" || node.tag === "audio" ? "media" : "reveal";
         return element(node.tag, node.attrs.concat([["data-animation", kind] as const]), node.children);
     });
