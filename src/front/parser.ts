@@ -159,11 +159,13 @@ function isChartKind(tag: string): tag is ChartKind {
 // A chart fence is bare `chart` (grouped bars) or `chart <type>` for a known `ChartKind`. A different fence lang or
 // an unknown type is `null` -- not a chart -- so the caller renders it as a code block rather than guessing bars.
 function chartFenceKind(lang: string): ChartKind | null {
-    const chart = `${BlockKind.Chart}`;
-    if (lang === chart) return ChartKind.Bars;
-    if (!lang.startsWith(`${chart} `)) return null;
-    const tag = lang.slice(chart.length + 1);
-    return isChartKind(tag) ? tag : null;
+    if (!lang.startsWith(BlockKind.Chart)) return null;
+    const tag = lang.slice(BlockKind.Chart.length);
+    if (tag === "") return ChartKind.Bars;
+    if (!tag.startsWith(" ")) return null;
+    const kind = tag.slice(1);
+    if (!isChartKind(kind)) return null;
+    return kind;
 }
 
 // The header row names the series (its leading cell is the axis corner, dropped); each later row is a category
