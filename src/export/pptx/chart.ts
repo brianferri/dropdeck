@@ -7,6 +7,7 @@ import type { AnimatedShapeRef, Embed, Lowered } from "#/export/pptx/lower";
 import type { Palette } from "#/export/pptx/palette";
 import type { RunStyle } from "#/export/pptx/build";
 import type { ChartData } from "#/ir";
+import type { Add, Mul } from "#/typings/arithmetic";
 import type { Node } from "@dropdeck/pptx";
 
 const CHART_PLOT_HEIGHT = 220;
@@ -17,7 +18,8 @@ const CHART_BAR_WIDTH_MAX = 40;
 const CHART_AXIS_GUTTER = 42;
 const CHART_GRID_LINES = 4;
 
-const CHART_HEIGHT = CHART_PLOT_HEIGHT + CHART_LABEL_HEIGHT + CHART_LEGEND_HEIGHT + (2 * PANEL_PAD);
+const CHART_HEIGHT = (CHART_PLOT_HEIGHT + CHART_LABEL_HEIGHT + CHART_LEGEND_HEIGHT + (2 * PANEL_PAD)) as
+    Add<Add<Add<typeof CHART_PLOT_HEIGHT, typeof CHART_LABEL_HEIGHT>, typeof CHART_LEGEND_HEIGHT>, Mul<2, typeof PANEL_PAD>>;
 const CHART_AREA_FILL_OPACITY = 16;
 const CHART_ARC_STEPS_MAX = 48;
 

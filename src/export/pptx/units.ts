@@ -1,3 +1,5 @@
+import type { Mul } from "#/typings/arithmetic";
+
 export const SLIDE_WIDTH_PX = 1280;
 export const SLIDE_HEIGHT_PX = 720;
 
@@ -7,13 +9,13 @@ const EMU_PER_PX = 9525; // 12192000 EMU / 1280 px -- the slide is exactly 13.33
 // rendered size without moving any layout coordinate.
 const CENTIPOINTS_PER_PX = 85; // 75 * (1280 / 1120); OOXML font size is in hundredths of a point.
 
-export const SLIDE_WIDTH_EMU = SLIDE_WIDTH_PX * EMU_PER_PX;
-export const SLIDE_HEIGHT_EMU = SLIDE_HEIGHT_PX * EMU_PER_PX;
-
-export function emu(px: number): number {
-    return Math.round(px * EMU_PER_PX);
+export function emu<const Px extends number>(px: Px): Mul<Px, typeof EMU_PER_PX> {
+    return Math.round(px * EMU_PER_PX) as Mul<Px, typeof EMU_PER_PX>;
 }
 
-export function fontSize(px: number): number {
-    return Math.round(px * CENTIPOINTS_PER_PX);
+export function fontSize<const Px extends number>(px: Px): Mul<Px, typeof CENTIPOINTS_PER_PX> {
+    return Math.round(px * CENTIPOINTS_PER_PX) as Mul<Px, typeof CENTIPOINTS_PER_PX>;
 }
+
+export const SLIDE_WIDTH_EMU = emu(SLIDE_WIDTH_PX);
+export const SLIDE_HEIGHT_EMU = emu(SLIDE_HEIGHT_PX);

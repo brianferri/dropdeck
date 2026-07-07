@@ -1,17 +1,18 @@
 import { BlockKind, SlideLayout } from "#/ir";
 import { LayoutHint } from "#/config";
+import type { Max, Min } from "#/typings/arithmetic";
 import type { Slide } from "#/ir";
 
-function columnCount(total: number, cap: number): number {
-    return Math.min(Math.max(total, 1), cap);
+function columnCount<const Total extends number, const Cap extends number>(total: Total, cap: Cap): Min<Max<Total, 1>, Cap> {
+    return Math.min(Math.max(total, 1), cap) as Min<Max<Total, 1>, Cap>;
 }
 
 // Four cards read best as a 2x2 square rather than a 1x4 row.
-export function gridCols(count: number): number {
-    return count === 4 ? 2 : columnCount(count, 3);
+export function gridCols<const Count extends number>(count: Count): Count extends 4 ? 2 : Min<Max<Count, 1>, 3> {
+    return (count === 4 ? 2 : columnCount(count, 3)) as Count extends 4 ? 2 : Min<Max<Count, 1>, 3>;
 }
 
-export function metricCols(count: number): number {
+export function metricCols<const Count extends number>(count: Count): Min<Max<Count, 1>, 4> {
     return columnCount(count, 4);
 }
 

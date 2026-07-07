@@ -12,6 +12,7 @@ import type { AnimatedShapeRef, Embed } from "#/export/pptx/blocks";
 import type { CT_CommonSlideData, CT_Shape, CT_Slide, CT_TextParagraph, DeckSlide, Node, SlideInput, SlideMedia } from "@dropdeck/pptx";
 import type { AnimatedShape } from "#/export/pptx/animations/timing";
 import type { AssetMap, Slide } from "#/ir";
+import type { Mul, Sub } from "#/typings/arithmetic";
 
 // Mirrored from `slide()` because `animatedSlide` builds the `p:sld` element directly.
 const SLIDE_NAMESPACES = [["xmlns:a", Namespace.a], ["xmlns:p", Namespace.p], ["xmlns:r", Namespace.r]] as const;
@@ -81,7 +82,7 @@ function animatedSlide(
 
 const MARGIN_PX = 44;
 const CONTENT_X = MARGIN_PX;
-const CONTENT_WIDTH = 1280 - (2 * MARGIN_PX);
+const CONTENT_WIDTH = (1280 - (2 * MARGIN_PX)) as Sub<1280, Mul<2, typeof MARGIN_PX>>;
 
 const SIZE = {
     emoji: 60,
