@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
 import { parse } from "#/front/parser";
-import { chartStyle } from "#/styles/chart.style";
+import type { chartStyle } from "#/styles/chart.style";
 import { BlockKind } from "#/ir";
 import type { Deck } from "#/ir";
 import type { ParseDeck } from "#/front/Parse";
