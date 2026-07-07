@@ -96,6 +96,17 @@ export default defineConfig({
     test: {
         environment: "node",
         include: ["tests/**/*.test.ts"],
+        // Rendering a deck in happy-dom would otherwise fetch its Google Fonts <link>; the tests never assert on
+        // fonts, so block external resource loads to keep them offline and their output quiet.
+        environmentOptions: {
+            happyDOM: {
+                settings: {
+                    disableCSSFileLoading: true,
+                    disableJavaScriptFileLoading: true,
+                    handleDisabledFileLoadingAsSuccess: true
+                }
+            }
+        },
         coverage: {
             provider: "v8",
             include: ["src/**"],
