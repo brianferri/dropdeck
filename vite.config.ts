@@ -95,6 +95,12 @@ export default defineConfig({
     },
     test: {
         environment: "node",
-        include: ["tests/**/*.test.ts"]
+        include: ["tests/**/*.test.ts"],
+        coverage: {
+            provider: "v8",
+            include: ["src/**"],
+            // Declarative CSS-builder tables are data, not logic -- testing them would only restate the CSS.
+            exclude: ["src/styles/**"]
+        }
     }
 });

@@ -19,13 +19,16 @@
         "check": "npm run check --workspace @dropdeck/xml --workspace @dropdeck/html --workspace @dropdeck/pptx --workspace @dropdeck/xlsx --workspace @dropdeck/markdown && tsc --noEmit && eslint .",
         "check:fix": "eslint . --fix",
         "test": "vitest run",
+        "test:coverage": "vitest run --coverage",
         "test:watch": "vitest"
     },
     "devDependencies": {
         "@stylistic/eslint-plugin": "^5.10.0",
         "@types/node": "^25.5.0",
+        "@vitest/coverage-v8": "^4.1.10",
         "eslint": "^10.1.0",
         "eslint-plugin-jsdoc": "^63.0.4",
+        "happy-dom": "^20.10.6",
         "typescript": "^6.0.3",
         "typescript-eslint": "^8.57.2",
         "vite": "^6.1.0",
@@ -34,9 +37,9 @@
     },
     "dependencies": {
         "@dropdeck/html": "*",
-        "@dropdeck/xml": "*",
         "@dropdeck/markdown": "*",
         "@dropdeck/pptx": "*",
+        "@dropdeck/xml": "*",
         "@tailwindcss/browser": "^4.0.0"
     },
     "license": "ISC"
