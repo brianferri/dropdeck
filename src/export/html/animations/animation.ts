@@ -2,7 +2,10 @@ export enum AnimationKind {
     Reveal = "reveal",
     Bars = "bars",
     Counter = "counter",
-    Media = "media"
+    Media = "media",
+    ChartGrow = "chart-grow",
+    ChartDraw = "chart-draw",
+    ChartWipe = "chart-wipe"
 }
 
 // Handed the elements that declared its `kind` via `data-animation`; it never queries the DOM, so it stays

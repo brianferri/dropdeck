@@ -2,6 +2,7 @@ import { bars } from "#/export/html/animations/bars";
 import { counter } from "#/export/html/animations/count";
 import { media } from "#/export/html/animations/media";
 import { reveal } from "#/export/html/animations/reveal";
+import { chartDraw, chartGrow, chartWipe } from "#/export/html/animations/chart";
 import { has } from "#/support";
 import { AnimationKind } from "#/export/html/animations/animation";
 import type { SlideAnimation } from "#/export/html/animations/animation";
@@ -10,7 +11,10 @@ const ANIMATIONS: ReadonlyArray<SlideAnimation> = [
     reveal,
     bars,
     counter,
-    media
+    media,
+    chartGrow,
+    chartDraw,
+    chartWipe
 ];
 
 function groupsOf(slide: HTMLElement): Record<AnimationKind, Array<HTMLElement>> {
@@ -18,7 +22,10 @@ function groupsOf(slide: HTMLElement): Record<AnimationKind, Array<HTMLElement>>
         [AnimationKind.Reveal]: [],
         [AnimationKind.Bars]: [],
         [AnimationKind.Counter]: [],
-        [AnimationKind.Media]: []
+        [AnimationKind.Media]: [],
+        [AnimationKind.ChartGrow]: [],
+        [AnimationKind.ChartDraw]: [],
+        [AnimationKind.ChartWipe]: []
     };
     slide.querySelectorAll<HTMLElement>("[data-animation]").forEach((element) => {
         const kind = element.dataset.animation;

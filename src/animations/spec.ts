@@ -3,6 +3,8 @@ import type { DeckConfig } from "#/config";
 export enum Motion {
     Fade = "fade",
     Wipe = "wipe",
+    WipeUp = "wipe-up",
+    Wheel = "wheel",
     Counter = "counter"
 }
 

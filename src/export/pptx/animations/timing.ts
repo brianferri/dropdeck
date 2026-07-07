@@ -4,7 +4,7 @@ import type { Node } from "@dropdeck/pptx";
 
 export { Motion };
 
-type SingleShape = { kind: Motion.Fade | Motion.Wipe, id: number };
+type SingleShape = { kind: Motion.Fade | Motion.Wipe | Motion.WipeUp | Motion.Wheel, id: number };
 type CounterShape = { kind: Motion.Counter, frames: ReadonlyArray<number> };
 export type AnimatedShape = SingleShape | CounterShape;
 
@@ -55,7 +55,10 @@ function animEffect(
 // PowerPoint's UI.
 const PRESET = {
     [Motion.Fade]: { id: 10, subtype: 0, filter: "fade", duration: FADE_MS },
-    [Motion.Wipe]: { id: 22, subtype: 4, filter: "wipe(left)", duration: WIPE_MS }
+    [Motion.Wipe]: { id: 22, subtype: 4, filter: "wipe(left)", duration: WIPE_MS },
+    // `wipe(down)` (not `wipe(up)`) reveals bottom-to-top, so a bar or column fills up from the baseline.
+    [Motion.WipeUp]: { id: 22, subtype: 8, filter: "wipe(down)", duration: WIPE_MS },
+    [Motion.Wheel]: { id: 21, subtype: 1, filter: "wheel(1)", duration: WIPE_MS }
 } as const;
 
 function entrance(shape: SingleShape, delay: number, nextNodeId: () => number): Node {

@@ -1,12 +1,12 @@
 import {
-    alpha, bodyPr, cNvPr, closePath, custGeom, element, ext, gd, gridCol, grpSpPr, highlight, latin, lnTo, moveTo, noFill,
-    nvGrpSpPr, nvPicPr, nvSpPr, off, path2D, pathLst, pic, picBlipFill, prstGeom, pt, roundRect, rPr, run, solidFill,
-    sp, spcBef, spcPts, spPr, ST_TextAlignType, ST_TextAnchoringType, ST_TextWrappingType, tableFrame, tbl, tblGrid,
-    tc, tr, txBodyA, xfrm
+    alpha, bodyPr, chExt, chOff, cNvPr, closePath, custGeom, element, ext, gd, gridCol, groupXfrm, grpSpPr, highlight,
+    latin, lnTo, moveTo, noFill, nvGrpSpPr, nvPicPr, nvSpPr, off, path2D, pathLst, pic, picBlipFill, prstGeom, pt, roundRect,
+    rPr, run, solidFill, sp, spcBef, spcPts, spPr, ST_TextAlignType, ST_TextAnchoringType, ST_TextWrappingType, tableFrame,
+    tbl, tblGrid, tc, tr, txBodyA, xfrm
 } from "@dropdeck/pptx";
 import { emu, fontSize, SLIDE_HEIGHT_EMU, SLIDE_WIDTH_EMU } from "#/export/pptx/units";
 import type {
-    BodyPropertyAttr, CT_EffectList, CT_GradientFillProperties, CT_GraphicalObjectFrame, CT_GroupShape,
+    BodyPropertyAttr, CT_EffectList, CT_GradientFillProperties, CT_GraphicalObjectFrame, CT_GroupShape, CT_GroupShapeChild,
     CT_LineProperties, CT_Path2DCommand, CT_Picture, CT_Shape, CT_SolidColorFillProperties, CT_SRgbColor,
     CT_TableCellProperties,
     CT_TextBody, CT_TextParagraph, CT_TextParagraphProperties, Element, Empty, Node, RunPropertyAttr
@@ -180,6 +180,26 @@ export function spTreeOf(members: ReadonlyArray<Node>): CT_GroupShape {
     for (const member of members) acc.push(member);
     const children: ReadonlyArray<Node> = acc;
     return element("p:spTree", [], children) as CT_GroupShape;
+}
+
+export function groupOf(
+    nextId: () => number,
+    name: string,
+    xPx: number,
+    yPx: number,
+    widthPx: number,
+    heightPx: number,
+    children: ReadonlyArray<Node>
+): CT_GroupShapeChild {
+    const x = emu(xPx);
+    const y = emu(yPx);
+    const cx = emu(Math.max(widthPx, 1));
+    const cy = emu(Math.max(heightPx, 1));
+    const transform = groupXfrm(off(x, y), ext(cx, cy), chOff(x, y), chExt(cx, cy));
+    const acc: Array<Node> = [nvGrpSpPr(cNvPr(nextId(), name)), grpSpPr(transform)];
+    for (const child of children) acc.push(child);
+    const members: ReadonlyArray<Node> = acc;
+    return element("p:grpSp", [], members) as CT_GroupShapeChild;
 }
 
 export function backgroundRect(nextId: () => number, color: string): CT_Shape {

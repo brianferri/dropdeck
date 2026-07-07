@@ -6,11 +6,11 @@ const SPACE = separator(" ");
 const COMMA = separator(",");
 const REVEAL_RISE_PX = 18;
 
-function pxOf(value: number): Dimension<`${number}`, "px"> {
+function pxOf<const V extends number>(value: V): Dimension<`${V}`, "px"> {
     return dimension(`${value}`, "px");
 }
 
-function numOf(value: number): NumberValue<`${number}`> {
+function numOf<const V extends number>(value: V): NumberValue<`${V}`> {
     return numberValue(`${value}`);
 }
 
@@ -23,8 +23,8 @@ function commaList(values: ReadonlyArray<ComponentValue>): Array<ComponentValue>
     return out;
 }
 
-export function revealRise(): string {
-    return serializeValue([numberValue("0"), SPACE, dimension(String(REVEAL_RISE_PX), "px")]);
+export function revealRise(): `0 ${typeof REVEAL_RISE_PX}px` {
+    return serializeValue([numOf(0), SPACE, pxOf(REVEAL_RISE_PX)]);
 }
 
 // A `timing` of any component value lets a keyword (`ease-in-out`) and a `cubic-bezier(...)` curve share one path.
@@ -51,26 +51,45 @@ export function barGrow(delayMs: number): string {
     return serializeValue(transitionEntry("width", BAR_GROW_MS, BAR_GROW_EASING, delayMs));
 }
 
-export function percent(value: string): `${string}%` {
+export function chartTransition(property: string, durationMs: number, delayMs: number): string {
+    return serializeValue(transitionEntry(property, durationMs, BAR_GROW_EASING, delayMs));
+}
+
+export function percent<const V extends string>(value: V): `${V}%` {
     return serializeValue([percentage(value)]);
 }
 
-export function origin(xPx: number, yPx: number): `${number}px ${number}px` {
+export function verticalScale<const V extends number>(value: V): `scaleY(${V})` {
+    return serializeTransform([functionValue("scaleY", [numOf(value)])]);
+}
+
+export function clipRight<const P extends number>(pct: P): `inset(0 ${P}% 0 0)` {
+    return serializeValue([functionValue("inset", [numOf(0), SPACE, percentage(`${pct}`), SPACE, numOf(0), SPACE, numOf(0)])]);
+}
+
+export function turn<const V extends number>(value: V): `${V}turn` {
+    return serializeValue([dimension(`${value}`, "turn")]);
+}
+
+export function origin<const X extends number, const Y extends number>(xPx: X, yPx: Y): `${X}px ${Y}px` {
     return serializeValue([pxOf(xPx), SPACE, pxOf(yPx)]);
 }
 
-export function rgbColor(red: number, green: number, blue: number): string {
-    return serializeValue([functionValue("rgb", commaList([numOf(red), numOf(green), numOf(blue)]))]);
+export function rgbColor<const R extends number, const G extends number, const B extends number>(red: R, green: G, blue: B): `rgb(${R}, ${G}, ${B})` {
+    return serializeValue([functionValue("rgb", [numOf(red), COMMA, SPACE, numOf(green), COMMA, SPACE, numOf(blue)])]);
 }
 
-export function flipTransform(dxPx: number, dyPx: number, scaleX: number, scaleY: number): string {
-    const move: FunctionValue = functionValue("translate3d", commaList([pxOf(dxPx), pxOf(dyPx), numOf(0)]));
-    const zoom: FunctionValue = functionValue("scale", commaList([numOf(scaleX), numOf(scaleY)]));
+export function flipTransform<const DX extends number, const DY extends number, const SX extends number, const SY extends number>(
+    dxPx: DX,
+    dyPx: DY,
+    scaleX: SX,
+    scaleY: SY
+): `translate3d(${DX}px, ${DY}px, 0) scale(${SX}, ${SY})` {
+    const move = functionValue("translate3d", [pxOf(dxPx), COMMA, SPACE, pxOf(dyPx), COMMA, SPACE, numOf(0)]);
+    const zoom = functionValue("scale", [numOf(scaleX), COMMA, SPACE, numOf(scaleY)]);
     return serializeTransform([move, zoom]);
 }
 
-export function flipRest(): string {
-    const move: FunctionValue = functionValue("translate3d", commaList([numOf(0), numOf(0), numOf(0)]));
-    const zoom: FunctionValue = functionValue("scale", commaList([numOf(1), numOf(1)]));
-    return serializeTransform([move, zoom]);
+export function flipRest(): "translate3d(0px, 0px, 0) scale(1, 1)" {
+    return flipTransform(0, 0, 1, 1);
 }

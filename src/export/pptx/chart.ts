@@ -1,8 +1,9 @@
-import { Align, Anchor, barRect, customShape, panel } from "#/export/pptx/build";
+import { Align, Anchor, barRect, customShape, groupOf, panel } from "#/export/pptx/build";
 import { PANEL_PAD, PANEL_RADIUS, glassPanel, lowered, runBox } from "#/export/pptx/lower";
 import { chartMax, pickAccent, pieSlices } from "#/export/chart";
+import { Motion } from "#/animations/spec";
 import { ChartKind } from "#/ir";
-import type { Embed, Lowered } from "#/export/pptx/lower";
+import type { AnimatedShapeRef, Embed, Lowered } from "#/export/pptx/lower";
 import type { Palette } from "#/export/pptx/palette";
 import type { RunStyle } from "#/export/pptx/build";
 import type { ChartData } from "#/ir";
@@ -19,6 +20,14 @@ const CHART_GRID_LINES = 4;
 const CHART_HEIGHT = CHART_PLOT_HEIGHT + CHART_LABEL_HEIGHT + CHART_LEGEND_HEIGHT + (2 * PANEL_PAD);
 const CHART_AREA_FILL_OPACITY = 16;
 const CHART_ARC_STEPS_MAX = 48;
+
+const MARK_MOTION: Record<ChartKind, Motion> = {
+    [ChartKind.Bars]: Motion.WipeUp,
+    [ChartKind.Stacked]: Motion.WipeUp,
+    [ChartKind.Line]: Motion.Wipe,
+    [ChartKind.Area]: Motion.Wipe,
+    [ChartKind.Pie]: Motion.Wheel
+};
 
 function chartAccent(palette: Palette, index: number): string {
     return pickAccent(palette.accents, index);
@@ -104,24 +113,27 @@ function groupedBars(nextId: () => number, palette: Palette, data: ChartData, bo
 }
 
 function stackedBars(nextId: () => number, palette: Palette, data: ChartData, box: ChartBox): Array<Node> {
-    const shapes: Array<Node> = [];
+    const columns: Array<Node> = [];
     const barWidth = Math.min(CHART_BAR_WIDTH_MAX, box.groupWidth - 14);
     data.categories.forEach((_, categoryIndex) => {
         const barX = box.plotX + (box.groupWidth * categoryIndex) + ((box.groupWidth - barWidth) / 2);
         let topIndex = -1;
         data.series.forEach((series, seriesIndex) => { if ((series.values[categoryIndex] ?? 0) > 0) topIndex = seriesIndex; });
+        const segments: Array<Node> = [];
         let baseY = box.plotBottom;
         data.series.forEach((series, seriesIndex) => {
             const height = Math.max(0, Math.round(((series.values[categoryIndex] ?? 0) / box.max) * CHART_PLOT_HEIGHT));
             if (height <= 0) return;
             const color = chartAccent(palette, seriesIndex);
-            shapes.push(seriesIndex === topIndex
+            segments.push(seriesIndex === topIndex
                 ? barRect(nextId, barX, baseY - height, barWidth, height, color, 8)
                 : panel(nextId, barX, baseY - height, barWidth, height, color, 0));
             baseY -= height;
         });
+        if (segments.length === 0) return;
+        columns.push(groupOf(nextId, "stack", barX, baseY, barWidth, box.plotBottom - baseY, segments));
     });
-    return shapes;
+    return columns;
 }
 
 function lineShapes(nextId: () => number, palette: Palette, data: ChartData, box: ChartBox, filled: boolean): Array<Node> {
@@ -171,20 +183,27 @@ function lowerPie(data: ChartData, embed: Embed, x: number, y: number, width: nu
     const radius = CHART_PLOT_HEIGHT / 2;
     const centerX = x + (width / 2);
     const centerY = y + PANEL_PAD + radius;
-    pieSlices(data.series[0]?.values ?? []).forEach((slice, index) => shapes.push(pieSliceShape(nextId, centerX, centerY, radius, slice.startFraction, slice.endFraction, chartAccent(palette, index))));
+    const slices = pieSlices(data.series[0]?.values ?? []).map((slice, index) => pieSliceShape(nextId, centerX, centerY, radius, slice.startFraction, slice.endFraction, chartAccent(palette, index)));
+    // All slices join one group so a single clock wipe sweeps the whole pie 0-to-360, revealing each slice as the
+    // wheel passes its wedge -- one angular reveal, not a wheel per slice.
+    const pie = groupOf(nextId, "pie", centerX - radius, centerY - radius, 2 * radius, 2 * radius, slices);
+    shapes.push(pie);
     for (const shape of chartLegend(nextId, palette, data.categories, x + PANEL_PAD, centerY + radius + CHART_LABEL_HEIGHT, width - (2 * PANEL_PAD))) shapes.push(shape);
-    return lowered(shapes, CHART_HEIGHT);
+    const anim: Array<AnimatedShapeRef> = [ { shapes: [pie], kind: MARK_MOTION[ChartKind.Pie] } ];
+    return lowered(shapes, CHART_HEIGHT, { anim });
 }
 
 export function lowerChart(data: ChartData, embed: Embed, x: number, y: number, width: number): Lowered {
     if (data.kind === ChartKind.Pie) return lowerPie(data, embed, x, y, width);
     const { nextId, palette } = embed;
     const box = chartBox(data, x, y, width);
+    const marks = plotShapes(data, embed, box);
     const shapes: Array<Node> = [glassPanel(nextId, x, y, width, CHART_HEIGHT, palette, PANEL_RADIUS)];
     for (const shape of chartGrid(nextId, palette, box)) shapes.push(shape);
-    for (const shape of plotShapes(data, embed, box)) shapes.push(shape);
+    for (const shape of marks) shapes.push(shape);
     for (const shape of chartLabels(nextId, palette, data, box)) shapes.push(shape);
     const names = data.series.map((series) => series.name);
     for (const shape of chartLegend(nextId, palette, names, x + PANEL_PAD, box.plotBottom + CHART_LABEL_HEIGHT + 8, width - (2 * PANEL_PAD))) shapes.push(shape);
-    return lowered(shapes, CHART_HEIGHT);
+    const anim: Array<AnimatedShapeRef> = marks.map((mark) => ({ shapes: [mark], kind: MARK_MOTION[data.kind] }));
+    return lowered(shapes, CHART_HEIGHT, { anim });
 }

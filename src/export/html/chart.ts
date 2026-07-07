@@ -15,13 +15,15 @@ function svgEl(tag: string, attrs: ReadonlyArray<readonly [string, string]>, chi
     return element(tag, attrs, children);
 }
 
-function barDiv(value: number, max: number, klass: string): ElementNode<"div"> {
+function barDiv(value: number, max: number, klass: string, animation?: string): ElementNode<"div"> {
     const heightPercent = Math.max(0, Math.round((value / max) * 100));
-    return div({ class: klass, style: [declaration("height", `${heightPercent}%`)] });
+    const style = [declaration("height", `${heightPercent}%`)];
+    if (animation === undefined) return div({ class: klass, style });
+    return div({ class: klass, style, data: { animation } });
 }
 
 function barColumn(data: ChartData, categoryIndex: number, max: number): ElementNode<"div"> {
-    return div({ class: "chart-col" }, data.series.map((series) => barDiv(series.values[categoryIndex] ?? 0, max, "chart-bar")));
+    return div({ class: "chart-col" }, data.series.map((series) => barDiv(series.values[categoryIndex] ?? 0, max, "chart-bar", "chart-grow")));
 }
 
 // Only the topmost non-zero segment gets the rounded cap, so the column reads as one bar (matching the PPTX
@@ -34,7 +36,7 @@ function stackColumn(data: ChartData, categoryIndex: number, max: number): Eleme
         max,
         index === topIndex ? "chart-seg chart-seg-cap" : "chart-seg"
     ));
-    return div({ class: "chart-col chart-stack" }, segments);
+    return div({ class: "chart-col chart-stack", data: { animation: "chart-grow" } }, segments);
 }
 
 function seriesPoints(values: ReadonlyArray<number>, max: number, count: number): string {
@@ -60,7 +62,7 @@ function lineSeries(values: ReadonlyArray<number>, max: number, count: number, f
 function lineSvg(data: ChartData, max: number, filled: boolean): ElementNode {
     const count = data.categories.length;
     const groups = data.series.map((series) => lineSeries(series.values, max, count, filled));
-    return svgEl("svg", [["class", "chart-svg"], ["viewBox", `0 0 ${PLOT_WIDTH} ${PLOT_HEIGHT}`], ["preserveAspectRatio", "none"]], groups);
+    return svgEl("svg", [["class", "chart-svg"], ["viewBox", `0 0 ${PLOT_WIDTH} ${PLOT_HEIGHT}`], ["preserveAspectRatio", "none"], ["data-animation", "chart-draw"]], groups);
 }
 
 function cartesianNode(data: ChartData, max: number, plot: ReadonlyArray<DomNode>): ElementNode<"div"> {
@@ -100,7 +102,7 @@ function pieShapes(values: ReadonlyArray<number>): Array<DomNode> {
 
 function pieNode(data: ChartData): ElementNode<"div"> {
     const values = data.series[0]?.values ?? [];
-    const svg = svgEl("svg", [["class", "chart-pie"], ["viewBox", "0 0 100 100"]], pieShapes(values));
+    const svg = svgEl("svg", [["class", "chart-pie"], ["viewBox", "0 0 100 100"], ["data-animation", "chart-wipe"]], pieShapes(values));
     const keys = data.categories.map((category) => div({ class: "chart-key" }, span({ class: "chart-swatch" }), span({}, category)));
     return div(
         { class: "panel chart chart-pie-panel mt-2", data: { animation: "reveal" } },
