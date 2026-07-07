@@ -11,6 +11,8 @@ import type {
     CT_Highlight,
     CT_TextSpacingPercent,
     CT_TextSpacingPoint,
+    CT_ChildOffset2D,
+    CT_ChildSize2D,
     CT_Point2D,
     CT_PositiveSize2D,
     CT_RegularTextRun,
@@ -71,6 +73,32 @@ export function xfrm<const O extends CT_Point2D, const E extends CT_PositiveSize
 export function xfrm(offset: CT_Point2D, extent: CT_PositiveSize2D, rotation?: number): CT_Transform2D {
     if (rotation === undefined) return element("a:xfrm", [], [offset, extent]);
     return element("a:xfrm", [["rot", rotation]], [offset, extent]);
+}
+
+// A group shape's child coordinate origin and size. Mirroring `chOff`/`chExt` to a group's `off`/`ext` maps the
+// child space 1:1 onto the group box, so children keep the absolute coordinates they were laid out with.
+export function chOff<const X extends ST_Coordinate, const Y extends ST_Coordinate>(
+    x: X,
+    y: Y
+): Element<"a:chOff", readonly [readonly ["x", X], readonly ["y", Y]], Empty> {
+    return element("a:chOff", [["x", x], ["y", y]], []);
+}
+
+export function chExt<
+    const Cx extends ST_PositiveCoordinate,
+    const Cy extends ST_PositiveCoordinate
+>(cx: Cx, cy: Cy): Element<"a:chExt", readonly [readonly ["cx", Cx], readonly ["cy", Cy]], Empty> {
+    return element("a:chExt", [["cx", cx], ["cy", cy]], []);
+}
+
+// A group transform carries the child origin/size the plain `xfrm` omits, so a `p:grpSp` places its children.
+export function groupXfrm<
+    const O extends CT_Point2D,
+    const E extends CT_PositiveSize2D,
+    const CO extends CT_ChildOffset2D,
+    const CE extends CT_ChildSize2D
+>(offset: O, extent: E, childOffset: CO, childExtent: CE): Element<"a:xfrm", Empty, readonly [O, E, CO, CE]> {
+    return element("a:xfrm", [], [offset, extent, childOffset, childExtent]);
 }
 
 // Opacity in thousandths of a percent (100000 = opaque).

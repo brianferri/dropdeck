@@ -159,6 +159,9 @@ export type CT_Transform2D = Element<
     Seq<Opt<CT_Point2D>, Opt<CT_PositiveSize2D>>
 >;
 
+export type CT_ChildOffset2D = Element<QName<"a", "chOff">, readonly [Attr<"x", ST_Coordinate>, Attr<"y", ST_Coordinate>], Empty>;
+export type CT_ChildSize2D = Element<QName<"a", "chExt">, readonly [Attr<"cx", ST_PositiveCoordinate>, Attr<"cy", ST_PositiveCoordinate>], Empty>;
+
 export type CT_GroupTransform2D = Element<
     QName<"a", "xfrm">,
     AttrSeq<OptAttr<"rot", ST_Angle>, AttrSeq<OptAttr<"flipH", ST_Boolean>, OptAttr<"flipV", ST_Boolean>>>,
@@ -166,10 +169,7 @@ export type CT_GroupTransform2D = Element<
         Opt<CT_Point2D>,
         Seq<
             Opt<CT_PositiveSize2D>,
-            Seq<
-                Opt<Element<QName<"a", "chOff">, readonly [Attr<"x", ST_Coordinate>, Attr<"y", ST_Coordinate>], Empty>>,
-                Opt<Element<QName<"a", "chExt">, readonly [Attr<"cx", ST_PositiveCoordinate>, Attr<"cy", ST_PositiveCoordinate>], Empty>>
-            >
+            Seq<Opt<CT_ChildOffset2D>, Opt<CT_ChildSize2D>>
         >
     >
 >;
