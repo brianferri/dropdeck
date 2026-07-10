@@ -1,5 +1,5 @@
 import { binary, call, constant, logicalNot, negate, number, variable } from "./builders.js";
-import { TokenKind, tokenize } from "./Tokenizer.js";
+import { PayloadKind, PunctKind, tokenize } from "./Tokenizer.js";
 import { BinaryOperator, MathConstant, OPERATOR_PRECEDENCE, UnaryOperator } from "./Specification.js";
 import { MathError } from "./Support.js";
 import type { Operator, Token } from "./Tokenizer.js";
@@ -7,13 +7,12 @@ import type { Expression } from "./Specification.js";
 import type { Parse } from "./Parse.js";
 
 type Cursor = { tokens: ReadonlyArray<Token>, index: number };
-type PunctKind = TokenKind.Open | TokenKind.Close | TokenKind.Comma;
 
-const MATH_CONSTANTS: Record<MathConstant, true> = {
-    [MathConstant.Pi]: true,
-    [MathConstant.E]: true,
-    [MathConstant.Tau]: true
-};
+const MATH_CONSTANTS = {
+    [MathConstant.Pi]: undefined,
+    [MathConstant.E]: undefined,
+    [MathConstant.Tau]: undefined
+} as const satisfies Record<MathConstant, void>;
 
 function isBinaryOperator(operator: Operator): operator is BinaryOperator {
     return operator in OPERATOR_PRECEDENCE;
@@ -29,7 +28,7 @@ function peek(cursor: Cursor): Token | undefined {
 
 function peekOperator(cursor: Cursor, operator: Operator): boolean {
     const token = peek(cursor);
-    return token?.kind === TokenKind.Operator && token.operator === operator;
+    return token?.kind === PayloadKind.Operator && token.operator === operator;
 }
 
 function peekPunct(cursor: Cursor, kind: PunctKind): boolean {
@@ -37,18 +36,18 @@ function peekPunct(cursor: Cursor, kind: PunctKind): boolean {
 }
 
 function expectClose(cursor: Cursor): void {
-    if (!peekPunct(cursor, TokenKind.Close)) throw new MathError("expected ')'", cursor.index);
+    if (!peekPunct(cursor, PunctKind.Close)) throw new MathError("expected ')'", cursor.index);
     cursor.index += 1;
 }
 
 function parseArguments(cursor: Cursor): Array<Expression> {
     const args: Array<Expression> = [];
-    if (peekPunct(cursor, TokenKind.Close)) {
+    if (peekPunct(cursor, PunctKind.Close)) {
         cursor.index += 1;
         return args;
     }
     args.push(parseExpression(cursor));
-    while (peekPunct(cursor, TokenKind.Comma)) {
+    while (peekPunct(cursor, PunctKind.Comma)) {
         cursor.index += 1;
         args.push(parseExpression(cursor));
     }
@@ -59,25 +58,28 @@ function parseArguments(cursor: Cursor): Array<Expression> {
 function parsePrimary(cursor: Cursor): Expression {
     const token = peek(cursor);
     if (token === undefined) throw new MathError("unexpected end of input", cursor.index);
-    if (token.kind === TokenKind.Number) {
-        cursor.index += 1;
-        return number(token.value);
-    }
-    if (token.kind === TokenKind.Name) {
-        cursor.index += 1;
-        if (peekPunct(cursor, TokenKind.Open)) {
+    switch (token.kind) {
+        case PayloadKind.Number:
             cursor.index += 1;
-            return call(token.name, parseArguments(cursor));
+            return number(token.value);
+        case PayloadKind.Name:
+            cursor.index += 1;
+            if (peekPunct(cursor, PunctKind.Open)) {
+                cursor.index += 1;
+                return call(token.name, parseArguments(cursor));
+            }
+            return isConstant(token.name) ? constant(token.name) : variable(token.name);
+        case PunctKind.Open: {
+            cursor.index += 1;
+            const node = parseExpression(cursor);
+            expectClose(cursor);
+            return node;
         }
-        return isConstant(token.name) ? constant(token.name) : variable(token.name);
+        case PayloadKind.Operator:
+        case PunctKind.Close:
+        case PunctKind.Comma:
+            throw new MathError("expected an expression", cursor.index);
     }
-    if (token.kind === TokenKind.Open) {
-        cursor.index += 1;
-        const node = parseExpression(cursor);
-        expectClose(cursor);
-        return node;
-    }
-    throw new MathError("expected an expression", cursor.index);
 }
 
 function parseUnary(cursor: Cursor): Expression {
@@ -105,7 +107,7 @@ function parseBinaryAt(cursor: Cursor, precedence: number): Expression {
     if (precedence >= OPERATOR_PRECEDENCE[BinaryOperator.Power]) return parsePower(cursor);
     let left = parseBinaryAt(cursor, precedence + 1);
     let token = peek(cursor);
-    while (token?.kind === TokenKind.Operator && isBinaryOperator(token.operator) && OPERATOR_PRECEDENCE[token.operator] === precedence) {
+    while (token?.kind === PayloadKind.Operator && isBinaryOperator(token.operator) && OPERATOR_PRECEDENCE[token.operator] === precedence) {
         cursor.index += 1;
         left = binary(token.operator, left, parseBinaryAt(cursor, precedence + 1));
         token = peek(cursor);

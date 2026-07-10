@@ -1,35 +1,41 @@
 import { BinaryOperator, UnaryOperator } from "./Specification.js";
 import { MathError } from "./Support.js";
 
-export enum TokenKind {
+export enum PayloadKind {
     Number = "number",
     Name = "name",
-    Operator = "operator",
+    Operator = "operator"
+}
+
+export enum PunctKind {
     Open = "(",
     Close = ")",
     Comma = ","
 }
 
+export type TokenKind = PayloadKind | PunctKind;
+
 export type Operator = BinaryOperator | UnaryOperator;
 
 export type Token =
-    | { kind: TokenKind.Number, value: number }
-    | { kind: TokenKind.Name, name: string }
-    | { kind: TokenKind.Operator, operator: Operator }
-    | { kind: TokenKind.Open }
-    | { kind: TokenKind.Close }
-    | { kind: TokenKind.Comma };
+    | { kind: PayloadKind.Number, value: number }
+    | { kind: PayloadKind.Name, name: string }
+    | { kind: PayloadKind.Operator, operator: Operator }
+    | { kind: PunctKind };
 
 const OPERATOR_BY_SPELLING: Record<string, Operator | undefined> = {};
 for (const operator of Object.values(BinaryOperator)) OPERATOR_BY_SPELLING[operator] = operator;
 for (const operator of Object.values(UnaryOperator)) OPERATOR_BY_SPELLING[operator] = operator;
 
-type PunctKind = TokenKind.Open | TokenKind.Close | TokenKind.Comma;
-const PUNCT_BY_SPELLING: Record<string, PunctKind | undefined> = {
-    [TokenKind.Open]: TokenKind.Open,
-    [TokenKind.Close]: TokenKind.Close,
-    [TokenKind.Comma]: TokenKind.Comma
-};
+const PUNCT_CHARS = {
+    [PunctKind.Open]: undefined,
+    [PunctKind.Close]: undefined,
+    [PunctKind.Comma]: undefined
+} as const satisfies Record<PunctKind, void>;
+
+function isPunctChar(char: string): char is PunctKind {
+    return char in PUNCT_CHARS;
+}
 
 function isWhitespace(char: string): boolean {
     return char === " " || char === "\n" || char === "\t" || char === "\r";
@@ -75,32 +81,31 @@ export function tokenize(source: string): Array<Token> {
         }
         const pairOperator = OPERATOR_BY_SPELLING[source.slice(index, index + 2)];
         if (pairOperator !== undefined) {
-            tokens.push({ kind: TokenKind.Operator, operator: pairOperator });
+            tokens.push({ kind: PayloadKind.Operator, operator: pairOperator });
             index += 2;
             continue;
         }
         if (isDigit(char)) {
             const { value, next } = readNumber(source, index);
-            tokens.push({ kind: TokenKind.Number, value });
+            tokens.push({ kind: PayloadKind.Number, value });
             index = next;
             continue;
         }
         if (isAlpha(char)) {
             const { name, next } = readName(source, index);
             const wordOperator = OPERATOR_BY_SPELLING[name];
-            tokens.push(wordOperator !== undefined ? { kind: TokenKind.Operator, operator: wordOperator } : { kind: TokenKind.Name, name });
+            tokens.push(wordOperator !== undefined ? { kind: PayloadKind.Operator, operator: wordOperator } : { kind: PayloadKind.Name, name });
             index = next;
             continue;
         }
-        const punctKind = PUNCT_BY_SPELLING[char];
-        if (punctKind !== undefined) {
-            tokens.push({ kind: punctKind });
+        if (isPunctChar(char)) {
+            tokens.push({ kind: char });
             index += 1;
             continue;
         }
         const charOperator = OPERATOR_BY_SPELLING[char];
         if (charOperator !== undefined) {
-            tokens.push({ kind: TokenKind.Operator, operator: charOperator });
+            tokens.push({ kind: PayloadKind.Operator, operator: charOperator });
             index += 1;
             continue;
         }

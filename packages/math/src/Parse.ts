@@ -2,13 +2,13 @@ import type { AdditiveOperator, BinaryOperator, ComparisonOperator, MathConstant
 import type {
     BinaryNode, CallNode, Content, ConstantNode, Expression, NegateNode, NotNode, NumberNode, One, Pair, VariableNode
 } from "./Specification.js";
-import type { TokenKind } from "./Tokenizer.js";
+import type { PayloadKind, PunctKind } from "./Tokenizer.js";
 
 type Operator = BinaryOperator | UnaryOperator;
 
 type OperatorBySpelling = { [Op in Operator as `${Op}`]: Op };
 type ConstantBySpelling = { [Name in MathConstant as `${Name}`]: Name };
-type PunctBySpelling = { [Kind in TokenKind.Open | TokenKind.Close | TokenKind.Comma as `${Kind}`]: Kind };
+type PunctBySpelling = { [Kind in PunctKind as `${Kind}`]: Kind };
 
 type DigitChar = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";
 type AlphaChar =
@@ -18,10 +18,9 @@ type AlphaChar =
     | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "_";
 type Whitespace = " " | "\n" | "\t" | "\r";
 
-type PunctKind = TokenKind.Open | TokenKind.Close | TokenKind.Comma;
-type NumberToken<Value extends number = number> = { kind: TokenKind.Number, value: Value };
-type NameToken<Name extends string = string> = { kind: TokenKind.Name, name: Name };
-type OperatorToken<Op extends Operator = Operator> = { kind: TokenKind.Operator, operator: Op };
+type NumberToken<Value extends number = number> = { kind: PayloadKind.Number, value: Value };
+type NameToken<Name extends string = string> = { kind: PayloadKind.Name, name: Name };
+type OperatorToken<Op extends Operator = Operator> = { kind: PayloadKind.Operator, operator: Op };
 type PunctToken<Kind extends PunctKind = PunctKind> = { kind: Kind };
 type Token = NumberToken | NameToken | OperatorToken | PunctToken;
 type Tokens = ReadonlyArray<Token>;
@@ -90,7 +89,7 @@ export type ParseError<Message extends string = string> = { parseError: Message 
 type Parsed<Node extends Expression, Rest extends Tokens> = { node: Node, rest: Rest };
 
 type ParseArgs<T extends Tokens, Acc extends Content = readonly []> =
-    T extends [{ kind: TokenKind.Close }, ...infer Rest extends Tokens]
+    T extends [{ kind: PunctKind.Close }, ...infer Rest extends Tokens]
         ? { args: Acc, rest: Rest }
         : ContinueArg<ParseBinary<T>, Acc>;
 
@@ -98,9 +97,9 @@ type ContinueArg<Result, Acc extends Content> =
     Result extends Parsed<infer Node, infer After> ? AfterArg<After, readonly [...Acc, Node]> : Result;
 
 type AfterArg<After extends Tokens, Acc extends Content> =
-    After extends [{ kind: TokenKind.Comma }, ...infer Rest extends Tokens]
+    After extends [{ kind: PunctKind.Comma }, ...infer Rest extends Tokens]
         ? ParseArgs<Rest, Acc>
-        : After extends [{ kind: TokenKind.Close }, ...infer Rest extends Tokens]
+        : After extends [{ kind: PunctKind.Close }, ...infer Rest extends Tokens]
             ? { args: Acc, rest: Rest }
             : ParseError<"expected ',' or ')'">;
 
@@ -112,17 +111,17 @@ type CompleteCall<Name extends string, Result> =
 
 type CloseGroup<Result> =
     Result extends Parsed<infer Node, infer After>
-        ? After extends [{ kind: TokenKind.Close }, ...infer Rest extends Tokens] ? Parsed<Node, Rest> : ParseError<"expected ')'">
+        ? After extends [{ kind: PunctKind.Close }, ...infer Rest extends Tokens] ? Parsed<Node, Rest> : ParseError<"expected ')'">
         : Result;
 
 type NumberPrimary<Head extends Token, Rest extends Tokens> =
     Head extends NumberToken<infer Value> ? Parsed<NumberNode<Value>, Rest> : false;
 type NamePrimary<Head extends Token, Rest extends Tokens> =
     Head extends NameToken<infer Name>
-        ? Rest extends [{ kind: TokenKind.Open }, ...infer Args extends Tokens] ? CompleteCall<Name, ParseArgs<Args>> : NameAtom<Name, Rest>
+        ? Rest extends [{ kind: PunctKind.Open }, ...infer Args extends Tokens] ? CompleteCall<Name, ParseArgs<Args>> : NameAtom<Name, Rest>
         : false;
 type GroupPrimary<Head extends Token, Rest extends Tokens> =
-    Head extends { kind: TokenKind.Open } ? CloseGroup<ParseBinary<Rest>> : false;
+    Head extends { kind: PunctKind.Open } ? CloseGroup<ParseBinary<Rest>> : false;
 
 type ParsePrimary<T extends Tokens> =
     T extends [infer Head extends Token, ...infer Rest extends Tokens]
