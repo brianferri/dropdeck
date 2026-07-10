@@ -8,15 +8,21 @@
         "#/*": "./src/*"
     },
     "workspaces": [
-        "packages/*"
+        "packages/xml",
+        "packages/html",
+        "packages/pptx",
+        "packages/xlsx",
+        "packages/markdown",
+        "packages/math",
+        "packages/latex"
     ],
     "scripts": {
         "dev": "vite",
-        "prebuild": "npm run build --workspace @dropdeck/xml --workspace @dropdeck/html --workspace @dropdeck/pptx --workspace @dropdeck/xlsx --workspace @dropdeck/markdown --workspace @dropdeck/math",
+        "prebuild": "npm run build --workspaces --if-present",
         "build": "tsc --noEmit && vite build",
         "preview": "vite preview",
-        "precheck": "npm run build --workspace @dropdeck/xml --workspace @dropdeck/html --workspace @dropdeck/pptx --workspace @dropdeck/xlsx --workspace @dropdeck/markdown --workspace @dropdeck/math",
-        "check": "npm run check --workspace @dropdeck/xml --workspace @dropdeck/html --workspace @dropdeck/pptx --workspace @dropdeck/xlsx --workspace @dropdeck/markdown --workspace @dropdeck/math && tsc --noEmit && eslint .",
+        "precheck": "npm run build --workspaces --if-present",
+        "check": "npm run check --workspaces --if-present && tsc --noEmit && eslint .",
         "check:fix": "eslint . --fix",
         "test": "vitest run",
         "test:coverage": "vitest run --coverage",
