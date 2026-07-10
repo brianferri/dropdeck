@@ -1,6 +1,7 @@
-export { ExpressionKind, BinaryOperator, UnaryOperator, MathConstant } from "./Specification.js";
+export { ExpressionKind, BinaryOperator, UnaryOperator, MathConstant, OPERATOR_PRECEDENCE } from "./Specification.js";
 export type {
-    BinaryNode, CallNode, Content, ConstantNode, Expression, NegateNode, NotNode, NumberNode, One, Pair, VariableNode
+    BinaryNode, CallNode, Content, ConstantNode, Expression, NegateNode, NotNode, NumberNode, One, Pair, Precedence,
+    VariableNode
 } from "./Specification.js";
 export { binary, call, constant, logicalNot, negate, number, variable } from "./builders.js";
 export { PayloadKind, PunctKind, tokenize } from "./Tokenizer.js";
