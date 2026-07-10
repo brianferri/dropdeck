@@ -1,11 +1,12 @@
 {
     "name": "@dropdeck/xml",
     "version": "0.0.0",
-    "description": "Dependency-free, typed XML element tree and serializer, with an SVG element vocabulary",
+    "description": "Dependency-free, typed XML element tree and serializer, with dialects",
     "type": "module",
     "exports": {
         ".": "./dist/src/index.js",
-        "./svg": "./dist/src/svg/index.js"
+        "./svg": "./dist/src/svg/index.js",
+        "./mathml": "./dist/src/mathml/index.js"
     },
     "scripts": {
         "check": "tsc --noEmit && eslint .",
