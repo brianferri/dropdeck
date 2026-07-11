@@ -62,7 +62,7 @@ type NumberRule<S extends string> =
 type NameRule<S extends string> =
     S extends `${infer Head}${string}`
         ? Head extends AlphaChar
-            ? TakeRun<S, AlphaChar> extends { run: infer Run extends string, rest: infer Rest extends string } ? Step<[NameTokenOf<Run>], Rest> : false
+            ? TakeRun<S, AlphaChar | DigitChar> extends { run: infer Run extends string, rest: infer Rest extends string } ? Step<[NameTokenOf<Run>], Rest> : false
             : false
         : false;
 type PunctRule<S extends string> =

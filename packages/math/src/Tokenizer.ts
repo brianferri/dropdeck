@@ -63,7 +63,7 @@ function readNumber(source: string, start: number): { value: number, next: numbe
 
 function readName(source: string, start: number): { name: string, next: number } {
     let index = start;
-    while (index < source.length && isAlpha(source[index])) index += 1;
+    while (index < source.length && (isAlpha(source[index]) || isDigit(source[index]))) index += 1;
     return { name: source.slice(start, index), next: index };
 }
 
