@@ -55,10 +55,12 @@ type WrapTight<Child extends Expression> = [RowOperator<Child>] extends [never] 
 
 type LowerNumber<E extends Expression> = E extends { kind: ExpressionKind.Number, value: infer Value extends number } ? NumberNode<Value> : false;
 
+type SubscriptIndex<Index extends string> = Index extends `${infer Value extends number}` ? NumberNode<Value> : IdentifierNode<Index>;
+
 // A `_` in a variable name is a semantic subscript in math but a presentational one here, split on the first `_`.
 type LowerVariable<E extends Expression> =
     E extends { kind: ExpressionKind.Variable, name: infer Name extends string }
-        ? Name extends `${infer Base}_${infer Index}` ? SubscriptNode<Pair<IdentifierNode<Base>, IdentifierNode<Index>>> : IdentifierNode<Name>
+        ? Name extends `${infer Base}_${infer Index}` ? SubscriptNode<Pair<IdentifierNode<Base>, SubscriptIndex<Index>>> : IdentifierNode<Name>
         : false;
 
 type LowerConstant<E extends Expression> = E extends { kind: ExpressionKind.Constant, name: infer Name extends MathConstant } ? IdentifierNode<ConstantGlyph[Name]> : false;
@@ -143,10 +145,16 @@ function wrapTight(child: Expression): Notation {
     return isRowBinary(child) ? fenced("(", ")", [lowerNode(child)]) : lowerNode(child);
 }
 
+function subscriptIndex(index: string): Notation {
+    if (index === "") return identifier(index);
+    const value = Number(index);
+    return Number.isNaN(value) ? identifier(index) : number(value);
+}
+
 function splitVariable(name: string): Notation {
     const underscore = name.indexOf("_");
     if (underscore === -1) return identifier(name);
-    return subscript(identifier(name.slice(0, underscore)), identifier(name.slice(underscore + 1)));
+    return subscript(identifier(name.slice(0, underscore)), subscriptIndex(name.slice(underscore + 1)));
 }
 
 function lowerArgs(children: MathContent): Notation {

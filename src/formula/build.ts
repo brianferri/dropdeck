@@ -52,3 +52,10 @@ export function subscript<const Base extends Notation, const Index extends Notat
 export function radical<const Radicand extends Notation>(radicand: Radicand): RadicalNode<One<Radicand>> {
     return { kind: NotationKind.Radical, children: [radicand] as const };
 }
+
+export function root<const Radicand extends Notation, const Index extends Notation>(
+    radicand: Radicand,
+    index: Index
+): RadicalNode<Pair<Radicand, Index>> {
+    return { kind: NotationKind.Radical, children: [radicand, index] as const };
+}

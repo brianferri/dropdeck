@@ -43,6 +43,7 @@
     },
     "dependencies": {
         "@dropdeck/html": "*",
+        "@dropdeck/latex": "*",
         "@dropdeck/markdown": "*",
         "@dropdeck/math": "*",
         "@dropdeck/pptx": "*",
