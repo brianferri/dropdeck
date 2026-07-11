@@ -88,7 +88,7 @@ type SplitColumns<S extends string, Acc extends ReadonlyArray<string> = []> =
     S extends `${infer Head}\n::right::\n${infer Rest}` ? SplitColumns<Rest, [...Acc, Head]> : [...Acc, S];
 
 type ColumnsOf<Text extends string> =
-    SplitColumns<Text extends `::left::\n${infer Rest}` ? Rest : Text> extends infer Cols extends ReadonlyArray<string>
+    SplitColumns<Text> extends infer Cols extends ReadonlyArray<string>
         ? { kind: BlockKind.Columns, columns: { [Index in keyof Cols]: ParseBlocks<Trim<Cols[Index] & string>> } }
         : { kind: BlockKind.Columns, columns: Array<Array<Block>> };
 

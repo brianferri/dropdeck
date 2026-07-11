@@ -12,7 +12,7 @@ type Slides = ParseDeck<"# One\n\nbody one\n\n---\n\n# Two\n\nbody two\n">["slid
 type Metrics = ParseDeck<"# M\n\n```metrics\n42 | Answer | x\n```\n">["slides"][0]["blocks"][0];
 type Bars = ParseDeck<"# B\n\n```bars\nAlpha | 95% | 95\n```\n">["slides"][0]["blocks"][0];
 type Cards = ParseDeck<"# C\n\n### Alpha\nbody a\n\n### Beta\nbody b\n">["slides"][0]["blocks"][0];
-type Columns = ParseDeck<"# K\n\n::left::\na\n::right::\nb\n">["slides"][0]["blocks"][0];
+type Columns = ParseDeck<"# K\n\na\n::right::\nb\n">["slides"][0]["blocks"][0];
 type Html = ParseDeck<"# H\n\n<div class=\"x\">a</div>\n">["slides"][0]["blocks"][0];
 type Code = ParseDeck<"# Code\n\n```ts\nconst x = 1;\n```\n">["slides"][0]["blocks"][0];
 type Config = ParseDeck<"---\naccent: \"#7befeb\"\nfont: 'Manrope'\ndark: true\n---\n\n# T\n">["config"];

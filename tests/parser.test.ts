@@ -79,8 +79,8 @@ test("a non-metrics/bars fence stays a Code block keeping its lang", () => {
     expect(block.content).toBe("const x = 1;");
 });
 
-test("::left:: / ::right:: split into one Columns block, one column per segment", () => {
-    const deck = parse("# Cols\n\n::left::\nleft prose\n::right::\nmid prose\n::right::\nright prose\n");
+test("::right:: splits into one Columns block, one column per segment", () => {
+    const deck = parse("# Cols\n\nleft prose\n::right::\nmid prose\n::right::\nright prose\n");
     const block = firstBlock(deck, BlockKind.Columns);
     expect(block.columns.length).toBe(3);
     expect(block.columns.every((column) => column[0]?.kind === BlockKind.Prose)).toBe(true);

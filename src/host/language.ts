@@ -26,7 +26,7 @@ export const DIRECTIVES = [
         label: "::right::",
         insert: "::right::\n$0",
         detail: "column split",
-        doc: "Splits the slide into two columns: everything before `::right::` is the left column, everything after is the right. It stands alone -- there is no `::left::`.",
+        doc: "Splits the slide into columns: each `::right::` starts the next column, and the text before the first is already the first column.",
         kind: CompletionKind.Directive
     }
 ] as const;

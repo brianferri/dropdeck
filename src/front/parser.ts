@@ -183,12 +183,11 @@ function parseChartData(kind: ChartKind, content: string): ChartData {
     return { kind, categories, series };
 }
 
-// `::left::` is optional: the segment before the first `::right::` is already the first column.
+// Each `::right::` starts the next column; the text before the first is already the first column.
 function splitColumns(text: string): Array<string> {
     const segments: Array<string> = [];
     let column: Array<string> = [];
     for (const line of text.split("\n")) {
-        if (line.trimEnd() === "::left::") continue;
         if (line.trimEnd() === "::right::") {
             segments.push(column.join("\n"));
             column = [];
