@@ -12,7 +12,7 @@ function labels(source: string, caret: number): Array<string> {
 suite("completionsAt context", () => {
     test("fence opener offers component fences, chart typed by kind", () => {
         const src = "# Slide\n\n```";
-        expect(labels(src, src.length)).toEqual(["metrics", "bars", "chart", "chart stacked", "chart line", "chart area", "chart pie"]);
+        expect(labels(src, src.length)).toEqual(["metrics", "bars", "math", "latex", "chart", "chart stacked", "chart line", "chart area", "chart pie"]);
         const partial = "# Slide\n\n```ba";
         expect(labels(partial, partial.length)).toEqual(["bars"]);
         const chart = "# Slide\n\n```chart ";

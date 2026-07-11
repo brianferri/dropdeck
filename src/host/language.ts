@@ -10,7 +10,9 @@ export enum CompletionKind {
     Fence = "fence",
     Frontmatter = "frontmatter",
     Snippet = "snippet",
-    Asset = "asset"
+    Asset = "asset",
+    Math = "math",
+    Latex = "latex"
 }
 
 export type CompletionItem = {
@@ -65,10 +67,81 @@ const FENCE_ROWS: ReadonlyArray<CompletionItem> = [
         detail: "bar chart",
         doc: "A horizontal bar chart. Each row is `label | tag | percent` (0-100); bars grow on slide entry.",
         kind: CompletionKind.Fence
+    },
+    {
+        label: "math",
+        insert: "math\n${1:x^2}\n```\n$0",
+        detail: "math formula",
+        doc: "A formula in the `math` language (semantic: `a/b` divides, `x^2` powers, `sqrt(x)` calls). Renders as native MathML in HTML and an editable equation in PowerPoint.",
+        kind: CompletionKind.Fence
+    },
+    {
+        label: "latex",
+        insert: "latex\n${1:\\frac{a}{b}}\n```\n$0",
+        detail: "LaTeX formula",
+        doc: "A formula in `latex` (presentational: `\\frac{a}{b}`, `x^2`, `\\sqrt{x}`). Renders as native MathML in HTML and an editable equation in PowerPoint.",
+        kind: CompletionKind.Fence
     }
 ];
 
 export const FENCES: ReadonlyArray<CompletionItem> = FENCE_ROWS.concat(Object.values(ChartKind).map(chartFence));
+
+function mathToken(label: string, insert: string, doc: string): CompletionItem {
+    return { label, insert, detail: "math", doc, kind: CompletionKind.Math };
+}
+
+// Operators (`+ - * / ^ == <= >= != and or`) are typed directly, so only functions and constants complete.
+export const MATH_TOKENS: ReadonlyArray<CompletionItem> = [
+    mathToken("sqrt", "sqrt(${1:x})$0", "Square root, rendered as a radical."),
+    mathToken("sin", "sin(${1:x})$0", "Sine, rendered as `sin(x)`."),
+    mathToken("cos", "cos(${1:x})$0", "Cosine, rendered as `cos(x)`."),
+    mathToken("tan", "tan(${1:x})$0", "Tangent, rendered as `tan(x)`."),
+    mathToken("log", "log(${1:x})$0", "Logarithm, rendered as `log(x)`."),
+    mathToken("ln", "ln(${1:x})$0", "Natural logarithm, rendered as `ln(x)`."),
+    mathToken("exp", "exp(${1:x})$0", "Exponential, rendered as `exp(x)`."),
+    mathToken("abs", "abs(${1:x})$0", "Absolute value, rendered as `abs(x)`."),
+    mathToken("pi", "pi", "The constant π."),
+    mathToken("e", "e", "Euler's number e."),
+    mathToken("tau", "tau", "The constant τ (2π).")
+];
+
+function latexCommand(label: string, insert: string, doc: string): CompletionItem {
+    return { label, insert, detail: "latex", doc, kind: CompletionKind.Latex };
+}
+
+export const LATEX_COMMANDS: ReadonlyArray<CompletionItem> = [
+    latexCommand("\\frac", "\\frac{${1:a}}{${2:b}}$0", "A fraction, a over b."),
+    latexCommand("\\sqrt", "\\sqrt{${1:x}}$0", "A square root; `\\sqrt[n]{x}` for an nth root."),
+    latexCommand("\\cdot", "\\cdot", "Multiplication dot ·."),
+    latexCommand("\\times", "\\times", "Multiplication cross ×."),
+    latexCommand("\\div", "\\div", "Division sign ÷."),
+    latexCommand("\\pm", "\\pm", "Plus-minus ±."),
+    latexCommand("\\mp", "\\mp", "Minus-plus ∓."),
+    latexCommand("\\le", "\\le", "Less than or equal ≤."),
+    latexCommand("\\ge", "\\ge", "Greater than or equal ≥."),
+    latexCommand("\\ne", "\\ne", "Not equal ≠."),
+    latexCommand("\\approx", "\\approx", "Approximately equal ≈."),
+    latexCommand("\\equiv", "\\equiv", "Identical to ≡."),
+    latexCommand("\\land", "\\land", "Logical and ∧."),
+    latexCommand("\\lor", "\\lor", "Logical or ∨."),
+    latexCommand("\\to", "\\to", "Right arrow →."),
+    latexCommand("\\mapsto", "\\mapsto", "Maps-to arrow ↦."),
+    latexCommand("\\in", "\\in", "Set membership ∈."),
+    latexCommand("\\cup", "\\cup", "Set union ∪."),
+    latexCommand("\\cap", "\\cap", "Set intersection ∩."),
+    latexCommand("\\alpha", "\\alpha", "The Greek letter α."),
+    latexCommand("\\beta", "\\beta", "The Greek letter β."),
+    latexCommand("\\gamma", "\\gamma", "The Greek letter γ."),
+    latexCommand("\\delta", "\\delta", "The Greek letter δ."),
+    latexCommand("\\theta", "\\theta", "The Greek letter θ."),
+    latexCommand("\\lambda", "\\lambda", "The Greek letter λ."),
+    latexCommand("\\mu", "\\mu", "The Greek letter μ."),
+    latexCommand("\\pi", "\\pi", "The Greek letter π."),
+    latexCommand("\\sigma", "\\sigma", "The Greek letter σ."),
+    latexCommand("\\phi", "\\phi", "The Greek letter φ."),
+    latexCommand("\\omega", "\\omega", "The Greek letter ω."),
+    latexCommand("\\tau", "\\tau", "The Greek letter τ.")
+];
 
 function colorKey(label: string, doc: string): CompletionItem {
     return { label, insert: `${label}: \${0:#5cd0b3}`, detail: "colour", doc, kind: CompletionKind.Frontmatter };

@@ -1,7 +1,8 @@
 import { serializeAll } from "#/dom";
 import { completionItemView, tooltipView } from "#/host/components/editor.component";
 import { requireElement } from "#/host/dom";
-import { CompletionKind, DIRECTIVES, FENCES, FRONTMATTER, FRONTMATTER_VALUES, SNIPPETS } from "#/host/language";
+import { CompletionKind, DIRECTIVES, FENCES, FRONTMATTER, FRONTMATTER_VALUES, LATEX_COMMANDS, MATH_TOKENS, SNIPPETS } from "#/host/language";
+import { FormulaNotation } from "#/ir";
 import { has } from "#/support";
 import type { CompletionItem } from "#/host/language";
 
@@ -60,6 +61,44 @@ function filterFrom(items: ReadonlyArray<CompletionItem>, typed: string, from: n
     return { items: matched, from, to };
 }
 
+const FORMULA_NOTATIONS = new Set<string>(Object.values(FormulaNotation));
+
+function isFormulaNotation(lang: string): lang is FormulaNotation {
+    return FORMULA_NOTATIONS.has(lang);
+}
+
+// Each ``` toggles in or out of a fence, so the last state before the line says which body -- if any -- holds the caret.
+function enclosingFormula(source: string, lineStart: number): FormulaNotation | null {
+    let lang: string | null = null;
+    for (const line of source.slice(0, lineStart).split("\n")) {
+        const trimmed = line.trimStart();
+        if (trimmed.startsWith("```")) lang = lang === null ? trimmed.slice(3).trim() : null;
+    }
+    if (lang === null) return null;
+    return isFormulaNotation(lang) ? lang : null;
+}
+
+function formulaCompletions(notation: FormulaNotation, linePrefix: string, caret: number): Completion | null {
+    switch (notation) {
+        case FormulaNotation.Latex: {
+            const command = trailingLatexCommand(linePrefix);
+            return command === null ? null : filterFrom(LATEX_COMMANDS, command, caret - command.length, caret);
+        }
+        case FormulaNotation.Math: {
+            const token = trailingWord(linePrefix);
+            return token === "" ? null : filterFrom(MATH_TOKENS, token, caret - token.length, caret);
+        }
+    }
+}
+
+// A LaTeX completion only makes sense after the backslash that starts a command, so a bare word yields none.
+function trailingLatexCommand(prefix: string): string | null {
+    let start = prefix.length;
+    while (start > 0 && isWordChar(prefix[start - 1])) start -= 1;
+    if (prefix[start - 1] !== "\\") return null;
+    return prefix.slice(start - 1);
+}
+
 function assetContext(linePrefix: string): { typed: string, from: number } | null {
     const open = linePrefix.lastIndexOf("](");
     if (open < 0) return null;
@@ -94,6 +133,9 @@ export function completionsAt(source: string, caret: number, assets: ReadonlyArr
         const typed = trimmed.slice(colon + 1).trimStart();
         return filterFrom(FRONTMATTER_VALUES[key], typed, caret - typed.length, caret);
     }
+
+    const formula = enclosingFormula(source, lineStart);
+    if (formula !== null) return formulaCompletions(formula, linePrefix, caret);
 
     const word = trailingWord(linePrefix);
     if (word.length > 0 && word === trimmed) return filterFrom(SNIPPETS, word, caret - word.length, caret);
