@@ -6,7 +6,8 @@
     "exports": {
         ".": "./dist/src/index.js",
         "./svg": "./dist/src/svg/index.js",
-        "./mathml": "./dist/src/mathml/index.js"
+        "./mathml": "./dist/src/mathml/index.js",
+        "./omml": "./dist/src/omml/index.js"
     },
     "scripts": {
         "check": "tsc --noEmit && eslint .",
