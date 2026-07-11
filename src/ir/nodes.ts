@@ -8,7 +8,13 @@ export enum BlockKind {
     Bars = "bars",
     Chart = "chart",
     Code = "code",
+    Formula = "formula",
     Columns = "columns"
+}
+
+export enum FormulaNotation {
+    Math = "math",
+    Latex = "latex"
 }
 
 export enum SlideLayout {
@@ -63,6 +69,7 @@ export type Block =
     | { kind: BlockKind.Bars, rows: Array<BarRow> }
     | { kind: BlockKind.Chart, chart: ChartData }
     | { kind: BlockKind.Code, lang: string, content: string }
+    | { kind: BlockKind.Formula, notation: FormulaNotation, source: string }
     | { kind: BlockKind.Columns, columns: Array<Array<Block>> };
 
 export type Slide = {

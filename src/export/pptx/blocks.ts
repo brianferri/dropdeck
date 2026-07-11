@@ -1,7 +1,8 @@
 import { HtmlTag, NodeField, attribute, childElements, findAll, findFirst, hasClass, parse, serialize, textContent } from "@dropdeck/html";
 import { CssProperty, colorClass, columnSpan, gridColumns as tailwindGridColumns, resolve as resolveTailwind } from "@dropdeck/html/tailwind";
 import { decompose, matrixOf, parseStyle, parseTransform, styleValue } from "@dropdeck/html/css";
-import { Align, Anchor, idFactory, imageShape, leftBarFrame, panel, paragraphOf, pProps, relFactory, styledRun, textBox, txBodyOf } from "#/export/pptx/build";
+import { Align, Anchor, fill as solidFill, idFactory, imageShape, leftBarFrame, panel, paragraphOf, pProps, relFactory, styledRun, textBox, txBodyOf } from "#/export/pptx/build";
+import { fontSize } from "#/export/pptx/units";
 import { PANEL_PAD, PANEL_RADIUS, glassPanel, lowered, runBox } from "#/export/pptx/lower";
 import { lowerChart } from "#/export/pptx/chart";
 import { inlineRuns, inlineRunsFromNodes, inlineSegments } from "#/export/pptx/inline";
@@ -9,16 +10,21 @@ import { resolveImage } from "#/export/pptx/image";
 import { svgToShapes } from "#/export/pptx/svg-lower";
 import { Motion } from "#/export/pptx/animations/timing";
 import { morphName } from "#/animations/spec";
+import { element as oox } from "@dropdeck/pptx";
+import { oMathPara } from "@dropdeck/xml/omml";
+import { parse as parseMath } from "@dropdeck/math";
+import { parse as parseLatex } from "@dropdeck/latex";
 import { renderMarkdown } from "#/render/html";
+import { lowerLatex, lowerMath, toOmml } from "#/formula";
 import { barFraction, gridCols, metricCols } from "#/layout";
-import { BlockKind } from "#/ir";
+import { BlockKind, FormulaNotation } from "#/ir";
 import type { AnimatedShapeRef, Embed, Lowered } from "#/export/pptx/lower";
 import type { Content, DomNode, ElementNode } from "@dropdeck/html";
 import type { Palette } from "#/export/pptx/palette";
 import type { RunStyle } from "#/export/pptx/build";
 import type { Block, BarRow, Card, MetricRow } from "#/ir";
 import type { ColorClass } from "@dropdeck/html/tailwind";
-import type { Node, SlideMedia } from "@dropdeck/pptx";
+import type { CT_TextParagraph, Node, SlideMedia } from "@dropdeck/pptx";
 
 export type { AnimatedShapeRef, Embed } from "#/export/pptx/lower";
 
@@ -526,6 +532,37 @@ function lowerCode(content: string, embed: Embed, x: number, y: number, width: n
     return lowered([surface, text], height);
 }
 
+const FORMULA_HEIGHT = 60;
+const FORMULA_SIZE_PX = 24;
+const FORMULA_ERROR_COLOR = "e5484d";
+const MARKUP_COMPAT_NS = "http://schemas.openxmlformats.org/markup-compatibility/2006";
+const DRAWING_2010_NS = "http://schemas.microsoft.com/office/drawing/2010/main";
+
+// PowerPoint renders DrawingML math only through the 2010 `a14:m` extension; a bare `m:oMathPara` is ignored.
+function formulaEquation(notation: FormulaNotation, source: string, palette: Palette): CT_TextParagraph {
+    const shared = notation === FormulaNotation.Latex ? lowerLatex(parseLatex(source)) : lowerMath(parseMath(source));
+    const defaults = oox("a:defRPr", [["sz", fontSize(FORMULA_SIZE_PX)]], [solidFill(palette.text)]);
+    const properties = oox("a:pPr", [["algn", "ctr"]], [defaults]);
+    const choice = oox("mc:Choice", [["xmlns:a14", DRAWING_2010_NS], ["Requires", "a14"]], [oox("a14:m", [], [oMathPara([toOmml(shared)])])]);
+    const fallback = oox("mc:Fallback", [], [styledRun(source, { sizePx: FORMULA_SIZE_PX, color: palette.text, font: palette.mono })]);
+    const alternate = oox("mc:AlternateContent", [["xmlns:mc", MARKUP_COMPAT_NS]], [choice, fallback]);
+    const children: ReadonlyArray<Node> = [properties, alternate];
+    return oox("a:p", [], children) as CT_TextParagraph;
+}
+
+function lowerFormula(notation: FormulaNotation, source: string, embed: Embed, x: number, y: number, width: number): Lowered {
+    const { nextId, palette } = embed;
+    try {
+        const body = txBodyOf(Anchor.Center, [formulaEquation(notation, source, palette)]);
+        return lowered([textBox(nextId, x, y, width, FORMULA_HEIGHT, body)], FORMULA_HEIGHT);
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        const sourceParagraph = paragraphOf(pProps(Align.Center, 0, 0), [styledRun(source, { sizePx: 18, color: palette.secondary, font: palette.mono })]);
+        const errorParagraph = paragraphOf(pProps(Align.Center, 0, 0), [styledRun(message, { sizePx: 16, color: FORMULA_ERROR_COLOR, font: palette.mono })]);
+        return lowered([textBox(nextId, x, y, width, FORMULA_HEIGHT, txBodyOf(Anchor.Center, [sourceParagraph, errorParagraph]))], FORMULA_HEIGHT);
+    }
+}
+
 const HEADING_TAGS = new Set<string>([HtmlTag.H1, HtmlTag.H2, HtmlTag.H3, HtmlTag.H4, HtmlTag.H5, HtmlTag.H6]);
 
 function isGrid(element: ElementNode): boolean {
@@ -760,6 +797,8 @@ function lowerBlock(block: Block, embed: Embed, x: number, y: number, width: num
             return lowerMarkup(renderMarkdown(block.markdown), embed, x, y, width, align);
         case BlockKind.Code:
             return lowerCode(block.content, embed, x, y, width);
+        case BlockKind.Formula:
+            return lowerFormula(block.notation, block.source, embed, x, y, width);
         case BlockKind.Metrics:
             return lowerMetrics(block.rows, embed, x, y, width);
         case BlockKind.Cards:

@@ -1,11 +1,15 @@
-import { code, div, h3, parse, pre, sanitize, span } from "#/dom";
+import { code, div, h3, parse, pre, sanitize, span, text } from "#/dom";
 import { NodeField, element } from "@dropdeck/html";
+import { parse as parseMath } from "@dropdeck/math";
+import { parse as parseLatex } from "@dropdeck/latex";
 import { gridCols, metricCols } from "#/layout";
 import { chartNode } from "#/export/html/chart";
 import { renderMarkdown } from "#/render/html";
 import { convertFences } from "#/render/markdown";
-import { BlockKind } from "#/ir";
+import { lowerLatex, lowerMath, toMathML } from "#/formula";
+import { BlockKind, FormulaNotation } from "#/ir";
 import type { Child, DomNode, ElementNode } from "#/dom";
+import type { Node as XmlNode } from "@dropdeck/xml";
 import type { Block, BarRow, Card, MetricRow } from "#/ir";
 
 // A deck's Markdown may carry raw HTML; sanitize so an untrusted deck cannot inject script into the live page
@@ -56,6 +60,29 @@ function codeNode(content: string): ElementNode<"div"> {
     return div({ class: "code-block mt-3", data: { animation: "reveal" } }, pre({}, code({}, content)));
 }
 
+function mathmlToDom(node: XmlNode): DomNode {
+    if (NodeField.Text in node) return text(node.text);
+    return element(node.tag, node.attrs.map(([name, value]) => [name, String(value)] as const), node.children.map(mathmlToDom));
+}
+
+function formulaMathML(notation: FormulaNotation, source: string): XmlNode {
+    if (notation === FormulaNotation.Latex) return toMathML(lowerLatex(parseLatex(source)));
+    return toMathML(lowerMath(parseMath(source)));
+}
+
+function formulaNode(notation: FormulaNotation, source: string): ElementNode<"div"> {
+    try {
+        return div({ class: "formula mt-3", data: { animation: "reveal" } }, mathmlToDom(formulaMathML(notation, source)));
+    } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return div(
+            { class: "formula formula-error mt-3", data: { animation: "reveal" } },
+            div({ class: "formula-error-src" }, source),
+            div({ class: "formula-error-msg" }, message)
+        );
+    }
+}
+
 function proseNode(markdown: string): ElementNode<"div"> {
     return div({ class: "mt-3" }, withReveal(markupNodes(renderMarkdown(markdown))));
 }
@@ -85,6 +112,8 @@ export function renderBlock(block: Block): DomNode {
             return chartNode(block.chart);
         case BlockKind.Code:
             return codeNode(block.content);
+        case BlockKind.Formula:
+            return formulaNode(block.notation, block.source);
         case BlockKind.Columns:
             return columnsNode(block.columns);
     }

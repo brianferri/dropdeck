@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import { renderBlock } from "#/export/html";
 import { serialize } from "#/dom";
-import { BlockKind } from "#/ir";
+import { BlockKind, FormulaNotation } from "#/ir";
 import type { Block } from "#/ir";
 
 function render(block: Block): string {
@@ -35,4 +35,25 @@ test("code blocks HTML-escape their body", () => {
     const out = render({ kind: BlockKind.Code, lang: "ts", content: "const x = 1 < 2;" });
     expect(out).toContain("code-block");
     expect(out).toContain("const x = 1 &lt; 2;");
+});
+
+test("a math fence renders native MathML in the slide", () => {
+    const out = render({ kind: BlockKind.Formula, notation: FormulaNotation.Math, source: "x^2" });
+    expect(out).toContain("class=\"formula mt-3\"");
+    expect(out).toContain("<math xmlns=\"http://www.w3.org/1998/Math/MathML\"><msup><mi>x</mi><mn>2</mn></msup></math>");
+});
+
+test("a math fence and its latex twin converge on identical MathML", () => {
+    const math = render({ kind: BlockKind.Formula, notation: FormulaNotation.Math, source: "(a+b)*c" });
+    const latex = render({ kind: BlockKind.Formula, notation: FormulaNotation.Latex, source: "(a+b) \\cdot c" });
+    expect(math).toBe(latex);
+    expect(math).toContain("<mo>·</mo>");
+});
+
+test("a malformed formula shows the source and the parser error rather than aborting the build", () => {
+    const out = render({ kind: BlockKind.Formula, notation: FormulaNotation.Math, source: "x +" });
+    expect(out).toContain("formula-error");
+    expect(out).toContain("x +");
+    expect(out).toContain("formula-error-msg");
+    expect(out).not.toContain("<math");
 });

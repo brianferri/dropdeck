@@ -1,5 +1,5 @@
 import { RawBlockKind, tokenize } from "#/front/lexer";
-import { BlockKind, ChartKind } from "#/ir";
+import { BlockKind, ChartKind, FormulaNotation } from "#/ir";
 import type { BarRow, Block, ChartData, ChartSeries, MetricRow, Slide } from "#/ir";
 import type { DeckConfig } from "#/config";
 import type { ParseDeck } from "#/front/Parse";
@@ -168,6 +168,12 @@ function chartFenceKind(lang: string): ChartKind | null {
     return kind;
 }
 
+const FORMULA_NOTATIONS = new Set<string>(Object.values(FormulaNotation));
+
+function isFormulaNotation(lang: string): lang is FormulaNotation {
+    return FORMULA_NOTATIONS.has(lang);
+}
+
 // The header row names the series (its leading cell is the axis corner, dropped); each later row is a category
 // followed by one numeric cell per series.
 function parseChartData(kind: ChartKind, content: string): ChartData {
@@ -239,7 +245,13 @@ function parseBlocks(text: string): Array<Block> {
         else if (raw.kind === RawBlockKind.Fence) {
             if (raw.lang === "metrics") blocks.push({ kind: BlockKind.Metrics, rows: parseMetricRows(raw.content) });
             else if (raw.lang === "bars") blocks.push({ kind: BlockKind.Bars, rows: parseBarRows(raw.content) });
-            else {
+            else if (isFormulaNotation(raw.lang)) {
+                blocks.push({
+                    kind: BlockKind.Formula,
+                    notation: raw.lang,
+                    source: raw.content.trim()
+                });
+            } else {
                 const chartKind = chartFenceKind(raw.lang);
                 if (chartKind !== null) blocks.push({ kind: BlockKind.Chart, chart: parseChartData(chartKind, raw.content) });
                 else blocks.push({ kind: BlockKind.Code, lang: raw.lang, content: raw.content });

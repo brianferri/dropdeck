@@ -122,5 +122,25 @@ export const blocksStyle = [
     rule(["td:first-child"], [
         declaration("font-weight", "700"),
         declaration("color", "var(--color-text)")
+    ]),
+    // A rendered equation is a centred display formula at its natural size; it wraps rather than scrolls, and an
+    // author who wants it resized inlines their own HTML around it.
+    rule([".formula"], [
+        declaration("text-align", "center"),
+        declaration("color", "var(--color-text)")
+    ]),
+    rule([".formula math"], [
+        declaration("max-width", "100%"),
+        declaration("overflow-wrap", "break-word")
+    ]),
+    // A formula that failed to parse shows its source and the parser's message.
+    rule([".formula-error-src"], [
+        declaration("font-family", "var(--font-mono)"),
+        declaration("color", "var(--color-text-secondary)")
+    ]),
+    rule([".formula-error-msg"], [
+        declaration("font-family", "var(--font-mono)"),
+        declaration("color", "#e5484d"),
+        declaration("margin-top", "0.35rem")
     ])
 ] as const;
