@@ -2,6 +2,10 @@
 // snippet engine, not interpolated, so the template-curly lint does not apply here.
 /* eslint-disable no-template-curly-in-string */
 import { ChartKind } from "#/ir";
+import { MathAccent, MathConstant, MathFunction } from "@dropdeck/math";
+import { LatexAccentCommand } from "@dropdeck/latex";
+import { LatexCommand } from "#/formula/latex";
+import type { NaryCommand } from "#/formula/latex";
 import type { SlideTransition } from "#/animations/spec";
 import type { LayoutHint } from "#/config";
 
@@ -90,58 +94,280 @@ function mathToken(label: string, insert: string, doc: string): CompletionItem {
     return { label, insert, detail: "math", doc, kind: CompletionKind.Math };
 }
 
-// Operators (`+ - * / ^ == <= >= != and or`) are typed directly, so only functions and constants complete.
-export const MATH_TOKENS: ReadonlyArray<CompletionItem> = [
-    mathToken("sqrt", "sqrt(${1:x})$0", "Square root, rendered as a radical."),
-    mathToken("sin", "sin(${1:x})$0", "Sine, rendered as `sin(x)`."),
-    mathToken("cos", "cos(${1:x})$0", "Cosine, rendered as `cos(x)`."),
-    mathToken("tan", "tan(${1:x})$0", "Tangent, rendered as `tan(x)`."),
-    mathToken("log", "log(${1:x})$0", "Logarithm, rendered as `log(x)`."),
-    mathToken("ln", "ln(${1:x})$0", "Natural logarithm, rendered as `ln(x)`."),
-    mathToken("exp", "exp(${1:x})$0", "Exponential, rendered as `exp(x)`."),
-    mathToken("abs", "abs(${1:x})$0", "Absolute value, rendered as `abs(x)`."),
-    mathToken("pi", "pi", "The constant π."),
-    mathToken("e", "e", "Euler's number e."),
-    mathToken("tau", "tau", "The constant τ (2π).")
-];
+const OPERAND_SNIPPET = "(${1:x})$0";
+/** `(i, lo, up, body)`. */
+const RANGE_SNIPPET = "(${1:i}, ${2:1}, ${3:n}, ${4:body})$0";
+
+const MATH_FUNCTION_INFO = {
+    [MathFunction.Sqrt]: { insert: `sqrt${OPERAND_SNIPPET}`, doc: "Square root, rendered as a radical." },
+    [MathFunction.Fact]: { insert: "fact(${1:n})$0", doc: "Factorial, rendered as the postfix `n!`." },
+    [MathFunction.Sin]: { insert: `sin${OPERAND_SNIPPET}`, doc: "Sine, rendered as `sin(x)`." },
+    [MathFunction.Cos]: { insert: `cos${OPERAND_SNIPPET}`, doc: "Cosine, rendered as `cos(x)`." },
+    [MathFunction.Tan]: { insert: `tan${OPERAND_SNIPPET}`, doc: "Tangent, rendered as `tan(x)`." },
+    [MathFunction.Ln]: { insert: `ln${OPERAND_SNIPPET}`, doc: "Natural logarithm, rendered as `ln(x)`." },
+    [MathFunction.Exp]: { insert: `exp${OPERAND_SNIPPET}`, doc: "Exponential, rendered as `exp(x)`." },
+    [MathFunction.Abs]: { insert: `abs${OPERAND_SNIPPET}`, doc: "Absolute value, rendered as `abs(x)`." },
+    [MathFunction.Log]: { insert: "log(${1:2}, ${2:x})$0", doc: "Logarithm; `log(b, x)` renders as log_b(x), `log(x)` is a bare log." },
+    [MathFunction.Sum]: { insert: `sum${RANGE_SNIPPET}`, doc: "Summation ∑ from i=lo to up of body." },
+    [MathFunction.Prod]: { insert: `prod${RANGE_SNIPPET}`, doc: "Product ∏ from i=lo to up of body." },
+    [MathFunction.Bigcup]: { insert: `bigcup${RANGE_SNIPPET}`, doc: "Big union ⋃ from i=lo to up of body." },
+    [MathFunction.Bigcap]: { insert: `bigcap${RANGE_SNIPPET}`, doc: "Big intersection ⋂ from i=lo to up of body." }
+} as const satisfies Record<MathFunction, { insert: string, doc: string }>;
+
+const MATH_ACCENT_INFO = {
+    [MathAccent.Hat]: { insert: `hat${OPERAND_SNIPPET}`, doc: "Hat accent, rendered as x̂." },
+    [MathAccent.Vec]: { insert: `vec${OPERAND_SNIPPET}`, doc: "Vector arrow accent, rendered as x⃗." },
+    [MathAccent.Bar]: { insert: `bar${OPERAND_SNIPPET}`, doc: "Bar accent, rendered as x̄." },
+    [MathAccent.Tilde]: { insert: `tilde${OPERAND_SNIPPET}`, doc: "Tilde accent, rendered as x̃." },
+    [MathAccent.Dot]: { insert: `dot${OPERAND_SNIPPET}`, doc: "Dot accent, rendered as ẋ." },
+    [MathAccent.Ddot]: { insert: `ddot${OPERAND_SNIPPET}`, doc: "Double-dot accent, rendered as ẍ." },
+    [MathAccent.Overline]: { insert: `overline${OPERAND_SNIPPET}`, doc: "Overline accent, drawn across the operand." }
+} as const satisfies Record<MathAccent, { insert: string, doc: string }>;
+
+const MATH_CONSTANT_INFO = {
+    [MathConstant.Pi]: "The constant π.",
+    [MathConstant.E]: "Euler's number e.",
+    [MathConstant.Tau]: "The constant τ (2π)."
+} as const satisfies Record<MathConstant, string>;
+
+function mathTokens(): ReadonlyArray<CompletionItem> {
+    const out: Array<CompletionItem> = [];
+    for (const [name, info] of Object.entries(MATH_FUNCTION_INFO)) out.push(mathToken(name, info.insert, info.doc));
+    for (const [name, info] of Object.entries(MATH_ACCENT_INFO)) out.push(mathToken(name, info.insert, info.doc));
+    for (const [name, doc] of Object.entries(MATH_CONSTANT_INFO)) out.push(mathToken(name, name, doc));
+    return out;
+}
+
+export const MATH_TOKENS: ReadonlyArray<CompletionItem> = mathTokens();
 
 function latexCommand(label: string, insert: string, doc: string): CompletionItem {
     return { label, insert, detail: "latex", doc, kind: CompletionKind.Latex };
 }
 
-export const LATEX_COMMANDS: ReadonlyArray<CompletionItem> = [
+const LATEX_COMMAND_INFO = {
+    [LatexCommand.Le]: "Less than or equal ≤.",
+    [LatexCommand.Leq]: "Less than or equal ≤ (alias of \\le).",
+    [LatexCommand.Ge]: "Greater than or equal ≥.",
+    [LatexCommand.Geq]: "Greater than or equal ≥ (alias of \\ge).",
+    [LatexCommand.Ne]: "Not equal ≠.",
+    [LatexCommand.Neq]: "Not equal ≠ (alias of \\ne).",
+    [LatexCommand.Ll]: "Much less than ≪.",
+    [LatexCommand.Gg]: "Much greater than ≫.",
+    [LatexCommand.Prec]: "Precedes ≺.",
+    [LatexCommand.Succ]: "Succeeds ≻.",
+    [LatexCommand.Preceq]: "Precedes or equal ⪯.",
+    [LatexCommand.Succeq]: "Succeeds or equal ⪰.",
+    [LatexCommand.Approx]: "Approximately equal ≈.",
+    [LatexCommand.Equiv]: "Identical to ≡.",
+    [LatexCommand.Cong]: "Congruent ≅.",
+    [LatexCommand.Simeq]: "Asymptotically equal ≃.",
+    [LatexCommand.Sim]: "Similar to ∼.",
+    [LatexCommand.Asymp]: "Asymptotic to ≍.",
+    [LatexCommand.Propto]: "Proportional to ∝.",
+    [LatexCommand.Parallel]: "Parallel ∥.",
+    [LatexCommand.Mid]: "Divides ∣.",
+    [LatexCommand.Perp]: "Perpendicular ⊥.",
+    [LatexCommand.In]: "Set membership ∈.",
+    [LatexCommand.Notin]: "Not a member ∉.",
+    [LatexCommand.Ni]: "Contains as member ∋.",
+    [LatexCommand.Cup]: "Set union ∪.",
+    [LatexCommand.Cap]: "Set intersection ∩.",
+    [LatexCommand.Subset]: "Proper subset ⊂.",
+    [LatexCommand.Subseteq]: "Subset or equal ⊆.",
+    [LatexCommand.Supset]: "Proper superset ⊃.",
+    [LatexCommand.Supseteq]: "Superset or equal ⊇.",
+    [LatexCommand.Setminus]: "Set difference ∖.",
+    [LatexCommand.Emptyset]: "The empty set ∅.",
+    [LatexCommand.Cdot]: "Multiplication dot ·.",
+    [LatexCommand.Times]: "Multiplication cross ×.",
+    [LatexCommand.Div]: "Division sign ÷.",
+    [LatexCommand.Pm]: "Plus-minus ±.",
+    [LatexCommand.Mp]: "Minus-plus ∓.",
+    [LatexCommand.Ast]: "Asterisk operator ∗.",
+    [LatexCommand.Star]: "Star operator ⋆.",
+    [LatexCommand.Circ]: "Ring operator ∘.",
+    [LatexCommand.Bullet]: "Bullet operator ∙.",
+    [LatexCommand.Diamond]: "Diamond operator ⋄.",
+    [LatexCommand.Oplus]: "Direct sum ⊕.",
+    [LatexCommand.Ominus]: "Circled minus ⊖.",
+    [LatexCommand.Otimes]: "Tensor product ⊗.",
+    [LatexCommand.Oslash]: "Circled slash ⊘.",
+    [LatexCommand.Odot]: "Circled dot ⊙.",
+    [LatexCommand.Dagger]: "Dagger †.",
+    [LatexCommand.Ddagger]: "Double dagger ‡.",
+    [LatexCommand.Sqcup]: "Square union ⊔.",
+    [LatexCommand.Sqcap]: "Square intersection ⊓.",
+    [LatexCommand.Uplus]: "Multiset union ⊎.",
+    [LatexCommand.Land]: "Logical and ∧.",
+    [LatexCommand.Lor]: "Logical or ∨.",
+    [LatexCommand.Wedge]: "Logical and ∧ (alias of \\land).",
+    [LatexCommand.Vee]: "Logical or ∨ (alias of \\lor).",
+    [LatexCommand.Neg]: "Logical negation ¬.",
+    [LatexCommand.Lnot]: "Logical negation ¬ (alias of \\neg).",
+    [LatexCommand.Forall]: "Universal quantifier ∀.",
+    [LatexCommand.Exists]: "Existential quantifier ∃.",
+    [LatexCommand.Top]: "Top ⊤.",
+    [LatexCommand.Bot]: "Bottom ⊥.",
+    [LatexCommand.To]: "Right arrow →.",
+    [LatexCommand.Gets]: "Left arrow ←.",
+    [LatexCommand.Mapsto]: "Maps-to arrow ↦.",
+    [LatexCommand.Leftarrow]: "Left arrow ←.",
+    [LatexCommand.Rightarrow]: "Right arrow →.",
+    [LatexCommand.Uparrow]: "Up arrow ↑.",
+    [LatexCommand.Downarrow]: "Down arrow ↓.",
+    [LatexCommand.Leftrightarrow]: "Left-right arrow ↔.",
+    [LatexCommand.Longleftarrow]: "Long left arrow ⟵.",
+    [LatexCommand.Longrightarrow]: "Long right arrow ⟶.",
+    [LatexCommand.Hookrightarrow]: "Hooked right arrow ↪.",
+    [LatexCommand.LeftarrowDouble]: "Leftward double arrow ⇐.",
+    [LatexCommand.RightarrowDouble]: "Implication ⇒.",
+    [LatexCommand.LeftrightarrowDouble]: "Bi-implication ⇔.",
+    [LatexCommand.Implies]: "Implies ⟹.",
+    [LatexCommand.Iff]: "If and only if ⟺.",
+    [LatexCommand.Alpha]: "The Greek letter α.",
+    [LatexCommand.Beta]: "The Greek letter β.",
+    [LatexCommand.Gamma]: "The Greek letter γ.",
+    [LatexCommand.Delta]: "The Greek letter δ.",
+    [LatexCommand.Epsilon]: "The Greek letter ε.",
+    [LatexCommand.Varepsilon]: "The Greek letter ε (variant).",
+    [LatexCommand.Zeta]: "The Greek letter ζ.",
+    [LatexCommand.Eta]: "The Greek letter η.",
+    [LatexCommand.Theta]: "The Greek letter θ.",
+    [LatexCommand.Vartheta]: "The Greek letter ϑ (variant theta).",
+    [LatexCommand.Iota]: "The Greek letter ι.",
+    [LatexCommand.Kappa]: "The Greek letter κ.",
+    [LatexCommand.Lambda]: "The Greek letter λ.",
+    [LatexCommand.Mu]: "The Greek letter μ.",
+    [LatexCommand.Nu]: "The Greek letter ν.",
+    [LatexCommand.Xi]: "The Greek letter ξ.",
+    [LatexCommand.Pi]: "The Greek letter π.",
+    [LatexCommand.Varpi]: "The Greek letter ϖ (variant pi).",
+    [LatexCommand.Rho]: "The Greek letter ρ.",
+    [LatexCommand.Varrho]: "The Greek letter ϱ (variant rho).",
+    [LatexCommand.Sigma]: "The Greek letter σ.",
+    [LatexCommand.Varsigma]: "The Greek letter ς (final sigma).",
+    [LatexCommand.Tau]: "The Greek letter τ.",
+    [LatexCommand.Upsilon]: "The Greek letter υ.",
+    [LatexCommand.Phi]: "The Greek letter φ.",
+    [LatexCommand.Varphi]: "The Greek letter ϕ (variant phi).",
+    [LatexCommand.Chi]: "The Greek letter χ.",
+    [LatexCommand.Psi]: "The Greek letter ψ.",
+    [LatexCommand.Omega]: "The Greek letter ω.",
+    [LatexCommand.UpperGamma]: "The Greek letter Γ.",
+    [LatexCommand.UpperDelta]: "The Greek letter Δ.",
+    [LatexCommand.UpperTheta]: "The Greek letter Θ.",
+    [LatexCommand.UpperLambda]: "The Greek letter Λ.",
+    [LatexCommand.UpperXi]: "The Greek letter Ξ.",
+    [LatexCommand.UpperPi]: "The Greek letter Π.",
+    [LatexCommand.UpperSigma]: "The Greek letter Σ.",
+    [LatexCommand.UpperUpsilon]: "The Greek letter Υ.",
+    [LatexCommand.UpperPhi]: "The Greek letter Φ.",
+    [LatexCommand.UpperPsi]: "The Greek letter Ψ.",
+    [LatexCommand.UpperOmega]: "The Greek letter Ω.",
+    [LatexCommand.Partial]: "Partial derivative ∂.",
+    [LatexCommand.Nabla]: "Nabla ∇.",
+    [LatexCommand.Infty]: "Infinity ∞.",
+    [LatexCommand.Hbar]: "Reduced Planck constant ℏ.",
+    [LatexCommand.Ell]: "Script small l ℓ.",
+    [LatexCommand.Re]: "Real part ℜ.",
+    [LatexCommand.Im]: "Imaginary part ℑ.",
+    [LatexCommand.Aleph]: "Aleph ℵ.",
+    [LatexCommand.Angle]: "Angle ∠.",
+    [LatexCommand.Prime]: "Prime ′.",
+    [LatexCommand.Ldots]: "Low ellipsis ….",
+    [LatexCommand.Cdots]: "Centred ellipsis ⋯.",
+    [LatexCommand.Vdots]: "Vertical ellipsis ⋮.",
+    [LatexCommand.Ddots]: "Diagonal ellipsis ⋱.",
+    [LatexCommand.Sin]: "Sine `sin`.",
+    [LatexCommand.Cos]: "Cosine `cos`.",
+    [LatexCommand.Tan]: "Tangent `tan`.",
+    [LatexCommand.Cot]: "Cotangent `cot`.",
+    [LatexCommand.Sec]: "Secant `sec`.",
+    [LatexCommand.Csc]: "Cosecant `csc`.",
+    [LatexCommand.Arcsin]: "Inverse sine `arcsin`.",
+    [LatexCommand.Arccos]: "Inverse cosine `arccos`.",
+    [LatexCommand.Arctan]: "Inverse tangent `arctan`.",
+    [LatexCommand.Sinh]: "Hyperbolic sine `sinh`.",
+    [LatexCommand.Cosh]: "Hyperbolic cosine `cosh`.",
+    [LatexCommand.Tanh]: "Hyperbolic tangent `tanh`.",
+    [LatexCommand.Log]: "Logarithm `log`.",
+    [LatexCommand.Ln]: "Natural logarithm `ln`.",
+    [LatexCommand.Exp]: "Exponential `exp`.",
+    [LatexCommand.Lim]: "Limit `lim`.",
+    [LatexCommand.Max]: "Maximum `max`.",
+    [LatexCommand.Min]: "Minimum `min`.",
+    [LatexCommand.Sup]: "Supremum `sup`.",
+    [LatexCommand.Inf]: "Infimum `inf`.",
+    [LatexCommand.Gcd]: "Greatest common divisor `gcd`.",
+    [LatexCommand.Deg]: "Degree `deg`.",
+    [LatexCommand.Det]: "Determinant `det`.",
+    [LatexCommand.Dim]: "Dimension `dim`.",
+    [LatexCommand.Ker]: "Kernel `ker`.",
+    [LatexCommand.Arg]: "Argument `arg`.",
+    [LatexCommand.Sum]: "Summation ∑ with limits.",
+    [LatexCommand.Prod]: "Product ∏ with limits.",
+    [LatexCommand.Coprod]: "Coproduct ∐ with limits.",
+    [LatexCommand.Bigcup]: "Big union ⋃ with limits.",
+    [LatexCommand.Bigcap]: "Big intersection ⋂ with limits.",
+    [LatexCommand.Bigvee]: "Big disjunction ⋁ with limits.",
+    [LatexCommand.Bigwedge]: "Big conjunction ⋀ with limits.",
+    [LatexCommand.Bigoplus]: "Big direct sum ⨁ with limits.",
+    [LatexCommand.Bigotimes]: "Big tensor product ⨂ with limits.",
+    [LatexCommand.Bigsqcup]: "Big square union ⨆ with limits.",
+    [LatexCommand.Int]: "Integral ∫ with limits.",
+    [LatexCommand.Oint]: "Contour integral ∮ with limits.",
+    [LatexCommand.Iint]: "Double integral ∬ with limits.",
+    [LatexCommand.Iiint]: "Triple integral ∭ with limits."
+} as const satisfies Record<LatexCommand, string>;
+
+// Big operators take under/over limits, so they insert with a limit snippet; every other command inserts bare.
+// `satisfies ReadonlyArray<NaryCommand>` rejects any command whose glyph the shared IR does not classify as nary.
+const LATEX_LIMIT_SNIPPET = "_{${1:i=1}}^{${2:n}} $0";
+const LATEX_LIMIT_COMMANDS = [
+    LatexCommand.Sum,
+    LatexCommand.Prod,
+    LatexCommand.Coprod,
+    LatexCommand.Bigcup,
+    LatexCommand.Bigcap,
+    LatexCommand.Bigvee,
+    LatexCommand.Bigwedge,
+    LatexCommand.Bigoplus,
+    LatexCommand.Bigotimes,
+    LatexCommand.Bigsqcup,
+    LatexCommand.Int,
+    LatexCommand.Oint,
+    LatexCommand.Iint,
+    LatexCommand.Iiint
+] as const satisfies ReadonlyArray<NaryCommand>;
+const LATEX_LIMIT_SET = new Set<string>(LATEX_LIMIT_COMMANDS);
+
+// Accents wrap their single argument (`\hat{x}`); `satisfies Record<LatexAccentCommand, ...>` keeps them covered.
+const LATEX_ACCENT_INFO = {
+    [LatexAccentCommand.Hat]: "Hat accent, drawn over the argument (x̂).",
+    [LatexAccentCommand.Vec]: "Vector arrow accent (x⃗).",
+    [LatexAccentCommand.Bar]: "Bar accent (x̄).",
+    [LatexAccentCommand.Tilde]: "Tilde accent (x̃).",
+    [LatexAccentCommand.Dot]: "Dot accent (ẋ).",
+    [LatexAccentCommand.Ddot]: "Double-dot accent (ẍ).",
+    [LatexAccentCommand.Overline]: "Overline, drawn across the argument."
+} as const satisfies Record<LatexAccentCommand, string>;
+
+// `\frac` and `\sqrt` take braced arguments, so they are curated with their own snippets rather than the table.
+const LATEX_STRUCTURAL: ReadonlyArray<CompletionItem> = [
     latexCommand("\\frac", "\\frac{${1:a}}{${2:b}}$0", "A fraction, a over b."),
-    latexCommand("\\sqrt", "\\sqrt{${1:x}}$0", "A square root; `\\sqrt[n]{x}` for an nth root."),
-    latexCommand("\\cdot", "\\cdot", "Multiplication dot ·."),
-    latexCommand("\\times", "\\times", "Multiplication cross ×."),
-    latexCommand("\\div", "\\div", "Division sign ÷."),
-    latexCommand("\\pm", "\\pm", "Plus-minus ±."),
-    latexCommand("\\mp", "\\mp", "Minus-plus ∓."),
-    latexCommand("\\le", "\\le", "Less than or equal ≤."),
-    latexCommand("\\ge", "\\ge", "Greater than or equal ≥."),
-    latexCommand("\\ne", "\\ne", "Not equal ≠."),
-    latexCommand("\\approx", "\\approx", "Approximately equal ≈."),
-    latexCommand("\\equiv", "\\equiv", "Identical to ≡."),
-    latexCommand("\\land", "\\land", "Logical and ∧."),
-    latexCommand("\\lor", "\\lor", "Logical or ∨."),
-    latexCommand("\\to", "\\to", "Right arrow →."),
-    latexCommand("\\mapsto", "\\mapsto", "Maps-to arrow ↦."),
-    latexCommand("\\in", "\\in", "Set membership ∈."),
-    latexCommand("\\cup", "\\cup", "Set union ∪."),
-    latexCommand("\\cap", "\\cap", "Set intersection ∩."),
-    latexCommand("\\alpha", "\\alpha", "The Greek letter α."),
-    latexCommand("\\beta", "\\beta", "The Greek letter β."),
-    latexCommand("\\gamma", "\\gamma", "The Greek letter γ."),
-    latexCommand("\\delta", "\\delta", "The Greek letter δ."),
-    latexCommand("\\theta", "\\theta", "The Greek letter θ."),
-    latexCommand("\\lambda", "\\lambda", "The Greek letter λ."),
-    latexCommand("\\mu", "\\mu", "The Greek letter μ."),
-    latexCommand("\\pi", "\\pi", "The Greek letter π."),
-    latexCommand("\\sigma", "\\sigma", "The Greek letter σ."),
-    latexCommand("\\phi", "\\phi", "The Greek letter φ."),
-    latexCommand("\\omega", "\\omega", "The Greek letter ω."),
-    latexCommand("\\tau", "\\tau", "The Greek letter τ.")
+    latexCommand("\\sqrt", "\\sqrt{${1:x}}$0", "A square root; `\\sqrt[n]{x}` for an nth root.")
 ];
+
+function latexCommands(): ReadonlyArray<CompletionItem> {
+    const out: Array<CompletionItem> = [];
+    for (const item of LATEX_STRUCTURAL) out.push(item);
+    for (const [command, doc] of Object.entries(LATEX_COMMAND_INFO)) out.push(latexCommand(command, LATEX_LIMIT_SET.has(command) ? `${command}${LATEX_LIMIT_SNIPPET}` : command, doc));
+
+    for (const [command, doc] of Object.entries(LATEX_ACCENT_INFO)) out.push(latexCommand(`\\${command}`, `\\${command}{\${1:x}} $0`, doc));
+    return out;
+}
+
+export const LATEX_COMMANDS: ReadonlyArray<CompletionItem> = latexCommands();
 
 function colorKey(label: string, doc: string): CompletionItem {
     return { label, insert: `${label}: \${0:#5cd0b3}`, detail: "colour", doc, kind: CompletionKind.Frontmatter };

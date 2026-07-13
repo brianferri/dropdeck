@@ -58,7 +58,7 @@ test("inside a math fence, a word offers math functions and constants", () => {
 
 test("inside a latex fence, a backslash offers commands; a bare word offers nothing", () => {
     expect(labels("# T\n\n```latex\n\\fra|\n```\n")).toEqual(["\\frac"]);
-    expect(labels("# T\n\n```latex\n\\c|\n```\n")).toEqual(["\\cdot", "\\cup", "\\cap"]);
+    expect(labels("# T\n\n```latex\n\\c|\n```\n")).toEqual(expect.arrayContaining(["\\cdot", "\\cup", "\\cap", "\\cos", "\\coprod"]));
     expect(at("# T\n\n```latex\nfra|\n```\n")).toBe(null);
 });
 
