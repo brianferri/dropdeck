@@ -1,9 +1,8 @@
-export class MathError extends Error {
-    public readonly offset: number;
+import { SourceError } from "@dropdeck/common";
 
+export class MathError extends SourceError {
     public constructor(message: string, offset: number) {
-        super(message);
+        super(message, offset);
         this.name = "MathError";
-        this.offset = offset;
     }
 }

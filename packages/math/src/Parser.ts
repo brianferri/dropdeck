@@ -2,9 +2,9 @@ import { binary, call, constant, logicalNot, negate, number, variable } from "./
 import { PayloadKind, PunctKind, tokenize } from "./Tokenizer.js";
 import { BinaryOperator, MathConstant, OPERATOR_PRECEDENCE, UnaryOperator } from "./Specification.js";
 import { MathError } from "./Support.js";
-import type { Operator, Token } from "./Tokenizer.js";
-import type { Expression } from "./Specification.js";
-import type { Parse } from "./Parse.js";
+import type { Operator, Token } from "./typings/tokens.js";
+import type { Expression } from "./typings/nodes.js";
+import type { Parse } from "./typings/parse.js";
 
 type Cursor = { tokens: ReadonlyArray<Token>, index: number };
 

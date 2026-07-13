@@ -1,8 +1,8 @@
 import { ExpressionKind } from "./Specification.js";
+import type { BinaryOperator, MathConstant } from "./Specification.js";
 import type {
-    BinaryNode, BinaryOperator, CallNode, Content, ConstantNode, Expression, MathConstant, NegateNode, NotNode,
-    NumberNode, One, Pair, VariableNode
-} from "./Specification.js";
+    BinaryNode, CallNode, Content, ConstantNode, Expression, NegateNode, NotNode, NumberNode, One, Pair, VariableNode
+} from "./typings/nodes.js";
 
 export function number<const Value extends number>(value: Value): NumberNode<Value> {
     return { kind: ExpressionKind.Number, value };

@@ -1,22 +1,25 @@
-import type { AdditiveOperator, BinaryOperator, ComparisonOperator, MathConstant, MultiplicativeOperator, UnaryOperator } from "./Specification.js";
+import type { BinaryOperator, MathConstant, UnaryOperator } from "../Specification.js";
+import type { AdditiveOperator, ComparisonOperator, MultiplicativeOperator } from "./operators.js";
 import type {
     BinaryNode, CallNode, Content, ConstantNode, Expression, NegateNode, NotNode, NumberNode, One, Pair, VariableNode
-} from "./Specification.js";
-import type { PayloadKind, PunctKind } from "./Tokenizer.js";
+} from "./nodes.js";
+import type { PayloadKind, PunctKind } from "../Tokenizer.js";
+import type {
+    BySpelling, DigitChar, DoubleRule, FirstMatch, Lead, NumberOf, ParseError, SingleRule, Step, TakeNumber, TakeRun,
+    Whitespace
+} from "@dropdeck/common";
 
 type Operator = BinaryOperator | UnaryOperator;
 
-type OperatorBySpelling = { [Op in Operator as `${Op}`]: Op };
-type ConstantBySpelling = { [Name in MathConstant as `${Name}`]: Name };
-type PunctBySpelling = { [Kind in PunctKind as `${Kind}`]: Kind };
+type OperatorBySpelling = BySpelling<Operator>;
+type ConstantBySpelling = BySpelling<MathConstant>;
+type PunctBySpelling = BySpelling<PunctKind>;
 
-type DigitChar = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";
 type AlphaChar =
     | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m"
     | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
     | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M"
     | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "_";
-type Whitespace = " " | "\n" | "\t" | "\r";
 
 type NumberToken<Value extends number = number> = { kind: PayloadKind.Number, value: Value };
 type NameToken<Name extends string = string> = { kind: PayloadKind.Name, name: Name };
@@ -25,50 +28,23 @@ type PunctToken<Kind extends PunctKind = PunctKind> = { kind: Kind };
 type Token = NumberToken | NameToken | OperatorToken | PunctToken;
 type Tokens = ReadonlyArray<Token>;
 
-type TakeRun<Source extends string, Class extends string, Acc extends string = ""> =
-    Source extends `${infer Head}${infer Rest}`
-        ? Head extends Class ? TakeRun<Rest, Class, `${Acc}${Head}`> : { run: Acc, rest: Source }
-        : { run: Acc, rest: Source };
-
-type TakeNumber<Source extends string> =
-    TakeRun<Source, DigitChar> extends { run: infer Integer extends string, rest: infer Rest extends string }
-        ? Rest extends `.${infer Tail extends string}`
-            ? TakeRun<Tail, DigitChar> extends { run: infer Fraction extends string, rest: infer After extends string }
-                ? Fraction extends "" ? { run: Integer, rest: Rest } : { run: `${Integer}.${Fraction}`, rest: After }
-                : never
-            : { run: Integer, rest: Rest }
-        : never;
-
-type NumberOf<Run extends string> = Run extends `${infer Value extends number}` ? Value : never;
-
-type FirstMatch<Rules extends ReadonlyArray<unknown>> =
-    Rules extends readonly [infer Head, ...infer Tail] ? [Head] extends [false] ? FirstMatch<Tail> : Head : false;
-
-type Step<Produced extends Tokens, Rest extends string> = { produced: Produced, rest: Rest };
+// A run of letters is an operator IFF it spells one (`and`, `or`), otherwise a plain name.
 type NameTokenOf<Run extends string> =
     Run extends keyof OperatorBySpelling ? OperatorToken<OperatorBySpelling[Run]> : NameToken<Run>;
 
-type SpaceRule<S extends string> = S extends `${Whitespace}${infer Rest}` ? Step<[], Rest> : false;
-type PairRule<S extends string> =
-    S extends `${infer A}${infer B}${infer Rest}`
-        ? `${A}${B}` extends keyof OperatorBySpelling ? Step<[OperatorToken<OperatorBySpelling[`${A}${B}`]>], Rest> : false
-        : false;
+type PunctTokens = { [Char in keyof PunctBySpelling]: PunctToken<PunctBySpelling[Char]> };
+type OperatorTokens = { [Char in keyof OperatorBySpelling]: OperatorToken<OperatorBySpelling[Char]> };
+
+type SpaceRule<S extends string> = Lead<S, Whitespace> extends { rest: infer Rest extends string } ? Step<[], Rest> : false;
+type PairRule<S extends string> = DoubleRule<S, OperatorTokens>;
+type CharRule<S extends string> = SingleRule<S, OperatorTokens>;
+type PunctRule<S extends string> = SingleRule<S, PunctTokens>;
 type NumberRule<S extends string> =
-    S extends `${infer Head}${string}`
-        ? Head extends DigitChar
-            ? TakeNumber<S> extends { run: infer Run extends string, rest: infer Rest extends string } ? Step<[NumberToken<NumberOf<Run>>], Rest> : false
-            : false
-        : false;
+    Lead<S, DigitChar> extends false ? false
+        : TakeNumber<S> extends { run: infer Run extends string, rest: infer Rest extends string } ? Step<[NumberToken<NumberOf<Run>>], Rest> : false;
 type NameRule<S extends string> =
-    S extends `${infer Head}${string}`
-        ? Head extends AlphaChar
-            ? TakeRun<S, AlphaChar | DigitChar> extends { run: infer Run extends string, rest: infer Rest extends string } ? Step<[NameTokenOf<Run>], Rest> : false
-            : false
-        : false;
-type PunctRule<S extends string> =
-    S extends `${infer Head}${infer Rest}` ? Head extends keyof PunctBySpelling ? Step<[PunctToken<PunctBySpelling[Head]>], Rest> : false : false;
-type CharRule<S extends string> =
-    S extends `${infer Head}${infer Rest}` ? Head extends keyof OperatorBySpelling ? Step<[OperatorToken<OperatorBySpelling[Head]>], Rest> : false : false;
+    Lead<S, AlphaChar> extends false ? false
+        : TakeRun<S, AlphaChar | DigitChar> extends { run: infer Run extends string, rest: infer Rest extends string } ? Step<[NameTokenOf<Run>], Rest> : false;
 
 type NextToken<S extends string> = FirstMatch<readonly [
     SpaceRule<S>,
@@ -81,12 +57,23 @@ type NextToken<S extends string> = FirstMatch<readonly [
 
 type Tokenize<Source extends string, Acc extends Tokens = []> =
     Source extends "" ? Acc
-        : NextToken<Source> extends Step<infer Produced, infer Rest>
+        : NextToken<Source> extends Step<infer Produced extends Tokens, infer Rest>
             ? Tokenize<Rest, [...Acc, ...Produced]>
-            : ParseError<`unexpected character in "${Source}"`>;
+            : ParseError<`Unexpected character at <${Source}>`>;
 
-export type ParseError<Message extends string = string> = { parseError: Message };
 type Parsed<Node extends Expression, Rest extends Tokens> = { node: Node, rest: Rest };
+
+type ShowNumber<Head> = Head extends NumberToken<infer Value> ? `${Value}` : false;
+type ShowName<Head> = Head extends NameToken<infer Name> ? Name : false;
+type ShowOperator<Head> = Head extends OperatorToken<infer Op> ? `${Op}` : false;
+type ShowPunct<Head> = Head extends PunctToken<infer Kind> ? `${Kind}` : false;
+type Got<Head extends Token> = `'${Extract<FirstMatch<[
+    ShowNumber<Head>,
+    ShowName<Head>,
+    ShowOperator<Head>,
+    ShowPunct<Head>
+]>, string>}'`;
+type Peek<T extends Tokens> = T extends readonly [infer Head extends Token, ...Tokens] ? Got<Head> : "<end of input>";
 
 type ParseArgs<T extends Tokens, Acc extends Content = readonly []> =
     T extends [{ kind: PunctKind.Close }, ...infer Rest extends Tokens]
@@ -101,7 +88,7 @@ type AfterArg<After extends Tokens, Acc extends Content> =
         ? ParseArgs<Rest, Acc>
         : After extends [{ kind: PunctKind.Close }, ...infer Rest extends Tokens]
             ? { args: Acc, rest: Rest }
-            : ParseError<"expected ',' or ')'">;
+            : ParseError<`Expected ',' or ')', got ${Peek<After>}`>;
 
 type NameAtom<Name extends string, Rest extends Tokens> =
     Name extends keyof ConstantBySpelling ? Parsed<ConstantNode<ConstantBySpelling[Name]>, Rest> : Parsed<VariableNode<Name>, Rest>;
@@ -111,7 +98,9 @@ type CompleteCall<Name extends string, Result> =
 
 type CloseGroup<Result> =
     Result extends Parsed<infer Node, infer After>
-        ? After extends [{ kind: PunctKind.Close }, ...infer Rest extends Tokens] ? Parsed<Node, Rest> : ParseError<"expected ')'">
+        ? After extends [{ kind: PunctKind.Close }, ...infer Rest extends Tokens]
+            ? Parsed<Node, Rest>
+            : ParseError<`Expected ')', got ${Peek<After>}`>
         : Result;
 
 type NumberPrimary<Head extends Token, Rest extends Tokens> =
@@ -123,12 +112,16 @@ type NamePrimary<Head extends Token, Rest extends Tokens> =
 type GroupPrimary<Head extends Token, Rest extends Tokens> =
     Head extends { kind: PunctKind.Open } ? CloseGroup<ParseBinary<Rest>> : false;
 
+type PrimaryFrom<Match, Head extends Token> = [Match] extends [false]
+    ? ParseError<`Expected an expression, got ${Got<Head>}`> : Match;
 type ParsePrimary<T extends Tokens> =
     T extends [infer Head extends Token, ...infer Rest extends Tokens]
-        ? FirstMatch<readonly [NumberPrimary<Head, Rest>, NamePrimary<Head, Rest>, GroupPrimary<Head, Rest>]> extends infer Match
-            ? [Match] extends [false] ? ParseError<"expected an expression"> : Match
-            : never
-        : ParseError<"unexpected end of input">;
+        ? PrimaryFrom<FirstMatch<readonly [
+            NumberPrimary<Head, Rest>,
+            NamePrimary<Head, Rest>,
+            GroupPrimary<Head, Rest>
+        ]>, Head>
+        : ParseError<"Expected an expression, got <end of input>">;
 
 type WrapNot<Result> =
     Result extends Parsed<infer Operand, infer After> ? Parsed<NotNode<One<Operand>>, After> : Result;
@@ -159,37 +152,38 @@ type BinaryTiers = [
 ];
 type NextLevel = [1, 2, 3, 4, 5];
 
+// The right operand is parsed once and passed in; a failed operand parse flows through as the error.
+type FoldTierRight<Ops extends BinaryOperator,
+    Level extends number,
+    Op extends BinaryOperator,
+    Left extends Expression, Result
+> = Result extends Parsed<infer Right, infer After>
+    ? FoldTier<Ops, Level, BinaryNode<Op, Pair<Left, Right>>, After>
+    : Result;
 type FoldTier<Ops extends BinaryOperator, Level extends number, Left extends Expression, T extends Tokens> =
     T extends [OperatorToken<infer Op>, ...infer Rest extends Tokens]
         ? Op extends Ops
-            ? ParseTier<Rest, NextLevel[Level]> extends infer Result
-                ? Result extends Parsed<infer Right, infer After>
-                    ? FoldTier<Ops, Level, BinaryNode<Op, Pair<Left, Right>>, After>
-                    : Result
-                : never
+            ? FoldTierRight<Ops, Level, Op, Left, ParseTier<Rest, NextLevel[Level]>>
             : Parsed<Left, T>
         : Parsed<Left, T>;
 
+type FoldTierFrom<Ops extends BinaryOperator, Level extends number, Base> =
+    Base extends Parsed<infer Left, infer Rest> ? FoldTier<Ops, Level, Left, Rest> : Base;
 type ParseTier<T extends Tokens, Level extends number> =
     Level extends BinaryTiers["length"]
         ? ParsePower<T>
-        : ParseTier<T, NextLevel[Level]> extends infer Base
-            ? Base extends Parsed<infer Left, infer Rest>
-                ? FoldTier<BinaryTiers[Level], Level, Left, Rest>
-                : Base
-            : never;
+        : FoldTierFrom<BinaryTiers[Level], Level, ParseTier<T, NextLevel[Level]>>;
 
 type ParseBinary<T extends Tokens> = ParseTier<T, 0>;
 
+// A complete parse consumes every token; leftovers mean the parser stopped early, so they are reported.
+type CompleteParse<Result> = Result extends Parsed<infer Node, infer Rest>
+    ? (Rest extends []
+        ? Node
+        : ParseError<`Expected end of input, got ${Peek<Rest>}`>
+    ) : Result;
+
+type ParseTokens<T> = T extends Tokens ? CompleteParse<ParseBinary<T>> : T;
+
 export type Parse<Source extends string> =
-    string extends Source
-        ? Expression
-        : Tokenize<Source> extends infer T
-            ? T extends Tokens
-                ? ParseBinary<T> extends infer Result
-                    ? Result extends Parsed<infer Node, infer Rest>
-                        ? Rest extends [] ? Node : ParseError<"unexpected trailing input">
-                        : Result
-                    : never
-                : T
-            : never;
+    string extends Source ? Expression : ParseTokens<Tokenize<Source>>;

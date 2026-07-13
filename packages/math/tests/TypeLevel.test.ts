@@ -63,11 +63,11 @@ export type Grouping = [
 ];
 
 export type Errors = [
-    Assert<Equal<Parse<"a b">, ParseError<"unexpected trailing input">>>,
-    Assert<Equal<Parse<"(a">, ParseError<"expected ')'">>>,
-    Assert<Equal<Parse<"1 +">, ParseError<"unexpected end of input">>>,
-    Assert<Equal<Parse<"sqrt(a b)">, ParseError<"expected ',' or ')'">>>,
-    Assert<Equal<Parse<"a @ b">, ParseError<"unexpected character in \"@ b\"">>>
+    Assert<Equal<Parse<"a b">, ParseError<"Expected end of input, got 'b'">>>,
+    Assert<Equal<Parse<"(a">, ParseError<"Expected ')', got <end of input>">>>,
+    Assert<Equal<Parse<"1 +">, ParseError<"Expected an expression, got <end of input>">>>,
+    Assert<Equal<Parse<"sqrt(a b)">, ParseError<"Expected ',' or ')', got 'b'">>>,
+    Assert<Equal<Parse<"a @ b">, ParseError<"Unexpected character at <@ b>">>>
 ];
 
 await test("the runtime parse matches the type-level Parse for a nested formula", () => {

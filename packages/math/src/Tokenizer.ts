@@ -1,5 +1,7 @@
 import { BinaryOperator, UnaryOperator } from "./Specification.js";
 import { MathError } from "./Support.js";
+import { isAsciiLetter, isDigit, isWhitespace, memberGuard, readNumber } from "@dropdeck/common";
+import type { Operator, Token } from "./typings/tokens.js";
 
 export enum PayloadKind {
     Number = "number",
@@ -13,57 +15,20 @@ export enum PunctKind {
     Comma = ","
 }
 
-export type TokenKind = PayloadKind | PunctKind;
-
-export type Operator = BinaryOperator | UnaryOperator;
-
-export type Token =
-    | { kind: PayloadKind.Number, value: number }
-    | { kind: PayloadKind.Name, name: string }
-    | { kind: PayloadKind.Operator, operator: Operator }
-    | { kind: PunctKind };
-
 const OPERATOR_BY_SPELLING: Record<string, Operator | undefined> = {};
 for (const operator of Object.values(BinaryOperator)) OPERATOR_BY_SPELLING[operator] = operator;
 for (const operator of Object.values(UnaryOperator)) OPERATOR_BY_SPELLING[operator] = operator;
 
-const PUNCT_CHARS = {
-    [PunctKind.Open]: undefined,
-    [PunctKind.Close]: undefined,
-    [PunctKind.Comma]: undefined
-} as const satisfies Record<PunctKind, void>;
+const isPunctChar = memberGuard<PunctKind>(Object.values(PunctKind));
 
-function isPunctChar(char: string): char is PunctKind {
-    return char in PUNCT_CHARS;
-}
-
-function isWhitespace(char: string): boolean {
-    return char === " " || char === "\n" || char === "\t" || char === "\r";
-}
-
-function isDigit(char: string): boolean {
-    return char >= "0" && char <= "9";
-}
-
-function isAlpha(char: string): boolean {
-    if (char >= "a" && char <= "z") return true;
-    if (char >= "A" && char <= "Z") return true;
-    return char === "_";
-}
-
-function readNumber(source: string, start: number): { value: number, next: number } {
-    let index = start;
-    while (index < source.length && isDigit(source[index])) index += 1;
-    if (source[index] === "." && index + 1 < source.length && isDigit(source[index + 1])) {
-        index += 1;
-        while (index < source.length && isDigit(source[index])) index += 1;
-    }
-    return { value: Number(source.slice(start, index)), next: index };
+// A name may carry `_` (e.g. `x_i`), which a plain ASCII letter check excludes.
+function isNameChar(char: string): boolean {
+    return isAsciiLetter(char) || char === "_";
 }
 
 function readName(source: string, start: number): { name: string, next: number } {
     let index = start;
-    while (index < source.length && (isAlpha(source[index]) || isDigit(source[index]))) index += 1;
+    while (index < source.length && (isNameChar(source[index]) || isDigit(source[index]))) index += 1;
     return { name: source.slice(start, index), next: index };
 }
 
@@ -91,7 +56,7 @@ export function tokenize(source: string): Array<Token> {
             index = next;
             continue;
         }
-        if (isAlpha(char)) {
+        if (isNameChar(char)) {
             const { name, next } = readName(source, index);
             const wordOperator = OPERATOR_BY_SPELLING[name];
             tokens.push(wordOperator !== undefined ? { kind: PayloadKind.Operator, operator: wordOperator } : { kind: PayloadKind.Name, name });
