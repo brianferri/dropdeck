@@ -2,11 +2,11 @@ import { test, expect } from "vitest";
 import { parse as parseMath } from "@dropdeck/math";
 import { parse as parseLatex } from "@dropdeck/latex";
 import { xml } from "@dropdeck/xml";
-import { lowerLatex, lowerMath, toMathML, toOmml } from "#/formula";
+import { lowerLatex, lowerMath, toLatex, toMath, toMathML, toOmml } from "#/formula";
 import type { Expression, Parse as ParseMath } from "@dropdeck/math";
 import type { Notation as LatexNotation, Parse as ParseLatex } from "@dropdeck/latex";
 import type { Serialize } from "@dropdeck/xml";
-import type { LowerLatex, LowerMath, ToMathML, ToOmml } from "#/formula";
+import type { LowerLatex, LowerMath, ToLatex, ToMath, ToMathML, ToOmml } from "#/formula";
 
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;
 type Expect<T extends true> = T;
@@ -26,6 +26,16 @@ export type Convergence = [
     Expect<Equal<MathShared<"(a+b)*c">, LatexShared<"(a+b) \\cdot c">>>
 ];
 
+export type Serialization = [
+    Expect<Equal<ToLatex<MathShared<"a/b">>, "\\frac{a}{b}">>,
+    Expect<Equal<ToLatex<MathShared<"a<=b">>, "a \\le b">>,
+    Expect<Equal<ToLatex<MathShared<"(a+b)*c">>, "(a + b) \\cdot c">>,
+    Expect<Equal<ToLatex<LatexShared<"\\hat{x}">>, "\\hat{x}">>,
+    Expect<Equal<ToMath<LatexShared<"\\frac{a}{b}">>, "a / b">>,
+    Expect<Equal<ToMath<MathShared<"(a+b)*c">>, "(a + b) * c">>,
+    Expect<Equal<ToMath<LatexShared<"\\hat{x}">>, "hat(x)">>
+];
+
 type Ns = "http://www.w3.org/1998/Math/MathML";
 type OmmlNs = "http://schemas.openxmlformats.org/officeDocument/2006/math";
 
@@ -37,7 +47,7 @@ export type LatexToBothSinks = [
     >>
 ];
 
-const PAIRS: ReadonlyArray<readonly [string, string]> = [
+const PAIRS = [
     ["x^2", "x^2"],
     ["x_i", "x_i"],
     ["x_1", "x_1"],
@@ -45,8 +55,14 @@ const PAIRS: ReadonlyArray<readonly [string, string]> = [
     ["sqrt(x)", "\\sqrt{x}"],
     ["pi", "\\pi"],
     ["a<=b", "a \\le b"],
-    ["(a+b)*c", "(a+b) \\cdot c"]
-];
+    ["(a+b)*c", "(a+b) \\cdot c"],
+    ["sum(i, 1, n, i^2)", "\\sum_{i=1}^{n} i^2"],
+    ["prod(k, 1, m, a_k)", "\\prod_{k=1}^{m} a_k"],
+    ["bigcup(i, 1, n, A_i)", "\\bigcup_{i=1}^{n} A_i"],
+    ["hat(x)", "\\hat{x}"],
+    ["vec(F)", "\\vec{F}"],
+    ["bar(x)", "\\bar{x}"]
+] as const satisfies ReadonlyArray<readonly [string, string]>;
 
 test("math and latex converge on the same shared IR", () => {
     for (const [mathSource, latexSource] of PAIRS) {
@@ -59,6 +75,15 @@ test("both languages emit identical MathML and OMML through the shared IR", () =
     for (const [mathSource, latexSource] of PAIRS) {
         expect(xml(toMathML(lowerLatex(parseLatex(latexSource))))).toBe(xml(toMathML(lowerMath(parseMath(mathSource)))));
         expect(xml(toOmml(lowerLatex(parseLatex(latexSource))))).toBe(xml(toOmml(lowerMath(parseMath(mathSource)))));
+    }
+});
+
+test("the shared IR round-trips back through each language's source", () => {
+    for (const [mathSource, latexSource] of PAIRS) {
+        const shared = lowerMath(parseMath(mathSource));
+        expect(shared).toEqual(lowerLatex(parseLatex(latexSource)));
+        expect(lowerLatex(parseLatex(toLatex(shared)))).toEqual(shared);
+        expect(lowerMath(parseMath(toMath(shared)))).toEqual(shared);
     }
 });
 

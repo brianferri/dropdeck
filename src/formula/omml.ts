@@ -1,59 +1,21 @@
-import { frac, nthRoot, oMath, run, sSub, sSup, sqrt } from "@dropdeck/xml/omml";
-import { NotationKind } from "#/formula/nodes";
-import type { Frac, OMath, Root, Run, SSub, SSup, Sqrt } from "@dropdeck/xml/omml";
-import type { Content as XmlContent, Node as XmlNode } from "@dropdeck/xml";
-import type { Content, Notation } from "#/formula/nodes";
+import { acc, frac, nary, nthRoot, oMath, run, sSub, sSup, sqrt } from "@dropdeck/xml/omml";
+import { AccentKind, NotationKind } from "#/formula/nodes";
+import { isNaryIntegralGlyph } from "#/formula/nary";
+import type { Node as XmlNode } from "@dropdeck/xml";
+import type { Content, Notation } from "#/formula/typings/nodes";
+import type { ToOmml } from "./typings/omml.js";
 
-// OMML has no grouping element, so a row -- and a fence, whose delimiters are just text runs like MathML's `<mo>` --
-// flattens its nodes into the enclosing slot. Every rule therefore yields a list that the parent splices in.
-type OmmlList<Children extends Content> =
-    Children extends readonly [infer Head extends Notation, ...infer Rest extends Content]
-        ? readonly [...OmmlOf<Head>, ...OmmlList<Rest>]
-        : readonly [];
-
-type IdentifierOmml<N extends Notation> = N extends { kind: NotationKind.Identifier, symbol: infer Symbol extends string } ? readonly [Run<Symbol>] : false;
-type NumberOmml<N extends Notation> = N extends { kind: NotationKind.Number, value: infer Value extends number } ? readonly [Run<`${Value}`>] : false;
-type OperatorOmml<N extends Notation> = N extends { kind: NotationKind.Operator, symbol: infer Symbol extends string } ? readonly [Run<Symbol>] : false;
-type RowOmml<N extends Notation> = N extends { kind: NotationKind.Row, children: infer Children extends Content } ? OmmlList<Children> : false;
-type FencedOmml<N extends Notation> =
-    N extends { kind: NotationKind.Fenced, open: infer Open extends string, close: infer Close extends string, children: infer Children extends Content }
-        ? readonly [Run<Open>, ...OmmlList<Children>, Run<Close>]
-        : false;
-type FractionOmml<N extends Notation> =
-    N extends { kind: NotationKind.Fraction, children: infer Children extends Content }
-        ? Children extends readonly [infer Numerator extends Notation, infer Denominator extends Notation] ? readonly [Frac<OmmlOf<Numerator>, OmmlOf<Denominator>>] : false
-        : false;
-type SuperscriptOmml<N extends Notation> =
-    N extends { kind: NotationKind.Superscript, children: infer Children extends Content }
-        ? Children extends readonly [infer Base extends Notation, infer Superscript extends Notation] ? readonly [SSup<OmmlOf<Base>, OmmlOf<Superscript>>] : false
-        : false;
-type SubscriptOmml<N extends Notation> =
-    N extends { kind: NotationKind.Subscript, children: infer Children extends Content }
-        ? Children extends readonly [infer Base extends Notation, infer Subscript extends Notation] ? readonly [SSub<OmmlOf<Base>, OmmlOf<Subscript>>] : false
-        : false;
-type RadicalOmml<N extends Notation> =
-    N extends { kind: NotationKind.Radical, children: infer Children extends Content }
-        ? Children extends readonly [infer Radicand extends Notation, infer Index extends Notation] ? readonly [Root<OmmlOf<Index>, OmmlOf<Radicand>>]
-            : Children extends readonly [infer Radicand extends Notation] ? readonly [Sqrt<OmmlOf<Radicand>>]
-                : false
-        : false;
-
-type FirstMatch<Rules extends ReadonlyArray<unknown>> =
-    Rules extends readonly [infer Head, ...infer Tail] ? [Head] extends [false] ? FirstMatch<Tail> : Head : false;
-
-type OmmlOf<N extends Notation> = Extract<FirstMatch<[
-    IdentifierOmml<N>,
-    NumberOmml<N>,
-    OperatorOmml<N>,
-    RowOmml<N>,
-    FencedOmml<N>,
-    FractionOmml<N>,
-    SuperscriptOmml<N>,
-    SubscriptOmml<N>,
-    RadicalOmml<N>
-]>, XmlContent>;
-
-export type ToOmml<N extends Notation> = OMath<OmmlOf<N>>;
+// Word marks accents with the combining glyph (drawn over `m:e`); one table drives both the type and the runtime.
+// The marks are combining code points, so they are written as escapes to avoid attaching to the source quote.
+export const ACCENT_OMML = {
+    [AccentKind.Hat]: "̂",
+    [AccentKind.Vec]: "⃗",
+    [AccentKind.Bar]: "̄",
+    [AccentKind.Tilde]: "̃",
+    [AccentKind.Dot]: "̇",
+    [AccentKind.Ddot]: "̈",
+    [AccentKind.Overline]: "̅"
+} as const satisfies Record<AccentKind, string>;
 
 function flatten(children: Content): Array<XmlNode> {
     const out: Array<XmlNode> = [];
@@ -83,6 +45,17 @@ function ommlNodes(node: Notation): Array<XmlNode> {
             return node.children.length === 2
                 ? [nthRoot(ommlNodes(node.children[1]), ommlNodes(node.children[0]))]
                 : [sqrt(ommlNodes(node.children[0]))];
+        case NotationKind.Nary:
+            return [
+                nary(
+                    node.symbol,
+                    isNaryIntegralGlyph(node.symbol) ? "subSup" : "undOvr",
+                    ommlNodes(node.children[0]),
+                    ommlNodes(node.children[1]),
+                    ommlNodes(node.children[2])
+                )
+            ];
+        case NotationKind.Accent: return [acc(ACCENT_OMML[node.accent], ommlNodes(node.children[0]))];
     }
 }
 

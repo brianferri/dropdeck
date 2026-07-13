@@ -1,8 +1,9 @@
 import { NotationKind } from "#/formula/nodes";
+import type { AccentKind } from "#/formula/nodes";
 import type {
-    Content, FencedNode, FractionNode, IdentifierNode, Notation, NumberNode, One, OperatorNode, Pair,
-    RadicalNode, RowNode, SubscriptNode, SuperscriptNode
-} from "#/formula/nodes";
+    AccentNode, Content, FencedNode, FractionNode, IdentifierNode, NaryNode, Notation, NumberNode, One,
+    OperatorNode, Pair, RadicalNode, RowNode, SubscriptNode, SuperscriptNode, Triple
+} from "#/formula/typings/nodes";
 
 export function identifier<const Symbol extends string>(symbol: Symbol): IdentifierNode<Symbol> {
     return { kind: NotationKind.Identifier, symbol };
@@ -58,4 +59,20 @@ export function root<const Radicand extends Notation, const Index extends Notati
     index: Index
 ): RadicalNode<Pair<Radicand, Index>> {
     return { kind: NotationKind.Radical, children: [radicand, index] as const };
+}
+
+export function nary<
+    const Symbol extends string,
+    const Lower extends Notation,
+    const Upper extends Notation,
+    const Body extends Notation
+>(symbol: Symbol, lower: Lower, upper: Upper, body: Body): NaryNode<Symbol, Triple<Lower, Upper, Body>> {
+    return { kind: NotationKind.Nary, symbol, children: [lower, upper, body] as const };
+}
+
+export function accent<const Accent extends AccentKind, const Base extends Notation>(
+    kind: Accent,
+    base: Base
+): AccentNode<Accent, One<Base>> {
+    return { kind: NotationKind.Accent, accent: kind, children: [base] as const };
 }

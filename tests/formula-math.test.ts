@@ -1,7 +1,7 @@
 import { test, expect } from "vitest";
 import { parse } from "@dropdeck/math";
 import {
-    fenced, fraction, identifier, lowerMath, number, operator, radical, row, subscript, superscript
+    fenced, fraction, identifier, lowerMath, number, operator, radical, row, subscript, superscript, toMath
 } from "#/formula";
 import type { Expression, Parse } from "@dropdeck/math";
 import type {
@@ -52,12 +52,22 @@ export type Unary = [
     Expect<Equal<Lower<"-(a+b)">, RowNode<readonly [Op<"-">, Grouped<RowNode<readonly [Id<"a">, Op<"+">, Id<"b">]>>]>>>
 ];
 
+export type Calls = [
+    Expect<Equal<Lower<"sin(x)">, RowNode<readonly [Id<"sin">, Grouped<Id<"x">>]>>>,
+    Expect<Equal<Lower<"log(x)">, RowNode<readonly [Id<"log">, Grouped<Id<"x">>]>>>,
+    Expect<Equal<Lower<"log(2, x)">, RowNode<readonly [Id<"log">, Grouped<RowNode<readonly [Num<2>, Op<",">, Id<"x">]>>]>>>
+];
+
 test("the runtime lowering matches the type-level LowerMath", () => {
     expect(lowerMath(parse("x_i"))).toEqual(subscript(identifier("x"), identifier("i")));
     expect(lowerMath(parse("pi"))).toEqual(identifier("π"));
     expect(lowerMath(parse("x^2"))).toEqual(superscript(identifier("x"), number(2)));
     expect(lowerMath(parse("a/b"))).toEqual(fraction(identifier("a"), identifier("b")));
     expect(lowerMath(parse("sqrt(x)"))).toEqual(radical(identifier("x")));
+    expect(lowerMath(parse("sin(x)"))).toEqual(row([identifier("sin"), fenced("(", ")", [identifier("x")])]));
+    expect(lowerMath(parse("log(2, x)"))).toEqual(row([identifier("log"), fenced("(", ")", [row([number(2), operator(","), identifier("x")])])]));
+    const logIr = lowerMath(parse("log(2, x)"));
+    expect(lowerMath(parse(toMath(logIr)))).toEqual(logIr);
     expect(lowerMath(parse("(a+b)*c"))).toEqual(row([
         fenced("(", ")", [row([identifier("a"), operator("+"), identifier("b")])]),
         operator("·"),
