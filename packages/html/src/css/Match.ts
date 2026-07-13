@@ -1,7 +1,7 @@
 import type { Combinator, SelectorKind, SimpleSelector } from "./Selector.js";
 import type { ParseSelector } from "./ParseSelector.js";
 import type { Rule, Stylesheet } from "./Specification.js";
-import type { ElementNode } from "../Specification.js";
+import type { ElementNode } from "../typings/nodes.js";
 
 type All<U> = false extends U ? false : true;
 

@@ -3,9 +3,9 @@ import assert from "node:assert/strict";
 import { element, text } from "../src/builders.js";
 import { parse } from "../src/Parser.js";
 import { serialize } from "../src/Serializer.js";
-import type { Parse } from "../src/Parse.js";
-import type { Serialize } from "../src/Serializer.js";
-import type { Content, ElementNode, TextNode } from "../src/Specification.js";
+import type { Parse } from "../src/typings/parse.js";
+import type { Serialize } from "../src/typings/serialize.js";
+import type { Content, ElementNode, TextNode } from "../src/typings/nodes.js";
 
 // `Expect<Equal<A, B>>` fails to typecheck unless A and B are identical.
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;

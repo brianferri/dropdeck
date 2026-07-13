@@ -1,4 +1,5 @@
 import type { Combinator, ComplexSelector, SelectorKind, SimpleSelector } from "./Selector.js";
+import type { FirstMatch } from "@dropdeck/common";
 
 type Whitespace = " " | "\t" | "\n" | "\r" | "\f";
 type TrimStart<S extends string> = S extends `${Whitespace}${infer Rest}` ? TrimStart<Rest> : S;
@@ -31,9 +32,6 @@ type PseudoClassMatch<S extends string> = S extends `:${infer Rest}` ? ReadPseud
 type TypeMatch<S extends string> = ReadName<S> extends [infer Name extends string, infer After extends string] ? Name extends "" ? false : [Simple<SelectorKind.Type, Name>, After] : false;
 
 // The matcher list is ordered so `::` beats `:` and a bare type name is the last resort.
-type FirstMatch<List extends ReadonlyArray<unknown>> =
-    List extends readonly [infer Head, ...infer Rest] ? [Head] extends [false] ? FirstMatch<Rest> : Head : false;
-
 type ReadSimple<S extends string> = FirstMatch<[
     UniversalMatch<S>,
     ClassMatch<S>,

@@ -1,6 +1,6 @@
 import { isDigit, isIdentStart, isNameChar, isWhitespace } from "./Characters.js";
 import { advance, eof, peek, readUntil, readWhile } from "../scan/Cursor.js";
-import type { Cursor } from "../scan/Cursor.js";
+import type { Cursor } from "../typings/scan.js";
 export enum CssTokenKind {
     AtKeyword = "atKeyword",
     Ident = "ident",

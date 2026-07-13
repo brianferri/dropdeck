@@ -1,8 +1,9 @@
 import { isAttributeNameChar, isTagNameChar, isUnquotedValueChar, isWhitespace } from "./Characters.js";
 import { decodeEntities } from "./Entities.js";
 import { advance, consume, eof, peek, readUntil, readWhile, skipWhile, startsWith, startsWithInsensitive } from "./scan/Cursor.js";
-import type { Cursor } from "./scan/Cursor.js";
-import type { Attr, AttrList } from "./Specification.js";
+import type { Cursor } from "./typings/scan.js";
+import type { Attr, AttrList } from "./typings/nodes.js";
+import type { Token } from "./typings/tokens.js";
 
 export enum TokenKind {
     StartTag = "startTag",
@@ -11,13 +12,6 @@ export enum TokenKind {
     Comment = "comment",
     Eof = "eof"
 }
-
-export type Token =
-    | { kind: TokenKind.StartTag, name: string, attrs: AttrList, selfClosing: boolean }
-    | { kind: TokenKind.EndTag, name: string }
-    | { kind: TokenKind.Text, value: string }
-    | { kind: TokenKind.Comment }
-    | { kind: TokenKind.Eof };
 
 function readComment(c: Cursor): Token {
     consume(c, "<!--");

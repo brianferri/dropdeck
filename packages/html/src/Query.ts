@@ -1,6 +1,6 @@
 import { isWhitespace } from "./Characters.js";
 import { NodeField } from "./Specification.js";
-import type { Content, DomNode, ElementNode } from "./Specification.js";
+import type { Content, DomNode, ElementNode } from "./typings/nodes.js";
 
 export function attribute(element: ElementNode, name: string): string | null {
     for (const [key, value] of element.attrs) if (key === name) return value;

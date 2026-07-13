@@ -1,6 +1,6 @@
 // Type-level text stays raw: entities decode at runtime where the character mapping is available.
 
-import type { AttrList, Content, ElementNode, TextNode, VoidTag } from "./Specification.js";
+import type { AttrList, Content, ElementNode, TextNode, VoidTag } from "./nodes.js";
 
 type Whitespace = " " | "\t" | "\n" | "\r" | "\f";
 

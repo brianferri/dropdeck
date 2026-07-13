@@ -1,4 +1,4 @@
-import type { AttrList, Content, ElementNode, TextNode } from "./Specification.js";
+import type { AttrList, Content, ElementNode, TextNode } from "./typings/nodes.js";
 
 export function element<const Tag extends string, const A extends AttrList, const C extends Content>(
     tag: Tag,

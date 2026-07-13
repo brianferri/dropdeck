@@ -2,10 +2,10 @@ import { decodeEntities } from "./Entities.js";
 import { cursor } from "./scan/Cursor.js";
 import { ESCAPABLE_RAW_TEXT_TAGS, NodeField, RAW_TEXT_TAGS, VOID_TAGS } from "./Specification.js";
 import { TokenKind, nextToken, readRawText } from "./Tokenizer.js";
-import type { Parse } from "./Parse.js";
-import type { Cursor } from "./scan/Cursor.js";
-import type { AttrList, Content } from "./Specification.js";
-import type { Token } from "./Tokenizer.js";
+import type { Parse } from "./typings/parse.js";
+import type { Cursor } from "./typings/scan.js";
+import type { AttrList, Content } from "./typings/nodes.js";
+import type { Token } from "./typings/tokens.js";
 
 const VOID = new Set<string>(VOID_TAGS);
 const RAW_TEXT = new Set<string>(RAW_TEXT_TAGS);

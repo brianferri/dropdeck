@@ -1,5 +1,5 @@
 import { NodeField } from "./Specification.js";
-import type { Attr, DomNode } from "./Specification.js";
+import type { Attr, DomNode } from "./typings/nodes.js";
 
 // `style` is dropped too: a stylesheet can exfiltrate via `url(...)`.
 const FORBIDDEN_TAGS = new Set<string>([

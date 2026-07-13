@@ -1,6 +1,6 @@
 import { declaration, rule } from "../../src/css/builders.js";
-import type { Parse } from "../../src/Parse.js";
-import type { ElementNode } from "../../src/Specification.js";
+import type { Parse } from "../../src/typings/parse.js";
+import type { ElementNode } from "../../src/typings/nodes.js";
 import type { MatchesSelector, MatchesStylesheet } from "../../src/css/Match.js";
 
 // `Expect<Equal<A, B>>` fails to typecheck unless A and B are identical -- each row is a structural-match assertion.

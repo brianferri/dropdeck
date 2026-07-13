@@ -1,7 +1,4 @@
-export type Cursor = {
-    readonly source: string,
-    offset: number
-};
+import type { Cursor } from "../typings/scan.js";
 
 export function cursor(source: string): Cursor {
     return { source, offset: 0 };

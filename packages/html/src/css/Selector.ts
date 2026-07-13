@@ -1,6 +1,6 @@
 import { isNameChar, isWhitespace } from "./Characters.js";
 import { advance, cursor, eof, peek, readWhile, skipWhile } from "../scan/Cursor.js";
-import type { Cursor } from "../scan/Cursor.js";
+import type { Cursor } from "../typings/scan.js";
 import type { ParseSelector } from "./ParseSelector.js";
 
 export enum SelectorKind {
