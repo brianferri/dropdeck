@@ -1,13 +1,10 @@
 {
-    "name": "@dropdeck/markdown",
+    "name": "@dropdeck/common",
     "version": "0.0.0",
-    "description": "Dependency-free Markdown tokenizer built on a token Specification",
+    "description": "Shared type-level and runtime primitives reused across the parser and serializer packages",
     "type": "module",
     "exports": {
         ".": "./dist/src/index.js"
-    },
-    "dependencies": {
-        "@dropdeck/common": "*"
     },
     "scripts": {
         "check": "tsc --noEmit && eslint .",

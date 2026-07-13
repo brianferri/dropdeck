@@ -8,6 +8,7 @@
         "#/*": "./src/*"
     },
     "workspaces": [
+        "packages/common",
         "packages/xml",
         "packages/html",
         "packages/pptx",
@@ -42,6 +43,7 @@
         "vitest": "^4.1.9"
     },
     "dependencies": {
+        "@dropdeck/common": "*",
         "@dropdeck/html": "*",
         "@dropdeck/latex": "*",
         "@dropdeck/markdown": "*",

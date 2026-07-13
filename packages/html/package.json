@@ -8,6 +8,9 @@
         "./css": "./dist/src/css/index.js",
         "./tailwind": "./dist/src/tailwind/index.js"
     },
+    "dependencies": {
+        "@dropdeck/common": "*"
+    },
     "scripts": {
         "check": "tsc --noEmit && eslint .",
         "build": "rm -rf dist && tsc",
