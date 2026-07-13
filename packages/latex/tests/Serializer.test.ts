@@ -15,7 +15,9 @@ export type Checks = [
     Assert<Equal<Serialize<Parse<"\\sqrt[3]{x}">>, "\\sqrt[3]{x}">>,
     Assert<Equal<Serialize<Parse<"(a+b)">>, "(a + b)">>,
     Assert<Equal<Serialize<Parse<"{a+b}^2">>, "{a + b}^{2}">>,
-    Assert<Equal<Serialize<Parse<"a_i^2">>, "a_{i}^{2}">>
+    Assert<Equal<Serialize<Parse<"a_i^2">>, "a_{i}^{2}">>,
+    Assert<Equal<Serialize<Parse<"\\hat{x}">>, "\\hat{x}">>,
+    Assert<Equal<Serialize<Parse<"\\vec{F}">>, "\\vec{F}">>
 ];
 
 function roundTrip<Source extends string>(source: Source): Serialize<Parse<Source> & Notation> {
@@ -40,4 +42,5 @@ await test("parse and serialize round-trip at the IR level", () => {
     assert.deepEqual(parse(serialize(parse("\\frac{a_i}{2}"))), parse("\\frac{a_i}{2}"));
     assert.deepEqual(parse(serialize(parse("\\sqrt[3]{x}+1"))), parse("\\sqrt[3]{x}+1"));
     assert.deepEqual(parse(serialize(parse("(a+b)^2"))), parse("(a+b)^2"));
+    assert.deepEqual(parse(serialize(parse("\\hat{x}+\\vec{v}"))), parse("\\hat{x}+\\vec{v}"));
 });

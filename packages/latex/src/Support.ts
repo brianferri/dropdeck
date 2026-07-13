@@ -1,8 +1,3 @@
-export class LatexError extends Error {
-    public readonly offset: number;
+import { SourceError } from "@dropdeck/common";
 
-    public constructor(message: string, offset: number) {
-        super(message);
-        this.offset = offset;
-    }
-}
+export class LatexError extends SourceError {}

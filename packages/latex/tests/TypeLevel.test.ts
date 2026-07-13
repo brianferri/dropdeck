@@ -50,10 +50,10 @@ export type Fences = [
 ];
 
 export type Errors = [
-    Assert<Equal<Parse<"\\frac{a}">, ParseError<"unexpected end of input">>>,
-    Assert<Equal<Parse<"(a">, ParseError<"expected ')'">>>,
-    Assert<Equal<Parse<"{a">, ParseError<"expected '}'">>>,
-    Assert<Equal<Parse<"a @ b">, ParseError<"unexpected character in \"@ b\"">>>,
+    Assert<Equal<Parse<"\\frac{a}">, ParseError<"Expected an expression, got <end of input>">>>,
+    Assert<Equal<Parse<"(a">, ParseError<"Expected ')', got <end of input>">>>,
+    Assert<Equal<Parse<"{a">, ParseError<"Expected '}', got <end of input>">>>,
+    Assert<Equal<Parse<"a @ b">, ParseError<"Unexpected character at <@ b>">>>,
 
     // A non-literal source degrades to the general `Notation`
     Assert<Equal<Parse<string>, Notation>>

@@ -7,7 +7,25 @@ export enum NotationKind {
     Fraction = "fraction",
     Superscript = "superscript",
     Subscript = "subscript",
-    Radical = "radical"
+    Radical = "radical",
+    Accent = "accent"
+}
+
+// An accent command decorates the single argument that follows it (`\hat{x}`), unlike an operator that stands alone.
+export enum LatexAccentCommand {
+    Hat = "hat",
+    Vec = "vec",
+    Bar = "bar",
+    Tilde = "tilde",
+    Dot = "dot",
+    Ddot = "ddot",
+    Overline = "overline"
+}
+
+// Commands that take braced arguments rather than standing for a glyph, so the parser reads their operands.
+export enum LatexStructuralCommand {
+    Frac = "frac",
+    Sqrt = "sqrt"
 }
 
 export enum OperatorChar {
@@ -16,95 +34,93 @@ export enum OperatorChar {
     Equal = "=",
     Less = "<",
     Greater = ">",
-    Slash = "/"
+    Slash = "/",
+    Comma = ",",
+    Bang = "!"
 }
 
-// A command not listed here falls through to an identifier glyph (`\alpha`) or function name (`\sin`).
 export enum LatexOperatorCommand {
+    Le = "le",
+    Leq = "leq",
+    Ge = "ge",
+    Geq = "geq",
+    Ne = "ne",
+    Neq = "neq",
+    Ll = "ll",
+    Gg = "gg",
+    Prec = "prec",
+    Succ = "succ",
+    Preceq = "preceq",
+    Succeq = "succeq",
+    Approx = "approx",
+    Equiv = "equiv",
+    Cong = "cong",
+    Simeq = "simeq",
+    Sim = "sim",
+    Asymp = "asymp",
+    Propto = "propto",
+    Parallel = "parallel",
+    Mid = "mid",
+    Perp = "perp",
+    In = "in",
+    Notin = "notin",
+    Ni = "ni",
+    Cup = "cup",
+    Cap = "cap",
+    Subset = "subset",
+    Subseteq = "subseteq",
+    Supset = "supset",
+    Supseteq = "supseteq",
+    Setminus = "setminus",
+    Emptyset = "emptyset",
     Cdot = "cdot",
     Times = "times",
     Div = "div",
     Pm = "pm",
     Mp = "mp",
-    Le = "le",
-    Ge = "ge",
-    Ne = "ne",
-    Leq = "leq",
-    Geq = "geq",
-    Neq = "neq",
-    Approx = "approx",
-    Equiv = "equiv",
+    Ast = "ast",
+    Star = "star",
+    Circ = "circ",
+    Bullet = "bullet",
+    Diamond = "diamond",
+    Oplus = "oplus",
+    Ominus = "ominus",
+    Otimes = "otimes",
+    Oslash = "oslash",
+    Odot = "odot",
+    Dagger = "dagger",
+    Ddagger = "ddagger",
+    Sqcup = "sqcup",
+    Sqcap = "sqcap",
+    Uplus = "uplus",
     Land = "land",
     Lor = "lor",
+    Wedge = "wedge",
+    Vee = "vee",
+    Neg = "neg",
+    Lnot = "lnot",
+    Forall = "forall",
+    Exists = "exists",
+    Top = "top",
+    Bot = "bot",
     To = "to",
     Mapsto = "mapsto",
-    In = "in",
-    Cup = "cup",
-    Cap = "cap"
+    Implies = "implies",
+    Iff = "iff",
+    Rightarrow = "Rightarrow",
+    Leftrightarrow = "Leftrightarrow",
+    Sum = "sum",
+    Prod = "prod",
+    Coprod = "coprod",
+    Bigcup = "bigcup",
+    Bigcap = "bigcap",
+    Bigvee = "bigvee",
+    Bigwedge = "bigwedge",
+    Bigoplus = "bigoplus",
+    Bigotimes = "bigotimes",
+    Bigsqcup = "bigsqcup",
+    Int = "int",
+    Oint = "oint",
+    Iint = "iint",
+    Iiint = "iiint"
 }
-
-export type IdentifierNode<Symbol extends string = string> = {
-    kind: NotationKind.Identifier,
-    symbol: Symbol
-};
-
-export type NumberNode<Value extends number = number> = {
-    kind: NotationKind.Number,
-    value: Value
-};
-
-export type OperatorNode<Symbol extends string = string> = {
-    kind: NotationKind.Operator,
-    symbol: Symbol
-};
-
-export type RowNode<Children extends Content = Content> = {
-    kind: NotationKind.Row,
-    children: Children
-};
-
-export type FencedNode<
-    Open extends string = string,
-    Close extends string = string,
-    Children extends Content = Content
-> = {
-    kind: NotationKind.Fenced,
-    open: Open,
-    close: Close,
-    children: Children
-};
-
-export type FractionNode<Children extends Content = Content> = {
-    kind: NotationKind.Fraction,
-    children: Children
-};
-
-export type SuperscriptNode<Children extends Content = Content> = {
-    kind: NotationKind.Superscript,
-    children: Children
-};
-
-export type SubscriptNode<Children extends Content = Content> = {
-    kind: NotationKind.Subscript,
-    children: Children
-};
-
-export type RadicalNode<Children extends Content = Content> = {
-    kind: NotationKind.Radical,
-    children: Children
-};
-
-export type Notation =
-    | IdentifierNode
-    | NumberNode
-    | OperatorNode
-    | RowNode
-    | FencedNode
-    | FractionNode
-    | SuperscriptNode
-    | SubscriptNode
-    | RadicalNode;
-
-export type Content = ReadonlyArray<Notation>;
-export type One<Operand extends Notation> = readonly [Operand];
-export type Pair<Left extends Notation, Right extends Notation> = readonly [Left, Right];

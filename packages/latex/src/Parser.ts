@@ -1,39 +1,17 @@
-import { fenced, fraction, identifier, number, operator, radical, root, row, subscript, superscript } from "./builders.js";
+import { accent, fenced, fraction, identifier, number, operator, radical, root, row, subscript, superscript } from "./builders.js";
 import { PayloadKind, PunctKind, tokenize } from "./Tokenizer.js";
 import { LatexError } from "./Support.js";
-import { LatexOperatorCommand } from "./Specification.js";
-import type { Token } from "./Tokenizer.js";
-import type { Notation } from "./Specification.js";
-import type { Parse } from "./Parse.js";
+import { LatexAccentCommand, LatexOperatorCommand, LatexStructuralCommand } from "./Specification.js";
+import { memberGuard } from "@dropdeck/common";
+import type { Token } from "./typings/tokens.js";
+import type { Notation } from "./typings/nodes.js";
+import type { Parse } from "./typings/parse.js";
 
 type Cursor = { tokens: ReadonlyArray<Token>, index: number };
 
-const OPERATOR_COMMANDS = {
-    [LatexOperatorCommand.Cdot]: undefined,
-    [LatexOperatorCommand.Times]: undefined,
-    [LatexOperatorCommand.Div]: undefined,
-    [LatexOperatorCommand.Pm]: undefined,
-    [LatexOperatorCommand.Mp]: undefined,
-    [LatexOperatorCommand.Le]: undefined,
-    [LatexOperatorCommand.Ge]: undefined,
-    [LatexOperatorCommand.Ne]: undefined,
-    [LatexOperatorCommand.Leq]: undefined,
-    [LatexOperatorCommand.Geq]: undefined,
-    [LatexOperatorCommand.Neq]: undefined,
-    [LatexOperatorCommand.Approx]: undefined,
-    [LatexOperatorCommand.Equiv]: undefined,
-    [LatexOperatorCommand.Land]: undefined,
-    [LatexOperatorCommand.Lor]: undefined,
-    [LatexOperatorCommand.To]: undefined,
-    [LatexOperatorCommand.Mapsto]: undefined,
-    [LatexOperatorCommand.In]: undefined,
-    [LatexOperatorCommand.Cup]: undefined,
-    [LatexOperatorCommand.Cap]: undefined
-} as const satisfies Record<LatexOperatorCommand, void>;
-
-function isOperatorCommand(name: string): name is keyof typeof OPERATOR_COMMANDS {
-    return name in OPERATOR_COMMANDS;
-}
+const isOperatorCommand = memberGuard<LatexOperatorCommand>(Object.values(LatexOperatorCommand));
+const isAccentCommand = memberGuard<LatexAccentCommand>(Object.values(LatexAccentCommand));
+const isStructuralCommand = memberGuard<LatexStructuralCommand>(Object.values(LatexStructuralCommand));
 
 function peek(cursor: Cursor): Token | undefined {
     return cursor.tokens[cursor.index];
@@ -83,8 +61,13 @@ function parseRoot(cursor: Cursor): Notation {
 }
 
 function parseCommand(cursor: Cursor, name: string): Notation {
-    if (name === "frac") return parseFraction(cursor);
-    if (name === "sqrt") return parseRoot(cursor);
+    if (isStructuralCommand(name)) {
+        switch (name) {
+            case LatexStructuralCommand.Frac: return parseFraction(cursor);
+            case LatexStructuralCommand.Sqrt: return parseRoot(cursor);
+        }
+    }
+    if (isAccentCommand(name)) return accent(name, parseBase(cursor));
     if (isOperatorCommand(name)) return operator(`\\${name}`);
     return identifier(`\\${name}`);
 }

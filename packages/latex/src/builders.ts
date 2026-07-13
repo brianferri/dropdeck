@@ -1,8 +1,8 @@
 import { NotationKind } from "./Specification.js";
 import type {
-    Content, FencedNode, FractionNode, IdentifierNode, Notation, NumberNode, One, OperatorNode, Pair,
+    AccentNode, Content, FencedNode, FractionNode, IdentifierNode, Notation, NumberNode, One, OperatorNode, Pair,
     RadicalNode, RowNode, SubscriptNode, SuperscriptNode
-} from "./Specification.js";
+} from "./typings/nodes.js";
 
 export function identifier<const Symbol extends string>(symbol: Symbol): IdentifierNode<Symbol> {
     return { kind: NotationKind.Identifier, symbol };
@@ -58,4 +58,11 @@ export function root<const Radicand extends Notation, const Index extends Notati
     index: Index
 ): RadicalNode<Pair<Radicand, Index>> {
     return { kind: NotationKind.Radical, children: [radicand, index] as const };
+}
+
+export function accent<const Command extends string, const Base extends Notation>(
+    command: Command,
+    base: Base
+): AccentNode<Command, One<Base>> {
+    return { kind: NotationKind.Accent, command, children: [base] as const };
 }
