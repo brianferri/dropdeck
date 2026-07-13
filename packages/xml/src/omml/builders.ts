@@ -1,22 +1,8 @@
 import { element, text } from "../builders.js";
-import type { Content, Element, Text } from "../Specification.js";
+import type { Content } from "../typings/nodes.js";
+import type { Acc, Delimiter, Frac, Nary, OMath, OMathPara, Root, Run, SSub, SSup, Sqrt } from "../typings/omml.js";
 
 export const OMML_NS = "http://schemas.openxmlformats.org/officeDocument/2006/math";
-
-type Slot<Tag extends string, Children extends Content> = Element<Tag, readonly [], Children>;
-type Property<Tag extends string, Value extends string> = Element<Tag, readonly [readonly ["m:val", Value]], readonly []>;
-
-export type Run<Value extends string> = Slot<"m:r", readonly [Slot<"m:t", readonly [Text & { readonly text: Value }]>]>;
-export type Frac<Numerator extends Content, Denominator extends Content> = Slot<"m:f", readonly [Slot<"m:num", Numerator>, Slot<"m:den", Denominator>]>;
-export type SSup<Base extends Content, Superscript extends Content> = Slot<"m:sSup", readonly [Slot<"m:e", Base>, Slot<"m:sup", Superscript>]>;
-export type SSub<Base extends Content, Subscript extends Content> = Slot<"m:sSub", readonly [Slot<"m:e", Base>, Slot<"m:sub", Subscript>]>;
-export type Sqrt<Radicand extends Content> = Slot<"m:rad", readonly [Slot<"m:radPr", readonly [Property<"m:degHide", "1">]>, Slot<"m:deg", readonly []>, Slot<"m:e", Radicand>]>;
-export type Root<Degree extends Content, Radicand extends Content> = Slot<"m:rad", readonly [Slot<"m:deg", Degree>, Slot<"m:e", Radicand>]>;
-type DelimiterProps<Open extends string, Close extends string> = Slot<"m:dPr", readonly [Property<"m:begChr", Open>, Property<"m:endChr", Close>]>;
-export type Delimiter<Open extends string, Close extends string, Inner extends Content> = Slot<"m:d", readonly [DelimiterProps<Open, Close>, Slot<"m:e", Inner>]>;
-export type OMath<Body extends Content> = Element<"m:oMath", readonly [readonly ["xmlns:m", typeof OMML_NS]], Body>;
-
-export type OMathPara<Equation extends Content> = Element<"m:oMathPara", readonly [readonly ["xmlns:m", typeof OMML_NS]], Equation>;
 
 export function run<const Value extends string>(value: Value): Run<Value> {
     return element("m:r", [], [element("m:t", [], [text(value)])]);
@@ -50,6 +36,28 @@ export function delimiter<const Open extends string, const Close extends string,
     return element("m:d", [], [
         element("m:dPr", [], [element("m:begChr", [["m:val", open]], []), element("m:endChr", [["m:val", close]], [])]),
         element("m:e", [], inner)
+    ]);
+}
+
+export function nary<
+    const Chr extends string,
+    const LimLoc extends string,
+    const Lower extends Content,
+    const Upper extends Content,
+    const Body extends Content
+>(chr: Chr, limLoc: LimLoc, lower: Lower, upper: Upper, body: Body): Nary<Chr, LimLoc, Lower, Upper, Body> {
+    return element("m:nary", [], [
+        element("m:naryPr", [], [element("m:chr", [["m:val", chr]], []), element("m:limLoc", [["m:val", limLoc]], [])]),
+        element("m:sub", [], lower),
+        element("m:sup", [], upper),
+        element("m:e", [], body)
+    ]);
+}
+
+export function acc<const Chr extends string, const Base extends Content>(chr: Chr, base: Base): Acc<Chr, Base> {
+    return element("m:acc", [], [
+        element("m:accPr", [], [element("m:chr", [["m:val", chr]], [])]),
+        element("m:e", [], base)
     ]);
 }
 

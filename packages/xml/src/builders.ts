@@ -1,4 +1,4 @@
-import type { AssertUniqueAttrs, AttrList, Content, Element, Text } from "./Specification.js";
+import type { AssertUniqueAttrs, AttrList, Content, Element, Text } from "./typings/nodes.js";
 
 export function element<const Tag extends string, const A extends AttrList, const C extends Content>(
     tag: Tag,

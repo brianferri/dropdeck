@@ -16,9 +16,9 @@ export type {
     Seq,
     Some,
     Text
-} from "./Specification.js";
+} from "./typings/nodes.js";
 
 export { xml } from "./Serializer.js";
-export type { Serialize } from "./Serializer.js";
+export type { Serialize } from "./typings/serialize.js";
 
 export { element, text } from "./builders.js";

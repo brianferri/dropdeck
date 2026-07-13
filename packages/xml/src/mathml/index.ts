@@ -1,2 +1,2 @@
-export { MATHML_NS, math, mfrac, mi, mn, mo, mroot, mrow, msqrt, msub, msup } from "./builders.js";
-export type { MathMLAttr, MathMLAttrName, MathMLAttrs } from "./builders.js";
+export { MATHML_NS, math, mfrac, mi, mn, mo, mover, mroot, mrow, msqrt, msub, msup, munder, munderover } from "./builders.js";
+export type { MathMLAttr, MathMLAttrName, MathMLAttrs } from "../typings/mathml.js";
