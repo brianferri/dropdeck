@@ -1,5 +1,5 @@
 import { NodeKind } from "./Specification.js";
-import type { BlockNode, Blocks, DocumentNode, InlineNode, Inlines, ListNode } from "./Specification.js";
+import type { BlockNode, Blocks, DocumentNode, InlineNode, Inlines, ListNode } from "./typings/nodes.js";
 
 function serializeInline(node: InlineNode): string {
     switch (node.kind) {

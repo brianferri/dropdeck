@@ -1,11 +1,9 @@
+import type { FirstMatch } from "@dropdeck/common";
 import type {
     BlockNode, Blocks, BlockQuoteNode, CodeBlockNode, CodeNode, DocumentNode, EmphasisNode, HeadingLevel,
     HeadingNode, ImageNode, InlineNode, Inlines, LinkNode, ListItemNode, ListNode, ParagraphNode, SoftBreakNode,
     StrongNode, TextNode, ThematicBreakNode
-} from "./Specification.js";
-
-type FirstMatch<Rules extends ReadonlyArray<unknown>> =
-    Rules extends readonly [infer Head, ...infer Tail] ? [Head] extends [false] ? FirstMatch<Tail> : Head : false;
+} from "./nodes.js";
 
 type Escapable =
     | "!" | "\"" | "#" | "$" | "%" | "&" | "'" | "(" | ")" | "*" | "+" | "," | "-" | "." | "/" | ":" | ";"

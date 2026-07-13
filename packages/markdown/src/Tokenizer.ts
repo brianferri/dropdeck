@@ -1,4 +1,5 @@
 import { ATX_LEVEL_MAX } from "./Specification.js";
+import type { Token } from "./typings/tokens.js";
 
 // The highlighting IR: a flat, gap-free stream of positioned tokens over the source. Every character lands in
 // exactly one token, so a consumer rebuilds the source by slicing `[start, end)` in order. Kinds are the
@@ -12,12 +13,6 @@ export enum TokenKind {
     Quote = "quote",
     List = "list"
 }
-
-export type Token = {
-    readonly kind: TokenKind,
-    readonly start: number,
-    readonly end: number
-};
 
 function isThematicBreak(line: string): boolean {
     return line.startsWith("---") && Array.from(line).every((ch) => ch === "-");

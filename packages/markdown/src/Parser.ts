@@ -1,7 +1,7 @@
 import { has } from "./Support.js";
 import { ATX_LEVEL_MAX, ListDelimiter, ListMarker, NodeKind } from "./Specification.js";
-import type { BlockNode, Blocks, HeadingLevel, InlineNode, Inlines, ListItemNode } from "./Specification.js";
-import type { Parse } from "./Parse.js";
+import type { BlockNode, Blocks, HeadingLevel, InlineNode, Inlines, ListItemNode } from "./typings/nodes.js";
+import type { Parse } from "./typings/parse.js";
 
 type Lines = ReadonlyArray<string>;
 type InlineMatch = { readonly node: InlineNode, readonly end: number };

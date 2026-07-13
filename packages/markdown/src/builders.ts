@@ -1,9 +1,10 @@
+import type { ListDelimiter, ListMarker } from "./Specification.js";
 import { NodeKind } from "./Specification.js";
 import type {
     BlockQuoteNode, Blocks, CodeBlockNode, CodeNode, DocumentNode, EmphasisNode, HardBreakNode, HeadingLevel,
-    HeadingNode, HtmlBlockNode, HtmlInlineNode, ImageNode, Inlines, LinkNode, ListDelimiter, ListItemNode,
-    ListMarker, ListNode, ParagraphNode, SoftBreakNode, StrongNode, TextNode, ThematicBreakNode
-} from "./Specification.js";
+    HeadingNode, HtmlBlockNode, HtmlInlineNode, ImageNode, Inlines, LinkNode, ListItemNode,
+    ListNode, ParagraphNode, SoftBreakNode, StrongNode, TextNode, ThematicBreakNode
+} from "./typings/nodes.js";
 
 export function text<const V extends string>(value: V): TextNode<V> {
     return { kind: NodeKind.Text, value };

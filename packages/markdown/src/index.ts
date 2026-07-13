@@ -7,7 +7,6 @@ export type {
     CodeNode,
     Content,
     DocumentNode,
-    Empty,
     EmphasisNode,
     HardBreakNode,
     HeadingLevel,
@@ -20,24 +19,27 @@ export type {
     LinkNode,
     ListItemNode,
     ListNode,
-    Many,
     Node,
-    One,
-    Opt,
     ParagraphNode,
-    Seq,
-    Some,
     SoftBreakNode,
     StrongNode,
     TextNode,
     ThematicBreakNode
-} from "./Specification.js";
+} from "./typings/nodes.js";
+export type {
+    Empty,
+    Many,
+    One,
+    Opt,
+    Seq,
+    Some
+} from "./typings/arity.js";
 export {
     blockQuote, code, codeBlock, document, emphasis, hardBreak, heading, htmlBlock, htmlInline, image, link,
     list, listItem, paragraph, softBreak, strong, text, thematicBreak
 } from "./builders.js";
 export { tokenize, TokenKind } from "./Tokenizer.js";
-export type { Token } from "./Tokenizer.js";
+export type { Token } from "./typings/tokens.js";
 export { parse, parseBlockLines, parseInlines } from "./Parser.js";
-export type { Parse, ParseInline } from "./Parse.js";
+export type { Parse, ParseInline } from "./typings/parse.js";
 export { serialize } from "./Serializer.js";
