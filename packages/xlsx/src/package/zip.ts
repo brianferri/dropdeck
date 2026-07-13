@@ -1,4 +1,6 @@
-export type ZipEntry = { path: string, bytes: Uint8Array };
+import type { ZipEntry } from "../typings/package.js";
+
+export type { ZipEntry } from "../typings/package.js";
 
 // Magic values and the byte offsets used by the writers below are from PKWARE APPNOTE.TXT (.ZIP spec): sections
 // 4.3.7 (local header), 4.3.12 (central header), 4.3.16 (end-of-central-directory), 4.4.5 (method 8 = deflate).

@@ -2,9 +2,9 @@ import { xml } from "../oox.js";
 import { contentTypes, defaultType, override } from "./builders.js";
 import { ContentType } from "./constants.js";
 import { buildZip } from "./zip.js";
-import type { Node } from "../oox.js";
+import type { Part, ZipEntry } from "../typings/package.js";
 import type { CT_Default, CT_Override, CT_Types } from "./Specification.js";
-import type { ZipEntry } from "./zip.js";
+import type { Node } from "../oox.js";
 
 const PROLOG = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\r\n";
 
@@ -18,9 +18,7 @@ export enum PartKind {
     Bytes
 }
 
-export type Part =
-    | { kind: PartKind.Xml, path: string, contentType: string, root: Node }
-    | { kind: PartKind.Bytes, path: string, contentType: string, data: Uint8Array };
+export type { Part } from "../typings/package.js";
 
 export function xmlPart(path: string, contentType: string, root: Node): Part {
     return { kind: PartKind.Xml, path, contentType, root };

@@ -1,8 +1,9 @@
 import { Namespace, element, text } from "../oox.js";
 import { ST_CellType } from "./Specification.js";
 import type { AttrList, Element, Empty, Node, One, Text } from "../oox.js";
+import type { StyleSheetParts } from "../typings/spreadsheetml.js";
 import type { ST_CellRef, ST_Index, ST_PatternType, ST_Ref } from "./Specification.js";
-import type { CT_Border, CT_Cell, CT_CellStyle, CT_Fill, CT_Font, CT_Rst, CT_Row, CT_Sheet, CT_SheetData, CT_Xf } from "./Specification.js";
+import type { CT_Cell, CT_Rst, CT_Row, CT_Sheet, CT_SheetData } from "./Specification.js";
 
 const T_PRESERVE = [["xml:space", "preserve"]] as const;
 
@@ -153,15 +154,6 @@ export function cellStyle<const N extends string, const X extends ST_Index, cons
 ): Element<"cellStyle", CellStyleAttrs<N, X, B>, Empty> {
     return element("cellStyle", [["name", name], ["xfId", xfId], ["builtinId", builtinId]], []);
 }
-
-export type StyleSheetParts = {
-    readonly fonts: ReadonlyArray<CT_Font>,
-    readonly fills: ReadonlyArray<CT_Fill>,
-    readonly borders: ReadonlyArray<CT_Border>,
-    readonly cellStyleXfs: ReadonlyArray<CT_Xf>,
-    readonly cellXfs: ReadonlyArray<CT_Xf>,
-    readonly cellStyles: ReadonlyArray<CT_CellStyle>
-};
 
 type Section<T extends string, C extends ReadonlyArray<Node>> = Element<T, readonly [readonly ["count", number]], C>;
 type StyleChildren<P extends StyleSheetParts> = readonly [

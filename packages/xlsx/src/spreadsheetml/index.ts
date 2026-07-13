@@ -11,4 +11,4 @@ export {
     sharedString, sst, numberCell, sharedCell, inlineCell, row, sheetData, worksheet,
     sheet, workbook, font, fill, border, numberFormat, cellXf, cellStyle, styleSheet
 } from "./builders.js";
-export type { StyleSheetParts } from "./builders.js";
+export type { StyleSheetParts } from "../typings/spreadsheetml.js";

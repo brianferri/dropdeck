@@ -30,8 +30,6 @@ export enum Namespace {
     rel = "http://schemas.openxmlformats.org/package/2006/relationships"
 }
 
-export type ST_String = string;
-export type ST_Xstring = string;
-export type ST_Boolean = boolean;
+export type { ST_Boolean, ST_String, ST_Xstring } from "./typings/oox.js";
 
 /* eslint-enable @typescript-eslint/naming-convention */
