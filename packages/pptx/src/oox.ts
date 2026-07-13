@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention -- ST_* mirror the ECMA-376 schema names verbatim, and namespace prefixes are lower-case by spec. */
-
 // The generic XML tree and serializer live in `@dropdeck/xml`; this module layers OOXML's namespace vocabulary on
 // top and re-exports the core so the OOXML builders import both from one place.
 export { element, text, xml } from "@dropdeck/xml";
@@ -17,13 +15,19 @@ export type {
     One,
     Opt,
     OptAttr,
+    ParseQName,
+    Prefix,
+    QName,
     ReqAttr,
     Seq,
     Serialize,
     Some,
+    ST_Boolean,
+    ST_String,
     Text
-} from "@dropdeck/xml";
+} from "./typings/oox.js";
 
+/* eslint-disable @typescript-eslint/naming-convention -- namespace prefixes are lower-case by spec. */
 export enum Namespace {
     a = "http://schemas.openxmlformats.org/drawingml/2006/main",
     c = "http://schemas.openxmlformats.org/drawingml/2006/chart",
@@ -41,12 +45,4 @@ export const NamespaceByPrefix = {
     ct: Namespace.ct,
     rel: Namespace.rel
 } as const satisfies Record<string, Namespace>;
-
-export type Prefix = keyof typeof NamespaceByPrefix;
-export type QName<P extends Prefix, Local extends string> = `${P}:${Local}`;
-export type ParseQName<Q extends string> = Q extends `${infer P}:${infer Local}` ? { readonly prefix: P, readonly local: Local } : never;
-
-export type ST_String = string;
-export type ST_Boolean = boolean;
-
 /* eslint-enable @typescript-eslint/naming-convention */

@@ -3,7 +3,7 @@
 import { Namespace, element } from "../oox.js";
 import { srgbClr } from "../drawingml/builders.js";
 import type { Element } from "../oox.js";
-import type { CT_SRgbColor } from "../drawingml/Specification.js";
+import type { CT_SRgbColor } from "../typings/drawingml.js";
 
 const ACCENTS = ["4472C4", "ED7D31", "A5A5A5", "FFC000", "5B9BD5", "70AD47"] as const;
 

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { NamespaceByPrefix, Namespace } from "../src/oox.js";
 import type { ParseQName, QName } from "../src/oox.js";
-import type { CT_Point2D, CT_Transform2D, ValidateHexColor } from "../src/drawingml/Specification.js";
+import type { CT_Point2D, CT_Transform2D, ValidateHexColor } from "../src/typings/drawingml.js";
 
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends
 (<T>() => T extends B ? 1 : 2) ? true : false;

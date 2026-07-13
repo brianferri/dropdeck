@@ -41,7 +41,7 @@ export type {
     PresentationMLElement,
     SlideTransitionEffect,
     SpTreeMember
-} from "./Specification.js";
+} from "../typings/presentationml.js";
 
 export {
     cNvCxnSpPr,

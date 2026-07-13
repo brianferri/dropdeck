@@ -37,8 +37,8 @@ import type {
     ST_ShapeType,
     TableCellPropertyAttr,
     TablePropertyAttr
-} from "./Specification.js";
-import type { ValidateHexColor } from "./Specification.js";
+} from "../typings/drawingml.js";
+import type { ValidateHexColor } from "../typings/drawingml.js";
 
 export function off<const X extends ST_Coordinate, const Y extends ST_Coordinate>(
     x: X,

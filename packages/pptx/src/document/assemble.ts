@@ -3,7 +3,7 @@ import { ContentType, RelationshipType } from "../package/constants.js";
 import { bytesPart, pack, xmlPart } from "../package/parts.js";
 import { presentation, presentationProperties, slideLayout, slideMaster } from "./builders.js";
 import { theme } from "./theme.js";
-import type { CT_Slide } from "../presentationml/Specification.js";
+import type { CT_Slide } from "../typings/presentationml.js";
 import type { CT_Relationship } from "../package/Specification.js";
 import type { Node } from "../oox.js";
 import type { Part } from "../package/parts.js";

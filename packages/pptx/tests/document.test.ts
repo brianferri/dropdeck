@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { bodyPr, ext, off, paragraph, prstGeom, run, solidFill, srgbClr, xfrm } from "../src/drawingml/builders.js";
 import { cNvPr, cSld, grpSpPr, nvGrpSpPr, nvSpPr, slide, sp, spPr, spTree, txBody } from "../src/presentationml/builders.js";
 import { toBytes, toParts } from "../src/document/assemble.js";
-import type { CT_Slide } from "../src/presentationml/Specification.js";
+import type { CT_Slide } from "../src/typings/presentationml.js";
 
 function sampleSlide(): CT_Slide {
     return slide(cSld(spTree(

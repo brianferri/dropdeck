@@ -10,7 +10,7 @@ import type {
     ST_Coordinate,
     ST_DrawingElementId,
     ST_PositiveCoordinate
-} from "../drawingml/Specification.js";
+} from "../typings/drawingml.js";
 import type {
     CT_ApplicationNonVisualDrawingProps,
     CT_CommonSlideData,
@@ -34,7 +34,9 @@ import type {
     CT_Slide,
     CT_SlideTransition,
     CT_TextBody,
-    SlideTransitionEffect,
+    SlideTransitionEffect
+} from "../typings/presentationml.js";
+import type {
     ST_TransitionEightDirectionType,
     ST_TransitionSideDirectionType,
     ST_TransitionSpeed

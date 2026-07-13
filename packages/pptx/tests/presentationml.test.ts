@@ -4,7 +4,7 @@ import { Namespace, xml } from "../src/oox.js";
 import type { Serialize } from "../src/oox.js";
 import { bodyPr, ext, off, paragraph, prstGeom, run, solidFill, srgbClr, xfrm } from "../src/drawingml/builders.js";
 import { cNvPr, cSld, grpSpPr, nvGrpSpPr, nvSpPr, slide, sp, spPr, spTree, txBody } from "../src/presentationml/builders.js";
-import type { CT_Slide } from "../src/presentationml/Specification.js";
+import type { CT_Slide } from "../src/typings/presentationml.js";
 
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends
 (<T>() => T extends B ? 1 : 2) ? true : false;

@@ -97,7 +97,7 @@ export type {
     TableCellPropertyAttr,
     TablePropertyAttr,
     ValidateHexColor
-} from "./Specification.js";
+} from "../typings/drawingml.js";
 
 export {
     alpha,
