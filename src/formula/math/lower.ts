@@ -2,6 +2,7 @@ import { BinaryOperator, ExpressionKind, MathFunction, OPERATOR_PRECEDENCE } fro
 import { accent, fenced, fraction, identifier, nary, number, operator, radical, row, subscript, superscript } from "#/formula/build";
 import { CONSTANT_GLYPH, NARY_GLYPH, OPERATOR_GLYPH, isMathFunction, isNaryFunction } from "#/formula/math/glyphs";
 import { isAccentKind } from "#/formula/accent";
+import { keyGuard } from "@dropdeck/common";
 import type { BinaryNode, Expression } from "@dropdeck/math";
 import type { Notation } from "#/formula/typings/nodes";
 import type { LowerMath, MathContent } from "./typings/lower.js";
@@ -23,16 +24,24 @@ function wrapTight(child: Expression): Notation {
     return isRowBinary(child) ? fenced("(", ")", [lowerNode(child)]) : lowerNode(child);
 }
 
+const isConstantName = keyGuard(CONSTANT_GLYPH);
+
+// A subscript's base or index may name a constant -- a Greek letter, say -- which renders as that glyph exactly as
+// a bare name would: `omega_0` is ω_0, not the letters `omega`.
+function constantOr(name: string): string {
+    return isConstantName(name) ? CONSTANT_GLYPH[name] : name;
+}
+
 function subscriptIndex(index: string): Notation {
     if (index === "") return identifier(index);
     const value = Number(index);
-    return Number.isNaN(value) ? identifier(index) : number(value);
+    return Number.isNaN(value) ? identifier(constantOr(index)) : number(value);
 }
 
 function splitVariable(name: string): Notation {
     const underscore = name.indexOf("_");
     if (underscore === -1) return identifier(name);
-    return subscript(identifier(name.slice(0, underscore)), subscriptIndex(name.slice(underscore + 1)));
+    return subscript(identifier(constantOr(name.slice(0, underscore))), subscriptIndex(name.slice(underscore + 1)));
 }
 
 function lowerArgs(children: MathContent): Notation {

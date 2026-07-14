@@ -31,12 +31,17 @@ type WrapTight<Child extends Expression> = [RowOperator<Child>] extends [never] 
 
 type LowerNumber<E extends Expression> = E extends { kind: ExpressionKind.Number, value: infer Value extends number } ? NumberNode<Value> : false;
 
-type SubscriptIndex<Index extends string> = Index extends `${infer Value extends number}` ? NumberNode<Value> : IdentifierNode<Index>;
+// `omega_0` tokenises as one variable name and splits into base + index below; the base or index may itself spell a
+// constant (`omega`), which must show its glyph (ω_0, not the letters `omega_0`). Maps such a name to its glyph, else
+// leaves it -- the type-level twin of `constantOr`.
+type ConstantOr<Name extends string> = Name extends keyof typeof CONSTANT_GLYPH ? (typeof CONSTANT_GLYPH)[Name] : Name;
+
+type SubscriptIndex<Index extends string> = Index extends `${infer Value extends number}` ? NumberNode<Value> : IdentifierNode<ConstantOr<Index>>;
 
 // A `_` in a variable name is a semantic subscript in math but a presentational one here, split on the first `_`.
 type LowerVariable<E extends Expression> =
     E extends { kind: ExpressionKind.Variable, name: infer Name extends string }
-        ? Name extends `${infer Base}_${infer Index}` ? SubscriptNode<Pair<IdentifierNode<Base>, SubscriptIndex<Index>>> : IdentifierNode<Name>
+        ? Name extends `${infer Base}_${infer Index}` ? SubscriptNode<Pair<IdentifierNode<ConstantOr<Base>>, SubscriptIndex<Index>>> : IdentifierNode<Name>
         : false;
 
 type LowerConstant<E extends Expression> = E extends { kind: ExpressionKind.Constant, name: infer Name extends MathConstant } ? IdentifierNode<(typeof CONSTANT_GLYPH)[Name]> : false;

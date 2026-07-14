@@ -1,5 +1,5 @@
 import { BinaryOperator, MathConstant, MathFunction } from "@dropdeck/math";
-import { keyGuard, memberGuard } from "@dropdeck/common";
+import { invert, keyGuard, memberGuard } from "@dropdeck/common";
 import type { MathAccent } from "@dropdeck/math";
 import type { NaryGlyph } from "#/formula/nary";
 
@@ -22,7 +22,57 @@ export const OPERATOR_GLYPH = {
 export const CONSTANT_GLYPH = {
     [MathConstant.Pi]: "π",
     [MathConstant.E]: "e",
-    [MathConstant.Tau]: "τ"
+    [MathConstant.Tau]: "τ",
+    [MathConstant.Alpha]: "α",
+    [MathConstant.Beta]: "β",
+    [MathConstant.Gamma]: "γ",
+    [MathConstant.Delta]: "δ",
+    [MathConstant.Epsilon]: "ε",
+    [MathConstant.Zeta]: "ζ",
+    [MathConstant.Eta]: "η",
+    [MathConstant.Theta]: "θ",
+    [MathConstant.Vartheta]: "ϑ",
+    [MathConstant.Iota]: "ι",
+    [MathConstant.Kappa]: "κ",
+    [MathConstant.Lambda]: "λ",
+    [MathConstant.Mu]: "μ",
+    [MathConstant.Nu]: "ν",
+    [MathConstant.Xi]: "ξ",
+    [MathConstant.Rho]: "ρ",
+    [MathConstant.Varrho]: "ϱ",
+    [MathConstant.Sigma]: "σ",
+    [MathConstant.Varsigma]: "ς",
+    [MathConstant.Upsilon]: "υ",
+    [MathConstant.Phi]: "φ",
+    [MathConstant.Varphi]: "ϕ",
+    [MathConstant.Chi]: "χ",
+    [MathConstant.Psi]: "ψ",
+    [MathConstant.Omega]: "ω",
+    [MathConstant.UpperGamma]: "Γ",
+    [MathConstant.UpperDelta]: "Δ",
+    [MathConstant.UpperTheta]: "Θ",
+    [MathConstant.UpperLambda]: "Λ",
+    [MathConstant.UpperXi]: "Ξ",
+    [MathConstant.UpperPi]: "Π",
+    [MathConstant.UpperSigma]: "Σ",
+    [MathConstant.UpperUpsilon]: "Υ",
+    [MathConstant.UpperPhi]: "Φ",
+    [MathConstant.UpperPsi]: "Ψ",
+    [MathConstant.UpperOmega]: "Ω",
+    [MathConstant.Partial]: "∂",
+    [MathConstant.Nabla]: "∇",
+    [MathConstant.Infty]: "∞",
+    [MathConstant.Hbar]: "ℏ",
+    [MathConstant.Ell]: "ℓ",
+    [MathConstant.Aleph]: "ℵ",
+    [MathConstant.Re]: "ℜ",
+    [MathConstant.Im]: "ℑ",
+    [MathConstant.Angle]: "∠",
+    [MathConstant.Prime]: "′",
+    [MathConstant.Ldots]: "…",
+    [MathConstant.Cdots]: "⋯",
+    [MathConstant.Vdots]: "⋮",
+    [MathConstant.Ddots]: "⋱"
 } as const satisfies Record<MathConstant, string>;
 
 // The glyphs are proven to be shared `NaryGlyph`s, so a math call can only emit a sign the renderers already
@@ -30,12 +80,28 @@ export const CONSTANT_GLYPH = {
 // The big operators narrow out of `MathFunction`, so `NARY_GLYPH` is a strict (impartial) Record over exactly
 // them -- adding a nary member without a glyph, or vice versa, fails to compile.
 type NaryFunctionMember = Extract<MathFunction,
-    MathFunction.Sum | MathFunction.Prod | MathFunction.Bigcup | MathFunction.Bigcap>;
+    | MathFunction.Sum
+    | MathFunction.Prod
+    | MathFunction.Coprod
+    | MathFunction.Bigcup
+    | MathFunction.Bigcap
+    | MathFunction.Bigvee
+    | MathFunction.Bigwedge
+    | MathFunction.Bigoplus
+    | MathFunction.Bigotimes
+    | MathFunction.Bigsqcup
+>;
 export const NARY_GLYPH = {
     [MathFunction.Sum]: "∑",
     [MathFunction.Prod]: "∏",
+    [MathFunction.Coprod]: "∐",
     [MathFunction.Bigcup]: "⋃",
-    [MathFunction.Bigcap]: "⋂"
+    [MathFunction.Bigcap]: "⋂",
+    [MathFunction.Bigvee]: "⋁",
+    [MathFunction.Bigwedge]: "⋀",
+    [MathFunction.Bigoplus]: "⨁",
+    [MathFunction.Bigotimes]: "⨂",
+    [MathFunction.Bigsqcup]: "⨆"
 } as const satisfies Record<NaryFunctionMember, NaryGlyph>;
 
 // Callees carry their glyph by name: nary via the table above, accents straight off `MathAccent` -- so a new
@@ -52,34 +118,9 @@ type MathTokenTable = { [Op in keyof typeof OPERATOR_GLYPH as (typeof OPERATOR_G
 type MathConstantTable = { [Name in keyof typeof CONSTANT_GLYPH as (typeof CONSTANT_GLYPH)[Name]]: Name };
 export type MathCalleeTable = { [Callee in keyof typeof NARY_GLYPH as (typeof NARY_GLYPH)[Callee]]: Callee };
 
-// Serialising shared IR back to math source reverses the forward tables. Each key is pulled straight from the
-// forward map, so a reverse entry never re-spells a glyph, and `satisfies` proves the inversion covers every one.
-export const MATH_TOKEN_BY_GLYPH = {
-    [OPERATOR_GLYPH[BinaryOperator.Add]]: BinaryOperator.Add,
-    [OPERATOR_GLYPH[BinaryOperator.Subtract]]: BinaryOperator.Subtract,
-    [OPERATOR_GLYPH[BinaryOperator.Multiply]]: BinaryOperator.Multiply,
-    [OPERATOR_GLYPH[BinaryOperator.Divide]]: BinaryOperator.Divide,
-    [OPERATOR_GLYPH[BinaryOperator.Power]]: BinaryOperator.Power,
-    [OPERATOR_GLYPH[BinaryOperator.LessThan]]: BinaryOperator.LessThan,
-    [OPERATOR_GLYPH[BinaryOperator.GreaterThan]]: BinaryOperator.GreaterThan,
-    [OPERATOR_GLYPH[BinaryOperator.LessOrEqual]]: BinaryOperator.LessOrEqual,
-    [OPERATOR_GLYPH[BinaryOperator.GreaterOrEqual]]: BinaryOperator.GreaterOrEqual,
-    [OPERATOR_GLYPH[BinaryOperator.Equal]]: BinaryOperator.Equal,
-    [OPERATOR_GLYPH[BinaryOperator.NotEqual]]: BinaryOperator.NotEqual,
-    [OPERATOR_GLYPH[BinaryOperator.And]]: BinaryOperator.And,
-    [OPERATOR_GLYPH[BinaryOperator.Or]]: BinaryOperator.Or
-} as const satisfies MathTokenTable;
-export const CONSTANT_BY_GLYPH = {
-    [CONSTANT_GLYPH[MathConstant.Pi]]: MathConstant.Pi,
-    [CONSTANT_GLYPH[MathConstant.E]]: MathConstant.E,
-    [CONSTANT_GLYPH[MathConstant.Tau]]: MathConstant.Tau
-} as const satisfies MathConstantTable;
-export const CALLEE_BY_GLYPH = {
-    [NARY_GLYPH[MathFunction.Sum]]: MathFunction.Sum,
-    [NARY_GLYPH[MathFunction.Prod]]: MathFunction.Prod,
-    [NARY_GLYPH[MathFunction.Bigcup]]: MathFunction.Bigcup,
-    [NARY_GLYPH[MathFunction.Bigcap]]: MathFunction.Bigcap
-} as const satisfies MathCalleeTable;
+export const MATH_TOKEN_BY_GLYPH = invert(OPERATOR_GLYPH);
+export const CONSTANT_BY_GLYPH = invert(CONSTANT_GLYPH);
+export const CALLEE_BY_GLYPH = invert(NARY_GLYPH);
 
 // Each guard narrows a glyph to its reverse table's keys, so the serialiser indexes the static table directly.
 export const isTokenGlyph = keyGuard(MATH_TOKEN_BY_GLYPH);
