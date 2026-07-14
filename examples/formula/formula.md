@@ -47,3 +47,159 @@ pi * r_1^2 + 2 * pi * r_2 * h
 ```latex
 \pi \cdot r_1^2 + 2 \cdot \pi \cdot r_2 \cdot h
 ```
+
+---
+
+# Euler's identity
+
+Five constants, one equation.
+
+```math
+e^(i*pi) + 1 == 0
+```
+
+```latex
+e^{i \cdot \pi} + 1 = 0
+```
+
+---
+
+# A trigonometric identity
+
+```math
+sin(x)^2 + cos(x)^2 == 1
+```
+
+```latex
+\sin{x}^2 + \cos{x}^2 = 1
+```
+
+---
+
+# The law of cosines
+
+```math
+c^2 == a^2 + b^2 - 2*a*b*cos(t)
+```
+
+```latex
+c^2 = a^2 + b^2 - 2 \cdot a \cdot b \cdot \cos{t}
+```
+
+---
+
+# A sum with index and limits
+
+Big operators carry their bound variable above and below.
+
+```math
+sum(k, 1, n, k^2) == n*(n+1)*(2*n+1) / 6
+```
+
+```latex
+\sum_{k=1}^{n} k^2 = \frac{n \cdot (n+1) \cdot (2 \cdot n + 1)}{6}
+```
+
+---
+
+# The arithmetic mean
+
+A big operator nested inside a fraction.
+
+```math
+sum(i, 1, n, x_i) / n
+```
+
+```latex
+\frac{\sum_{i=1}^{n} x_i}{n}
+```
+
+---
+
+# The factorial, as a product
+
+```math
+prod(k, 1, n, k)
+```
+
+```latex
+\prod_{k=1}^{n} k
+```
+
+---
+
+# The golden ratio
+
+```math
+(1 + sqrt(5)) / 2
+```
+
+```latex
+\frac{1 + \sqrt{5}}{2}
+```
+
+---
+
+# Greek, on both sides
+
+The math notation now spells Greek letters by name, just like LaTeX.
+
+```math
+alpha + beta*gamma
+```
+
+```latex
+\alpha + \beta \cdot \gamma
+```
+
+---
+
+# Standard deviation
+
+Greek letters, a subscript, and a sum -- each written both ways.
+
+```math
+sigma == sqrt(sum(i, 1, n, (x_i - mu)^2) / n)
+```
+
+```latex
+\sigma = \sqrt{\frac{\sum_{i=1}^{n} (x_i - \mu)^2}{n}}
+```
+
+---
+
+# A phase term
+
+```math
+omega_0 * t + phi
+```
+
+```latex
+\omega_0 \cdot t + \phi
+```
+
+---
+
+# A direct sum
+
+Big operators now go beyond sum and product.
+
+```math
+bigoplus(i, 1, n, V_i)
+```
+
+```latex
+\bigoplus_{i=1}^{n} V_i
+```
+
+---
+
+# A finite sequence
+
+```math
+a_1 + cdots + a_n
+```
+
+```latex
+a_1 + \cdots + a_n
+```
