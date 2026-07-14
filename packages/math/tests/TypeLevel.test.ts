@@ -62,6 +62,33 @@ export type Grouping = [
     Assert<Equal<Parse<string>, Expression>>
 ];
 
+type S = VariableNode<"S">;
+type P = VariableNode<"p">;
+type Q = VariableNode<"q">;
+
+export type Relations = [
+    Assert<Equal<Parse<"a ~~ b">, Bin<BinaryOperator.Approx, A, B>>>,
+    Assert<Equal<Parse<"a ~= b">, Bin<BinaryOperator.Simeq, A, B>>>,
+    Assert<Equal<Parse<"a ~== b">, Bin<BinaryOperator.Cong, A, B>>>,
+    Assert<Equal<Parse<"a === b">, Bin<BinaryOperator.Equiv, A, B>>>,
+    Assert<Equal<Parse<"a << b">, Bin<BinaryOperator.Ll, A, B>>>,
+    Assert<Equal<Parse<"x in S">, Bin<BinaryOperator.In, VariableNode<"x">, S>>>,
+    Assert<Equal<Parse<"S ni x">, Bin<BinaryOperator.Ni, S, VariableNode<"x">>>>
+];
+
+export type Arrows = [
+    Assert<Equal<Parse<"p implies q">, Bin<BinaryOperator.Implies, P, Q>>>,
+    Assert<Equal<Parse<"p iff q">, Bin<BinaryOperator.Iff, P, Q>>>,
+    Assert<Equal<Parse<"a to b">, Bin<BinaryOperator.To, A, B>>>
+];
+
+export type NewPrecedence = [
+    Assert<Equal<Parse<"p implies a or b">, Bin<BinaryOperator.Implies, P, Bin<BinaryOperator.Or, A, B>>>>,
+    Assert<Equal<Parse<"x in S and a in b">,
+        Bin<BinaryOperator.And, Bin<BinaryOperator.In, VariableNode<"x">, S>, Bin<BinaryOperator.In, A, B>>>>,
+    Assert<Equal<Parse<"a in b + c">, Bin<BinaryOperator.In, A, Bin<BinaryOperator.Add, B, C>>>>
+];
+
 export type Errors = [
     Assert<Equal<Parse<"a b">, ParseError<"Expected end of input, got 'b'">>>,
     Assert<Equal<Parse<"(a">, ParseError<"Expected ')', got <end of input>">>>,
@@ -80,5 +107,16 @@ await test("the runtime parse matches the type-level Parse for a nested formula"
                 binary(BinaryOperator.Power, variable("b"), number(2))
             )
         ])
+    );
+});
+
+await test("the runtime parse matches the type-level Parse across the new precedence tiers", () => {
+    assert.deepEqual(
+        parse("x in S and a in b"),
+        binary(
+            BinaryOperator.And,
+            binary(BinaryOperator.In, variable("x"), variable("S")),
+            binary(BinaryOperator.In, variable("a"), variable("b"))
+        )
     );
 });
