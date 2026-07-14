@@ -1,12 +1,11 @@
-import type { BinaryOperator, MathConstant, UnaryOperator } from "../Specification.js";
-import type { AdditiveOperator, ComparisonOperator, MultiplicativeOperator } from "./operators.js";
+import type { BinaryOperator, MathConstant, OPERATOR_PRECEDENCE, UnaryOperator } from "../Specification.js";
 import type {
     BinaryNode, CallNode, Content, ConstantNode, Expression, NegateNode, NotNode, NumberNode, One, Pair, VariableNode
 } from "./nodes.js";
 import type { PayloadKind, PunctKind } from "../Tokenizer.js";
 import type {
-    AlphaChar as Letter, BySpelling, DigitChar, DoubleRule, FirstMatch, Lead, NumberOf, OrError, ParseError,
-    SingleRule, Step, TakeNumber, TakeRun, Whitespace
+    AlphaChar as Letter, BySpelling, DigitChar, FirstMatch, LeadN, LongestRule, NumberOf, OrError, ParseError,
+    Repeat, Step, TakeNumber, TakeRun, Whitespace
 } from "@dropdeck/common";
 
 type Operator = BinaryOperator | UnaryOperator;
@@ -32,24 +31,24 @@ type NameTokenOf<Run extends string> =
 type PunctTokens = { [Char in keyof PunctBySpelling]: PunctToken<PunctBySpelling[Char]> };
 type OperatorTokens = { [Char in keyof OperatorBySpelling]: OperatorToken<OperatorBySpelling[Char]> };
 
-type SpaceRule<S extends string> = Lead<S, Whitespace> extends { rest: infer Rest extends string } ? Step<[], Rest> : false;
-type PairRule<S extends string> = DoubleRule<S, OperatorTokens>;
-type CharRule<S extends string> = SingleRule<S, OperatorTokens>;
-type PunctRule<S extends string> = SingleRule<S, PunctTokens>;
+// The widest symbol operator is three characters (`===`, `~==`); longest-match tries this width down to one.
+type OperatorWidthMax = 3;
+
+type SpaceRule<S extends string> = LeadN<S, Whitespace, 1> extends { rest: infer Rest extends string } ? Step<[], Rest> : false;
+type PunctRule<S extends string> = LongestRule<S, PunctTokens, 1>;
 type NumberRule<S extends string> =
-    Lead<S, DigitChar> extends false ? false
+    LeadN<S, DigitChar, 1> extends false ? false
         : TakeNumber<S> extends { run: infer Run extends string, rest: infer Rest extends string } ? Step<[NumberToken<NumberOf<Run>>], Rest> : false;
 type NameRule<S extends string> =
-    Lead<S, AlphaChar> extends false ? false
+    LeadN<S, AlphaChar, 1> extends false ? false
         : TakeRun<S, AlphaChar | DigitChar> extends { run: infer Run extends string, rest: infer Rest extends string } ? Step<[NameTokenOf<Run>], Rest> : false;
 
 type NextToken<S extends string> = FirstMatch<readonly [
     SpaceRule<S>,
-    PairRule<S>,
     NumberRule<S>,
     NameRule<S>,
     PunctRule<S>,
-    CharRule<S>
+    LongestRule<S, OperatorTokens, OperatorWidthMax>
 ]>;
 
 type Tokenize<Source extends string, Acc extends Tokens = []> =
@@ -138,14 +137,12 @@ type ClimbPower<Base> =
 
 type ParsePower<T extends Tokens> = ClimbPower<ParseUnary<T>>;
 
-type BinaryTiers = [
-    BinaryOperator.Or,
-    BinaryOperator.And,
-    ComparisonOperator,
-    AdditiveOperator,
-    MultiplicativeOperator
-];
-type NextLevel = [1, 2, 3, 4, 5];
+// The tiers mirror the runtime parser: fold operators by their `OPERATOR_PRECEDENCE` level, loosest first, so one
+// precedence table drives both the compile-time and runtime parse and the two cannot drift.
+type PowerLevel = (typeof OPERATOR_PRECEDENCE)[BinaryOperator.Power];
+type NextLevel<Level extends number> = [...Repeat<unknown, Level>, unknown]["length"] & number;
+type OperatorsAtLevel<Level extends number> =
+    { [Op in BinaryOperator]: (typeof OPERATOR_PRECEDENCE)[Op] extends Level ? Op : never }[BinaryOperator];
 
 // The right operand is parsed once and passed in; a failed operand parse flows through as the error.
 type FoldTierRight<Ops extends BinaryOperator,
@@ -158,18 +155,19 @@ type FoldTierRight<Ops extends BinaryOperator,
 type FoldTier<Ops extends BinaryOperator, Level extends number, Left extends Expression, T extends Tokens> =
     T extends [OperatorToken<infer Op>, ...infer Rest extends Tokens]
         ? Op extends Ops
-            ? FoldTierRight<Ops, Level, Op, Left, ParseTier<Rest, NextLevel[Level]>>
+            ? FoldTierRight<Ops, Level, Op, Left, ParseTier<Rest, NextLevel<Level>>>
             : Parsed<Left, T>
         : Parsed<Left, T>;
 
 type FoldTierFrom<Ops extends BinaryOperator, Level extends number, Base> =
     Base extends Parsed<infer Left, infer Rest> ? FoldTier<Ops, Level, Left, Rest> : Base;
 type ParseTier<T extends Tokens, Level extends number> =
-    Level extends BinaryTiers["length"]
+    Level extends PowerLevel
         ? ParsePower<T>
-        : FoldTierFrom<BinaryTiers[Level], Level, ParseTier<T, NextLevel[Level]>>;
+        : FoldTierFrom<OperatorsAtLevel<Level>, Level, ParseTier<T, NextLevel<Level>>>;
 
-type ParseBinary<T extends Tokens> = ParseTier<T, 0>;
+// Precedence levels start at one (the loosest tier), matching the runtime parser's `parseBinaryAt(cursor, 1)`.
+type ParseBinary<T extends Tokens> = ParseTier<T, 1>;
 
 // A complete parse consumes every token; leftovers mean the parser stopped early, so they are reported.
 type CompleteParse<Result> = Result extends Parsed<infer Node, infer Rest>

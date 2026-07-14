@@ -1,24 +1,10 @@
 import type { FirstMatch, LessOrEqual, LessThan, Negate } from "@dropdeck/common";
-import type { BinaryOperator, UnaryOperator } from "../Specification.js";
+import type { BinaryOperator, OPERATOR_PRECEDENCE, UnaryOperator } from "../Specification.js";
 import type {
     BinaryNode, CallNode, Content, ConstantNode, Expression, NegateNode, NotNode, NumberNode, VariableNode
 } from "./nodes.js";
 
-type Level<Op extends BinaryOperator> = {
-    [BinaryOperator.Or]: 1,
-    [BinaryOperator.And]: 2,
-    [BinaryOperator.LessThan]: 3,
-    [BinaryOperator.GreaterThan]: 3,
-    [BinaryOperator.LessOrEqual]: 3,
-    [BinaryOperator.GreaterOrEqual]: 3,
-    [BinaryOperator.Equal]: 3,
-    [BinaryOperator.NotEqual]: 3,
-    [BinaryOperator.Add]: 4,
-    [BinaryOperator.Subtract]: 4,
-    [BinaryOperator.Multiply]: 5,
-    [BinaryOperator.Divide]: 5,
-    [BinaryOperator.Power]: 6
-}[Op];
+type Level<Op extends BinaryOperator> = (typeof OPERATOR_PRECEDENCE)[Op];
 
 type IsRightAssociative<Op extends BinaryOperator> = Op extends BinaryOperator.Power ? true : false;
 type ParenthesisesEqual<Tight extends boolean, ChildLevel extends number, ParentLevel extends number> =
