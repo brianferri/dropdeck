@@ -2,6 +2,7 @@ import { CssTokenKind, nextToken } from "./Tokenizer.js";
 import { cursor } from "../scan/Cursor.js";
 import { CssValueKind } from "./Specification.js";
 import type { CssToken } from "./Tokenizer.js";
+import type { DigitChar as Digit, TakeRun, TakeThrough, TakeUntil, TrimStart, Whitespace as Ws } from "@dropdeck/common";
 import type {
     Block, ComponentValue, ComponentValues, Delimiter, Dimension, FunctionValue,
     Hash, Keyword, NumberValue, Percentage, Separator, StringValue
@@ -27,37 +28,18 @@ type SerializeSequence<T extends ComponentValues> =
 
 export type SerializeValue<T extends ComponentValues> = SerializeSequence<T>;
 
-type Ws = " " | "\t" | "\n" | "\r" | "\f";
-type Digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";
 type Sign = "+" | "-";
 type Quote = "\"" | "'";
 type OpenChar = "(" | "[" | "{";
 type CloseChar = ")" | "]" | "}";
 type NumChar = Digit | Sign | ".";
-// A keyword or unit run ends at the first character a value grammar keys on (space, bracket, comma, percent, quote).
+/** A keyword or unit run ends at the first character a value grammar keys on (space, bracket, comma, percent, quote). */
 type Stop = Ws | OpenChar | CloseChar | "," | "%" | Quote;
 
-type SkipWs<S extends string> = S extends `${Ws}${infer Rest}` ? SkipWs<Rest> : S;
-
-type TakeNum<S extends string, Acc extends string = ""> =
-    S extends `${infer C}${infer Rest}`
-        ? C extends NumChar ? TakeNum<Rest, `${Acc}${C}`> : [Acc, S]
-        : [Acc, S];
-
-type TakeRun<S extends string, Acc extends string = ""> =
-    S extends `${infer C}${infer Rest}`
-        ? C extends Stop ? [Acc, S] : TakeRun<Rest, `${Acc}${C}`>
-        : [Acc, S];
-
-type TakeUntil<S extends string, End extends string, Acc extends string = ""> =
-    S extends `${infer C}${infer Rest}`
-        ? C extends End ? [Acc, Rest] : TakeUntil<Rest, End, `${Acc}${C}`>
-        : [Acc, S];
-
 type ParseNumber<S extends string, Out extends ComponentValues> =
-    TakeNum<S> extends [infer Num extends string, infer Rest extends string]
+    TakeRun<S, NumChar> extends { run: infer Num extends string, rest: infer Rest extends string }
         ? Rest extends `%${infer AfterPercent}` ? ParseList<AfterPercent, readonly [...Out, Percentage<Num>]>
-            : TakeRun<Rest> extends [infer Unit extends string, infer AfterUnit extends string]
+            : TakeUntil<Rest, Stop> extends { run: infer Unit extends string, rest: infer AfterUnit extends string }
                 ? Unit extends "" ? ParseList<Rest, readonly [...Out, NumberValue<Num>]>
                     : ParseList<AfterUnit, readonly [...Out, Dimension<Num, Unit>]>
                 : never
@@ -78,7 +60,7 @@ type ParseBlock<Open extends OpenChar, Rest extends string, Out extends Componen
         : never;
 
 type ParseIdent<Char extends string, Rest extends string, S extends string, Out extends ComponentValues> =
-    TakeRun<S> extends [infer Name extends string, infer After extends string]
+    TakeUntil<S, Stop> extends { run: infer Name extends string, rest: infer After extends string }
         ? Name extends ""
             ? ParseList<Rest, readonly [...Out, Delimiter<Char>]>
             : After extends `(${infer Inner}`
@@ -87,29 +69,31 @@ type ParseIdent<Char extends string, Rest extends string, S extends string, Out 
         : never;
 
 type ParseHash<Rest extends string, Out extends ComponentValues> =
-    TakeRun<Rest> extends [infer Name extends string, infer After extends string]
+    TakeUntil<Rest, Stop> extends { run: infer Name extends string, rest: infer After extends string }
         ? ParseList<After, readonly [...Out, Hash<`#${Name}`>]>
         : never;
 
 type ParseString<Char extends string, Rest extends string, Out extends ComponentValues> =
-    TakeUntil<Rest, Char> extends [infer Body extends string, infer After extends string]
+    TakeThrough<Rest, Char> extends { run: infer Body extends string, rest: infer After extends string }
         ? ParseList<After, readonly [...Out, StringValue<`${Char}${Body}${Char}`>]>
         : never;
 
-// A sign opens a number only when a digit or dot follows; otherwise it begins an identifier (`--custom`, `-webkit`).
+/** A sign opens a number only when a digit or dot follows; otherwise it begins an identifier (`--custom`, `-webkit`). */
 type ParseSigned<Char extends string, Rest extends string, S extends string, Out extends ComponentValues> =
     Rest extends `${Digit | "."}${string}` ? ParseNumber<S, Out> : ParseIdent<Char, Rest, S, Out>;
 
-// The leading characters the explicit arms below consume; anything else opens a keyword or a lone delimiter.
+/** The leading characters the explicit arms below consume; anything else opens a keyword or a lone delimiter. */
 type Structural = CloseChar | Ws | "," | OpenChar | "#" | Quote | Digit | "." | Sign;
 
-// Each arm guards on the leading character and is `never` unless it matches, so exactly one contributes and the
-// union collapses to it.
+/**
+ * Each arm guards on the leading character and is `never` unless it matches, so exactly one contributes and the
+ * union collapses to it.
+ */
 type ParseList<S extends string, Out extends ComponentValues = readonly []> =
     S extends `${infer Char}${infer Rest}`
         ?
             | (Char extends CloseChar ? [Out, S] : never)
-            | (Char extends Ws ? ParseList<SkipWs<Rest>, readonly [...Out, Separator<" ">]> : never)
+            | (Char extends Ws ? ParseList<TrimStart<Rest>, readonly [...Out, Separator<" ">]> : never)
             | (Char extends "," ? ParseList<Rest, readonly [...Out, Separator<",">]> : never)
             | (Char extends OpenChar ? ParseBlock<Char, Rest, Out> : never)
             | (Char extends "#" ? ParseHash<Rest, Out> : never)
@@ -119,7 +103,7 @@ type ParseList<S extends string, Out extends ComponentValues = readonly []> =
             | (Char extends Structural ? never : ParseIdent<Char, Rest, S, Out>)
         : [Out, S];
 
-// A non-literal `string` widens to the general list, mirroring `ParseStylesheet`; a literal resolves to its tree.
+/** A non-literal `string` widens to the general list, mirroring `ParseStylesheet`; a literal resolves to its tree. */
 export type ParseValue<S extends string> =
     string extends S ? ComponentValues
         : ParseList<S> extends [infer Out extends ComponentValues, string] ? Out : never;
@@ -135,8 +119,10 @@ function tokenize(source: string): Array<CssToken> {
     return tokens;
 }
 
-// A dimension token is a number glued to a unit (`300px`, `14deg`); split at the first non-numeric character so a
-// consumer reads the unit without re-lexing. Exponent syntax (`1e3px`) is rare enough to leave in the value part.
+/**
+ * A dimension token is a number glued to a unit (`300px`, `14deg`); split at the first non-numeric character so a
+ * consumer reads the unit without re-lexing. Exponent syntax (`1e3px`) is rare enough to leave in the value part.
+ */
 function splitDimension(text: string): { value: string, unit: string } {
     let index = 0;
     while (index < text.length && "+-.0123456789".includes(text[index])) index += 1;

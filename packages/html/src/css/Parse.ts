@@ -2,14 +2,7 @@
 // back with a sound cast; a non-literal `string` widens to the general AST.
 
 import type { CssNodeKind, Declaration, Rule, StyleNode, Stylesheet, AtRule } from "./Specification.js";
-
-type Whitespace = " " | "\t" | "\n" | "\r" | "\f";
-
-type TrimStart<S extends string> = S extends `${Whitespace}${infer Rest}` ? TrimStart<Rest> : S;
-type TrimEnd<S extends string> = S extends `${infer Rest}${Whitespace}` ? TrimEnd<Rest> : S;
-type Trim<S extends string> = TrimEnd<TrimStart<S>>;
-
-type StripComments<S extends string> = S extends `${infer Head}/*${string}*/${infer Tail}` ? StripComments<`${Head}${Tail}`> : S;
+import type { StripComments, Trim, TrimStart, Whitespace } from "@dropdeck/common";
 
 type MakeDecl<Property extends string, Value extends string, Important extends boolean> = {
     readonly kind: CssNodeKind.Declaration,

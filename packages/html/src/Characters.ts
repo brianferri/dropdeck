@@ -1,19 +1,10 @@
 // Plain predicates rather than a regex so the scanner cannot backtrack across a character.
+import { isAsciiLetter, isDigit, isWhitespace } from "@dropdeck/common";
 
-export function isWhitespace(character: string): boolean {
-    return character === " " || character === "\t" || character === "\n" || character === "\r" || character === "\f";
-}
-
-export function isAsciiLetter(character: string): boolean {
-    return (character >= "a" && character <= "z") || (character >= "A" && character <= "Z");
-}
-
-export function isAsciiDigit(character: string): boolean {
-    return character >= "0" && character <= "9";
-}
+export { isWhitespace };
 
 export function isTagNameChar(character: string): boolean {
-    return isAsciiLetter(character) || isAsciiDigit(character) || character === "-" || character === ":";
+    return isAsciiLetter(character) || isDigit(character) || character === "-" || character === ":";
 }
 
 export function isAttributeNameChar(character: string): boolean {
