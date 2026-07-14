@@ -3,11 +3,12 @@ import { PayloadKind, PunctKind, tokenize } from "./Tokenizer.js";
 import { LatexError } from "./Support.js";
 import { LatexAccentCommand, LatexOperatorCommand, LatexStructuralCommand } from "./Specification.js";
 import { memberGuard } from "@dropdeck/common";
+import type { Cursor as TokenCursor } from "@dropdeck/common";
 import type { Token } from "./typings/tokens.js";
 import type { Notation } from "./typings/nodes.js";
 import type { Parse } from "./typings/parse.js";
 
-type Cursor = { tokens: ReadonlyArray<Token>, index: number };
+type Cursor = TokenCursor<Token>;
 
 const isOperatorCommand = memberGuard<LatexOperatorCommand>(Object.values(LatexOperatorCommand));
 const isAccentCommand = memberGuard<LatexAccentCommand>(Object.values(LatexAccentCommand));

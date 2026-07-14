@@ -8,7 +8,8 @@ import type {
 import type { LatexStructuralArguments } from "./functions.js";
 import type { PayloadKind, PunctKind } from "../Tokenizer.js";
 import type {
-    BySpelling, DigitChar, FirstMatch, Lead, NumberOf, ParseError, SingleRule, Step, TakeNumber, TakeRun, Whitespace
+    AlphaChar, BySpelling, DigitChar, FirstMatch, Lead, NumberOf, OrError, Parsed as ParsedOf, ParseError, SingleRule,
+    Step, TakeNumber, TakeRun, Whitespace
 } from "@dropdeck/common";
 
 type NumberToken<Value extends number = number> = { kind: PayloadKind.Number, value: Value };
@@ -22,12 +23,6 @@ type Tokens = ReadonlyArray<Token>;
 
 type OperatorCommandName = `${LatexOperatorCommand}`;
 type AccentCommandName = `${LatexAccentCommand}`;
-
-type AlphaChar =
-    | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m"
-    | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
-    | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M"
-    | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z";
 
 type PunctBySpelling = BySpelling<PunctKind>;
 type OperatorCharSpelling = `${OperatorChar}`;
@@ -64,7 +59,7 @@ type Tokenize<Source extends string, Acc extends Tokens = []> =
             ? Tokenize<Rest, [...Acc, ...Produced]>
             : ParseError<`Unexpected character at <${Source}>`>;
 
-type Parsed<Node extends Notation, Rest extends Tokens> = { node: Node, rest: Rest };
+type Parsed<Node extends Notation, Rest extends Tokens> = ParsedOf<Node, Rest>;
 
 // The literal text of the next token -- its number, letter, command, operator, or punctuation -- so a diagnostic
 // can quote what it actually found as `got <X>`.
@@ -151,16 +146,15 @@ type GroupBase<Head extends Token, Rest extends Tokens> = Head extends PunctToke
 type ParenBase<Head extends Token, Rest extends Tokens> = Head extends PunctToken<PunctKind.ParenOpen> ? ParseFence<"(", ")", PunctKind.ParenClose, Rest> : false;
 type BracketBase<Head extends Token, Rest extends Tokens> = Head extends PunctToken<PunctKind.BracketOpen> ? ParseFence<"[", "]", PunctKind.BracketClose, Rest> : false;
 
-type BaseFrom<Head extends Token, Rest extends Tokens> = FirstMatch<[
+type BaseFrom<Head extends Token, Rest extends Tokens> = OrError<FirstMatch<[
     NumberBase<Head, Rest>,
     LetterBase<Head, Rest>,
     OperatorBase<Head, Rest>,
     CommandTokenBase<Head, Rest>,
     GroupBase<Head, Rest>,
     ParenBase<Head, Rest>,
-    BracketBase<Head, Rest>,
-    ParseError<`Expected an expression, got ${Got<Head>}`>
-]>;
+    BracketBase<Head, Rest>
+]>, `Expected an expression, got ${Got<Head>}`>;
 
 type ParseBase<T extends Tokens> =
     T extends [infer Head extends Token, ...infer Rest extends Tokens] ? BaseFrom<Head, Rest> : ParseError<"Expected an expression, got <end of input>">;
