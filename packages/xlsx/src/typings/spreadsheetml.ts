@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention -- ST_ and CT_ names mirror the ECMA-376 SpreadsheetML schema verbatim. */
 
+import type { HexRun, Repeat, UpperLetter } from "@dropdeck/common";
 import type {
     Attr,
     AttrList,
@@ -64,10 +65,6 @@ type OptAttrs<T extends ReadonlyArray<readonly [string, AttrScalar]>> = Readonly
 
 type Attrs<Req extends AttrList, Optional extends ReadonlyArray<readonly [string, AttrScalar]>> = AttrSeq<Req, OptAttrs<Optional>>;
 
-type UpperLetter =
-    | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M"
-    | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z";
-
 // Bounding the column to two letters and the range to single-letter endpoints keeps the union from squaring past
 // what the compiler will represent; the assembler asserts wider references back to these types at runtime.
 type Column = UpperLetter | `${UpperLetter}${UpperLetter}`;
@@ -75,17 +72,6 @@ export type ST_CellRef = `${Column}${number}`;
 export type ST_Ref = ST_CellRef | `${UpperLetter}${number}:${UpperLetter}${number}`;
 export type ST_Sqref = ST_Ref | `${ST_Ref} ${string}`; // Space-separated `ST_Ref` list; the leading ref is validated (18.18.76).
 export type ST_Index = number; // xsd:unsignedInt; a numeric index into a workbook table -- no string structure to constrain.
-type HexDigit =
-    | "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
-    | "a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" | "D" | "E" | "F";
-type Digits4 = [0, 0, 0, 0];
-type Digits8 = [0, 0, 0, 0, 0, 0, 0, 0];
-type Digits12 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-
-type HexRun<S extends string, Count extends ReadonlyArray<0>> =
-    Count extends readonly [0, ...infer Rest extends ReadonlyArray<0>]
-        ? S extends `${HexDigit}${infer Tail}` ? HexRun<Tail, Rest> : false
-        : S extends "" ? true : false;
 
 // `string extends S` holds only for the bare type, which stays the `string` attribute shape; a concrete literal
 // falls through and is validated. Length must be walked per digit because a union of every 8-hex group would be
@@ -93,7 +79,13 @@ type HexRun<S extends string, Count extends ReadonlyArray<0>> =
 export type ST_Guid<S extends string = string> = string extends S
     ? string
     : S extends `{${infer A}-${infer B}-${infer C}-${infer D}-${infer E}}`
-        ? [HexRun<A, Digits8>, HexRun<B, Digits4>, HexRun<C, Digits4>, HexRun<D, Digits4>, HexRun<E, Digits12>] extends [true, true, true, true, true]
+        ? [
+            HexRun<A, Repeat<0, 8>>,
+            HexRun<B, Repeat<0, 4>>,
+            HexRun<C, Repeat<0, 4>>,
+            HexRun<D, Repeat<0, 4>>,
+            HexRun<E, Repeat<0, 12>>
+        ] extends [true, true, true, true, true]
             ? S
             : `invalid GUID "${S}": groups must hold 8-4-4-4-12 hex digits`
         : `invalid GUID "${S}": expected the form {8-4-4-4-12 hex digits}`;
