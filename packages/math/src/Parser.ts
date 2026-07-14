@@ -2,6 +2,7 @@ import { binary, call, constant, logicalNot, negate, number, variable } from "./
 import { PayloadKind, PunctKind, tokenize } from "./Tokenizer.js";
 import { BinaryOperator, MathConstant, OPERATOR_PRECEDENCE, UnaryOperator } from "./Specification.js";
 import { MathError } from "./Support.js";
+import { memberGuard } from "@dropdeck/common";
 import type { Operator, Token } from "./typings/tokens.js";
 import type { Expression } from "./typings/nodes.js";
 import type { Parse } from "./typings/parse.js";
@@ -9,18 +10,10 @@ import type { Cursor as TokenCursor } from "@dropdeck/common";
 
 type Cursor = TokenCursor<Token>;
 
-const MATH_CONSTANTS = {
-    [MathConstant.Pi]: undefined,
-    [MathConstant.E]: undefined,
-    [MathConstant.Tau]: undefined
-} as const satisfies Record<MathConstant, void>;
+const isConstant = memberGuard<MathConstant>(Object.values(MathConstant));
 
 function isBinaryOperator(operator: Operator): operator is BinaryOperator {
     return operator in OPERATOR_PRECEDENCE;
-}
-
-function isConstant(name: string): name is MathConstant {
-    return name in MATH_CONSTANTS;
 }
 
 function peek(cursor: Cursor): Token | undefined {
