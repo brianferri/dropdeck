@@ -2,7 +2,7 @@ import type { BinaryOperator, ExpressionKind, MathConstant, MathFunction, OPERAT
 import type { Expression } from "@dropdeck/math";
 import type { AccentKindOf } from "#/formula/accent";
 import type { AccentFunction, CONSTANT_GLYPH, NaryFunction, NaryGlyphTable, OPERATOR_GLYPH } from "#/formula/math/glyphs";
-import type { FirstMatch } from "@dropdeck/common";
+import type { FirstMatch, LessOrEqual, LessThan } from "@dropdeck/common";
 import type {
     AccentNode, FencedNode, FractionNode, IdentifierNode, NaryNode, Notation, NumberNode, One, OperatorNode, Pair,
     RadicalNode, RowNode, SubscriptNode, SuperscriptNode, Triple
@@ -10,10 +10,6 @@ import type {
 
 export type MathContent = ReadonlyArray<Expression>;
 type Level<Op extends BinaryOperator> = (typeof OPERATOR_PRECEDENCE)[Op];
-
-type Units<N extends number, Acc extends ReadonlyArray<unknown> = []> = Acc["length"] extends N ? Acc : Units<N, [...Acc, unknown]>;
-type LessOrEqual<A extends number, B extends number> = Units<B> extends [...Units<A>, ...ReadonlyArray<unknown>] ? true : false;
-type LessThan<A extends number, B extends number> = Units<B> extends [...Units<A>, unknown, ...ReadonlyArray<unknown>] ? true : false;
 
 // `Divide`/`Power` become a fraction/superscript (self-grouping), so a child carrying one never needs a fence.
 type RowOperator<Child extends Expression> =

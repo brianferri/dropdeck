@@ -1,4 +1,5 @@
 import type { DeckConfig } from "#/config";
+import type { Trim } from "@dropdeck/common";
 
 export enum Motion {
     Fade = "fade",
@@ -27,16 +28,14 @@ export enum SlideTransition {
     Morph = "morph"
 }
 
-type Trimmed<S extends string> = S extends ` ${infer Rest}` ? Trimmed<Rest> : S extends `${infer Rest} ` ? Trimmed<Rest> : S;
-
-export function morphKey<const T extends string>(text: T): Lowercase<Trimmed<T>> {
-    return text.trim().toLowerCase() as Lowercase<Trimmed<T>>;
+export function morphKey<const T extends string>(text: T): Lowercase<Trim<T, " ">> {
+    return text.trim().toLowerCase() as Lowercase<Trim<T, " ">>;
 }
 
 // The leading `!!` forces PowerPoint to morph by name; without it, it pairs shapes by a fuzzy appearance heuristic
 // and slides one bar's colour onto another's box. The rest marks a shape morphable, so the timing pass drops its
 // entrance on a morph slide -- the transition moves it instead.
-export function morphName<const T extends string>(text: T): `!!morph:${Lowercase<Trimmed<T>>}` {
+export function morphName<const T extends string>(text: T): `!!morph:${Lowercase<Trim<T, " ">>}` {
     return `!!morph:${morphKey(text)}`;
 }
 
