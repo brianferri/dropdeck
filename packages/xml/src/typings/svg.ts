@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/naming-convention -- SVG presentation attributes are kebab-case by spec (stroke-width, text-anchor, ...). */
+import type { AttrOf } from "@dropdeck/common";
 
 // The attributes charts and icons use, with their value types. The builders take attribute *tuples*, not this
 // object -- object key order is not recoverable at the type level, so an object could not serialise precisely --
@@ -50,5 +51,5 @@ type SvgAttrTable = {
 /* eslint-enable @typescript-eslint/naming-convention */
 
 export type SvgAttrName = keyof SvgAttrTable;
-export type SvgAttr = { [K in SvgAttrName]: readonly [K, NonNullable<SvgAttrTable[K]>] }[SvgAttrName];
+export type SvgAttr = AttrOf<SvgAttrTable>;
 export type SvgAttrs = ReadonlyArray<SvgAttr>;

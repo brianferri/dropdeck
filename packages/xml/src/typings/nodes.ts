@@ -26,12 +26,7 @@ export type Element<
 export type Node = Element | Text;
 export type Content = ReadonlyArray<Node>;
 
-export type Empty = readonly [];
-export type One<T extends Node> = readonly [T];
-export type Opt<T extends Node> = readonly [] | readonly [T];
-export type Many<T extends Node> = ReadonlyArray<T>;
-export type Some<T extends Node> = readonly [T, ...ReadonlyArray<T>];
-export type Seq<A extends Content, B extends Content> = readonly [...A, ...B];
+export type { Empty, Many, One, Opt, Seq, Some } from "@dropdeck/common";
 
 export type ReqAttr<Name extends string, Value extends AttrScalar> = readonly [Attr<Name, Value>];
 export type OptAttr<Name extends string, Value extends AttrScalar> = readonly [] | readonly [Attr<Name, Value>];

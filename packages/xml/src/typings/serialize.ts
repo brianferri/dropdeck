@@ -1,6 +1,5 @@
+import type { ReplaceAll } from "@dropdeck/common";
 import type { Attr, AttrList, Content, Element, Node, Text } from "./nodes.js";
-
-type ReplaceAll<S extends string, From extends string, To extends string> = S extends `${infer Head}${From}${infer Tail}` ? `${Head}${To}${ReplaceAll<Tail, From, To>}` : S;
 
 // `&` is replaced first so the ampersands introduced by the later entities are not re-escaped.
 type EscapeText<S extends string> = ReplaceAll<ReplaceAll<ReplaceAll<S, "&", "&amp;">, "<", "&lt;">, ">", "&gt;">;

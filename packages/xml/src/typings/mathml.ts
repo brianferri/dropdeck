@@ -1,3 +1,5 @@
+import type { AttrOf } from "@dropdeck/common";
+
 type MathMLAttrTable = {
     readonly id?: string,
     readonly class?: string,
@@ -12,5 +14,5 @@ type MathMLAttrTable = {
 };
 
 export type MathMLAttrName = keyof MathMLAttrTable;
-export type MathMLAttr = { [K in MathMLAttrName]: readonly [K, NonNullable<MathMLAttrTable[K]>] }[MathMLAttrName];
+export type MathMLAttr = AttrOf<MathMLAttrTable>;
 export type MathMLAttrs = ReadonlyArray<MathMLAttr>;
