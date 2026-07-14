@@ -1,6 +1,7 @@
 import { Namespace, element, text } from "../../oox.js";
 import { ST_AxPos, ST_BarDir, ST_BarGrouping, ST_Orientation } from "./Specification.js";
 import type { AttrScalar, Element, Empty, Node, QName, Text } from "../../oox.js";
+import type { NumberOf } from "@dropdeck/common";
 
 type CV<Local extends string, V extends AttrScalar> = Element<QName<"c", Local>, readonly [readonly ["val", V]], Empty>;
 type CTxt<Local extends string, S extends string> = Element<QName<"c", Local>, Empty, readonly [Text & { readonly text: S }]>;
@@ -8,7 +9,7 @@ type Pt<S extends string, I extends number = number> = Element<QName<"c", "pt">,
 
 // Mapping over the label/value tuple keeps the cache a precise `[pt, pt]` tuple, not an unbounded `Pt[]` the
 // serialiser would drop; the tuple key `K` is reused as each point's zero-based `idx`.
-type IdxOf<K> = K extends `${infer I extends number}` ? I : number;
+type IdxOf<K> = NumberOf<K & string, number>;
 type StrPts<L extends ReadonlyArray<string>> = { readonly [K in keyof L]: Pt<L[K], IdxOf<K>> };
 type NumPts<N extends ReadonlyArray<number>> = { readonly [K in keyof N]: Pt<`${N[K] & number}`, IdxOf<K>> };
 

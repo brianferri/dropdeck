@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/naming-convention -- ST_*\/CT_* mirror the ECMA-376 schema names verbatim. */
 
+import type { HexDigit } from "@dropdeck/common";
 import type {
     Attr,
     Element,
@@ -61,8 +62,6 @@ export type ST_ShapeType =
     | "rightArrow" | "leftArrow" | "upArrow" | "downArrow" | "leftRightArrow" | "chevron"
     | "pie" | "blockArc" | "donut" | "noSmoking" | "heart" | "lightningBolt"
     | "sun" | "moon" | "cloud" | "can" | "cube" | "smileyFace";
-
-type HexDigit = | "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "a" | "b" | "c" | "d" | "e" | "f" | "A" | "B" | "C" | "D" | "E" | "F";
 
 // Six single-character `infer`s reject a shorter string (outer match fails) and a longer one (the trailing `F` is
 // multi-character, so not a `HexDigit`), pinning the length to exactly 6.
