@@ -5,8 +5,9 @@ import { MathError } from "./Support.js";
 import type { Operator, Token } from "./typings/tokens.js";
 import type { Expression } from "./typings/nodes.js";
 import type { Parse } from "./typings/parse.js";
+import type { Cursor as TokenCursor } from "@dropdeck/common";
 
-type Cursor = { tokens: ReadonlyArray<Token>, index: number };
+type Cursor = TokenCursor<Token>;
 
 const MATH_CONSTANTS = {
     [MathConstant.Pi]: undefined,

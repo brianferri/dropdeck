@@ -5,8 +5,8 @@ import type {
 } from "./nodes.js";
 import type { PayloadKind, PunctKind } from "../Tokenizer.js";
 import type {
-    BySpelling, DigitChar, DoubleRule, FirstMatch, Lead, NumberOf, ParseError, SingleRule, Step, TakeNumber, TakeRun,
-    Whitespace
+    AlphaChar as Letter, BySpelling, DigitChar, DoubleRule, FirstMatch, Lead, NumberOf, OrError, ParseError,
+    SingleRule, Step, TakeNumber, TakeRun, Whitespace
 } from "@dropdeck/common";
 
 type Operator = BinaryOperator | UnaryOperator;
@@ -15,11 +15,8 @@ type OperatorBySpelling = BySpelling<Operator>;
 type ConstantBySpelling = BySpelling<MathConstant>;
 type PunctBySpelling = BySpelling<PunctKind>;
 
-type AlphaChar =
-    | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m"
-    | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
-    | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M"
-    | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "_";
+// Math names may carry `_` (`x_i`), which pure letters exclude.
+type AlphaChar = Letter | "_";
 
 type NumberToken<Value extends number = number> = { kind: PayloadKind.Number, value: Value };
 type NameToken<Name extends string = string> = { kind: PayloadKind.Name, name: Name };
@@ -112,15 +109,13 @@ type NamePrimary<Head extends Token, Rest extends Tokens> =
 type GroupPrimary<Head extends Token, Rest extends Tokens> =
     Head extends { kind: PunctKind.Open } ? CloseGroup<ParseBinary<Rest>> : false;
 
-type PrimaryFrom<Match, Head extends Token> = [Match] extends [false]
-    ? ParseError<`Expected an expression, got ${Got<Head>}`> : Match;
 type ParsePrimary<T extends Tokens> =
     T extends [infer Head extends Token, ...infer Rest extends Tokens]
-        ? PrimaryFrom<FirstMatch<readonly [
+        ? OrError<FirstMatch<readonly [
             NumberPrimary<Head, Rest>,
             NamePrimary<Head, Rest>,
             GroupPrimary<Head, Rest>
-        ]>, Head>
+        ]>, `Expected an expression, got ${Got<Head>}`>
         : ParseError<"Expected an expression, got <end of input>">;
 
 type WrapNot<Result> =

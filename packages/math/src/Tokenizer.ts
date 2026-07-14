@@ -1,6 +1,6 @@
 import { BinaryOperator, UnaryOperator } from "./Specification.js";
 import { MathError } from "./Support.js";
-import { isAsciiLetter, isDigit, isWhitespace, memberGuard, readNumber } from "@dropdeck/common";
+import { bySpelling, isAsciiLetter, isDigit, isWhitespace, memberGuard, readNumber } from "@dropdeck/common";
 import type { Operator, Token } from "./typings/tokens.js";
 
 export enum PayloadKind {
@@ -15,9 +15,8 @@ export enum PunctKind {
     Comma = ","
 }
 
-const OPERATOR_BY_SPELLING: Record<string, Operator | undefined> = {};
-for (const operator of Object.values(BinaryOperator)) OPERATOR_BY_SPELLING[operator] = operator;
-for (const operator of Object.values(UnaryOperator)) OPERATOR_BY_SPELLING[operator] = operator;
+const operatorSpellings: ReadonlyArray<Operator> = (Object.values(BinaryOperator) as ReadonlyArray<Operator>).concat(Object.values(UnaryOperator));
+const OPERATOR_BY_SPELLING = bySpelling(operatorSpellings);
 
 const isPunctChar = memberGuard<PunctKind>(Object.values(PunctKind));
 

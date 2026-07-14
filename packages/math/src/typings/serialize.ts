@@ -1,4 +1,4 @@
-import type { FirstMatch } from "@dropdeck/common";
+import type { FirstMatch, LessOrEqual, LessThan, Negate } from "@dropdeck/common";
 import type { BinaryOperator, UnaryOperator } from "../Specification.js";
 import type {
     BinaryNode, CallNode, Content, ConstantNode, Expression, NegateNode, NotNode, NumberNode, VariableNode
@@ -20,12 +20,6 @@ type Level<Op extends BinaryOperator> = {
     [BinaryOperator.Power]: 6
 }[Op];
 
-type Units<N extends number, Acc extends ReadonlyArray<unknown> = []> =
-    Acc["length"] extends N ? Acc : Units<N, [...Acc, unknown]>;
-type LessOrEqual<A extends number, B extends number> = Units<B> extends [...Units<A>, ...ReadonlyArray<unknown>] ? true : false;
-type LessThan<A extends number, B extends number> = Units<B> extends [...Units<A>, unknown, ...ReadonlyArray<unknown>] ? true : false;
-
-type Negate<Flag extends boolean> = Flag extends true ? false : true;
 type IsRightAssociative<Op extends BinaryOperator> = Op extends BinaryOperator.Power ? true : false;
 type ParenthesisesEqual<Tight extends boolean, ChildLevel extends number, ParentLevel extends number> =
     Tight extends true ? LessOrEqual<ChildLevel, ParentLevel> : LessThan<ChildLevel, ParentLevel>;
