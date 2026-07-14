@@ -1,3 +1,5 @@
+import type { Repeat } from "./number.js";
+
 export type DigitChar = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9";
 export type Whitespace = " " | "\n" | "\t" | "\r" | "\f";
 
@@ -68,22 +70,30 @@ export type TakeNumber<Source extends string> =
 /** One tokenizer step: the tokens produced and the source left to scan. */
 export type Step<Produced extends ReadonlyArray<unknown>, Rest extends string> = { produced: Produced, rest: Rest };
 
-/** The leading character if it belongs to `Class`, split from the rest -- the shared shape of the single-char rules. */
-export type Lead<Source extends string, Class extends string> =
-    Source extends `${infer Head}${infer Rest}` ? Head extends Class ? { head: Head, rest: Rest } : false : false;
+// A char is consumed per element of the length-tuple, so widths are counted down as tuples internally while the
+// public types speak in plain numbers.
+type LeadRun<Source extends string, Class extends string, Width extends ReadonlyArray<unknown>, Run extends string = ""> =
+    Width extends readonly [unknown, ...infer Rest extends ReadonlyArray<unknown>]
+        ? Source extends `${infer Head}${infer Tail}` ? LeadRun<Tail, Class, Rest, `${Run}${Head}`> : false
+        : Run extends Class ? { head: Run, rest: Source } : false;
 
-/** A single-character token rule: the leading char, if a key of `Table`, becomes that one token; the rest is left. */
-export type SingleRule<Source extends string, Table> =
-    Lead<Source, keyof Table & string> extends { head: infer Head extends keyof Table, rest: infer Rest extends string }
-        ? Step<[Table[Head]], Rest>
+/**
+ * The leading `Width` characters if that run belongs to `Class`, split from the rest; `false` when the source is too
+ * short or the run is outside `Class`.
+ */
+export type LeadN<Source extends string, Class extends string, Width extends number> =
+    LeadRun<Source, Class, Repeat<unknown, Width>>;
+
+type LongestRun<Source extends string, Table, Width extends ReadonlyArray<unknown>> =
+    Width extends readonly [unknown, ...infer Narrower extends ReadonlyArray<unknown>]
+        ? LeadRun<Source, keyof Table & string, Width> extends { head: infer Head extends keyof Table, rest: infer Rest extends string }
+            ? Step<[Table[Head]], Rest>
+            : LongestRun<Source, Table, Narrower>
         : false;
 
-/** The leading two characters if that pair belongs to `Class`, split from the rest -- `Lead` a pair wide. */
-export type Lead2<Source extends string, Class extends string> =
-    Source extends `${infer A}${infer B}${infer Rest}` ? `${A}${B}` extends Class ? { head: `${A}${B}`, rest: Rest } : false : false;
-
-/** A two-character token rule: the leading pair, if a key of `Table`, becomes that one token; the rest is left. */
-export type DoubleRule<Source extends string, Table> =
-    Lead2<Source, keyof Table & string> extends { head: infer Head extends keyof Table, rest: infer Rest extends string }
-        ? Step<[Table[Head]], Rest>
-        : false;
+/**
+ * The longest leading run (up to `Width` characters) that keys `Table`, emitted as that one token with the rest left.
+ * Widest first, so a table holding both `===` and `==` matches `===`; `false` when no leading run keys the table.
+ */
+export type LongestRule<Source extends string, Table, Width extends number> =
+    LongestRun<Source, Table, Repeat<unknown, Width>>;
