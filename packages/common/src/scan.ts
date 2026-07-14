@@ -1,7 +1,11 @@
-// Plain character predicates rather than regexes, so a scanner never backtracks across a character.
-
 export function isDigit(character: string): boolean {
     return character >= "0" && character <= "9";
+}
+
+export function isHexDigit(character: string): boolean {
+    if (isDigit(character)) return true;
+    const lower = character.toLowerCase();
+    return lower >= "a" && lower <= "f";
 }
 
 export function isAsciiLetter(character: string): boolean {
@@ -9,11 +13,11 @@ export function isAsciiLetter(character: string): boolean {
     return character >= "A" && character <= "Z";
 }
 
+/** A single character is whitespace when it trims away; the finite `Whitespace` type is the type-level counterpart. */
 export function isWhitespace(character: string): boolean {
-    return character === " " || character === "\n" || character === "\t" || character === "\r";
+    return character.trim() === "";
 }
 
-// Reads a run of digits with an optional fractional part, returning its value and the index past it.
 export function readNumber(source: string, start: number): { value: number, next: number } {
     let index = start;
     while (index < source.length && isDigit(source[index])) index += 1;

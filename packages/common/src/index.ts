@@ -1,8 +1,14 @@
-export type { FirstMatch } from "./typings/match.js";
-export { keyGuard, memberGuard } from "./guard.js";
-export type { ParseError } from "./typings/parse.js";
+export type { Empty, Many, One, Opt, Seq, Some } from "./typings/arity.js";
+export type { FirstMatch, OrError } from "./typings/match.js";
+export { bySpelling, keyGuard, memberGuard } from "./guard.js";
+export type { Cursor, Parsed, ParseError, Token } from "./typings/parse.js";
 export type {
-    BySpelling, DigitChar, DoubleRule, Lead, Lead2, NumberOf, SingleRule, Step, TakeNumber, TakeRun, Whitespace
+    AlphaChar, AttrOf, BySpelling, DigitChar, DoubleRule, HexDigit, HexRun, IsLetter, Lead, Lead2, LowerLetter,
+    NumberOf, SingleRule, Step, TakeNumber, TakeRun, TakeThrough, TakeUntil, UpperLetter, Whitespace
 } from "./typings/lex.js";
-export { isAsciiLetter, isDigit, isWhitespace, readNumber } from "./scan.js";
+export type {
+    AllChars, Contains, Normalize, ReplaceAll, SkipPast, SplitOn, StripComments, Trim, TrimEnd, TrimStart
+} from "./typings/string.js";
+export type { LessOrEqual, LessThan, Negate, Repeat } from "./typings/number.js";
+export { isAsciiLetter, isDigit, isHexDigit, isWhitespace, readNumber } from "./scan.js";
 export { SourceError } from "./error.js";
