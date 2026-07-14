@@ -8,7 +8,7 @@ import type {
 import type { LatexStructuralArguments } from "./functions.js";
 import type { PayloadKind, PunctKind } from "../Tokenizer.js";
 import type {
-    AlphaChar, BySpelling, DigitChar, FirstMatch, Lead, NumberOf, OrError, Parsed as ParsedOf, ParseError, SingleRule,
+    AlphaChar, BySpelling, DigitChar, FirstMatch, LeadN, LongestRule, NumberOf, OrError, Parsed as ParsedOf, ParseError,
     Step, TakeNumber, TakeRun, Whitespace
 } from "@dropdeck/common";
 
@@ -27,16 +27,16 @@ type AccentCommandName = `${LatexAccentCommand}`;
 type PunctBySpelling = BySpelling<PunctKind>;
 type OperatorCharSpelling = `${OperatorChar}`;
 
-type SpaceRule<S extends string> = Lead<S, Whitespace> extends { rest: infer Rest extends string } ? Step<[], Rest> : false;
+type SpaceRule<S extends string> = LeadN<S, Whitespace, 1> extends { rest: infer Rest extends string } ? Step<[], Rest> : false;
 type NumberRule<S extends string> =
-    Lead<S, DigitChar> extends false ? false
+    LeadN<S, DigitChar, 1> extends false ? false
         : TakeNumber<S> extends { run: infer Run extends string, rest: infer Rest extends string } ? Step<[NumberToken<NumberOf<Run>>], Rest> : false;
 type LetterTokens = { [Char in AlphaChar]: LetterToken<Char> };
 type OperatorTokens = { [Char in OperatorCharSpelling]: OperatorToken<Char> };
 type PunctTokens = { [Char in keyof PunctBySpelling]: PunctToken<PunctBySpelling[Char]> };
-type LetterRule<S extends string> = SingleRule<S, LetterTokens>;
-type OperatorRule<S extends string> = SingleRule<S, OperatorTokens>;
-type PunctRule<S extends string> = SingleRule<S, PunctTokens>;
+type LetterRule<S extends string> = LongestRule<S, LetterTokens, 1>;
+type OperatorRule<S extends string> = LongestRule<S, OperatorTokens, 1>;
+type PunctRule<S extends string> = LongestRule<S, PunctTokens, 1>;
 type CommandRule<S extends string> =
     S extends `\\${infer Tail}`
         ? TakeRun<Tail, AlphaChar> extends { run: infer Name extends string, rest: infer Rest extends string }
