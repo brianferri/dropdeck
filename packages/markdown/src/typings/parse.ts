@@ -1,4 +1,6 @@
-import type { FirstMatch } from "@dropdeck/common";
+import type {
+    AllChars, FirstMatch, Normalize, OrError, ParseError, ReplaceAll, TakeUntil, Trim as CommonTrim
+} from "@dropdeck/common";
 import type {
     BlockNode, Blocks, BlockQuoteNode, CodeBlockNode, CodeNode, DocumentNode, EmphasisNode, HeadingLevel,
     HeadingNode, ImageNode, InlineNode, Inlines, LinkNode, ListItemNode, ListNode, ParagraphNode, SoftBreakNode,
@@ -12,12 +14,14 @@ type Delimiter = "`" | "*" | "_" | "[" | "!" | "<" | "\\" | "\n";
 
 type TextOf<V extends string> = V extends "" ? readonly [] : readonly [TextNode<V>];
 
-type ReadPlain<S extends string, Acc extends string = ""> =
+/**
+ * The first character is always plain (an inline delimiter that started no construct); the rest runs to the next
+ * delimiter. `TakeUntil` always succeeds, so its result is read directly rather than through a matchable branch.
+ */
+type ReadPlain<S extends string> =
     S extends `${infer C}${infer R}`
-        ? Acc extends ""
-            ? ReadPlain<R, C>
-            : C extends Delimiter ? { text: Acc, rest: S } : ReadPlain<R, `${Acc}${C}`>
-        : { text: Acc, rest: "" };
+        ? { run: `${C}${TakeUntil<R, Delimiter>["run"]}`, rest: TakeUntil<R, Delimiter>["rest"] }
+        : { run: "", rest: "" };
 
 type IsAutolink<U extends string> =
     U extends `${string}:${string}` ? U extends `${string} ${string}` ? false : true : false;
@@ -49,7 +53,7 @@ type Inline<S extends string, Nodes extends Inlines, Run extends string> =
         ? readonly [...Nodes, ...TextOf<Run>]
         : InlineChunk<S> extends { node: infer N extends InlineNode, rest: infer R extends string }
             ? Inline<R, readonly [...Nodes, ...TextOf<Run>, N], "">
-            : ReadPlain<S> extends { text: infer T extends string, rest: infer R extends string }
+            : ReadPlain<S> extends { run: infer T extends string, rest: infer R extends string }
                 ? Inline<R, Nodes, `${Run}${T}`>
                 : readonly [...Nodes, ...TextOf<Run>];
 
@@ -57,33 +61,34 @@ export type ParseInline<S extends string> = string extends S ? Inlines : Inline<
 
 type NextLine<S extends string> = S extends `${infer L}\n${infer R}` ? { line: L, rest: R } : { line: S, rest: "" };
 
-type TrimStart<S extends string> = S extends ` ${infer R}` ? TrimStart<R> : S;
-type TrimEnd<S extends string> = S extends `${infer R} ` ? TrimEnd<R> : S;
-type Trim<S extends string> = TrimEnd<TrimStart<S>>;
+// Markdown trims only literal spaces (not tabs/newlines, which carry block structure).
+type Trim<S extends string> = CommonTrim<S, " ">;
 
-type NoSpaces<S extends string, Acc extends string = ""> =
-    S extends `${infer C}${infer R}` ? C extends " " ? NoSpaces<R, Acc> : NoSpaces<R, `${Acc}${C}`> : Acc;
-
-type AllOf<S extends string, C extends string> = S extends "" ? true : S extends `${C}${infer R}` ? AllOf<R, C> : false;
-type Repeated<B extends string, C extends string> = B extends `${C}${C}${C}${string}` ? AllOf<B, C> : false;
+// A thematic break is three or more of one marker character, spaces ignored.
+type Repeated<B extends string, C extends string> = B extends `${C}${C}${C}${string}` ? AllChars<B, C> : false;
 type IsThematic<L extends string> =
-    NoSpaces<L> extends infer B extends string
+    ReplaceAll<L, " ", ""> extends infer B extends string
         ? Repeated<B, "-"> extends true ? true : Repeated<B, "_"> extends true ? true : Repeated<B, "*"> extends true ? true : false
         : false;
 
-type Atx<L extends string> =
-    L extends `###### ${infer C}` ? { level: 6, content: Trim<C> }
-        : L extends `##### ${infer C}` ? { level: 5, content: Trim<C> }
-            : L extends `#### ${infer C}` ? { level: 4, content: Trim<C> }
-                : L extends `### ${infer C}` ? { level: 3, content: Trim<C> }
-                    : L extends `## ${infer C}` ? { level: 2, content: Trim<C> }
-                        : L extends `# ${infer C}` ? { level: 1, content: Trim<C> }
-                            : never;
+// Longest run first so `######` wins over `#`; each arm yields its heading or `false` to defer, kept flat by
+// `FirstMatch` rather than a right-drifting ternary ladder.
+type Atx<L extends string> = OrError<FirstMatch<readonly [
+    L extends `###### ${infer C}` ? { level: 6, content: Trim<C> } : false,
+    L extends `##### ${infer C}` ? { level: 5, content: Trim<C> } : false,
+    L extends `#### ${infer C}` ? { level: 4, content: Trim<C> } : false,
+    L extends `### ${infer C}` ? { level: 3, content: Trim<C> } : false,
+    L extends `## ${infer C}` ? { level: 2, content: Trim<C> } : false,
+    L extends `# ${infer C}` ? { level: 1, content: Trim<C> } : false
+]>, `not an ATX heading: '${L}'`>;
 
-type Setext<L extends string> =
-    Trim<L> extends infer B extends string
-        ? B extends "" ? never : AllOf<B, "="> extends true ? 1 : AllOf<B, "-"> extends true ? 2 : never
-        : never;
+// An underline that is all `=` (level 1) or all `-` (level 2); empty is excluded since `AllChars` is vacuously true.
+type Setext<L extends string> = OrError<Trim<L> extends infer B extends string
+    ? B extends "" ? false : FirstMatch<readonly [
+        AllChars<B, "="> extends true ? 1 : false,
+        AllChars<B, "-"> extends true ? 2 : false
+    ]>
+    : false, `not a setext underline: '${L}'`>;
 
 type Fence<S extends string, Acc extends string> =
     S extends "" ? { literal: Acc, rest: "" }
@@ -103,10 +108,15 @@ type Quote<S extends string, Acc extends string> =
                 : { inner: Acc, rest: S }
         : { inner: Acc, rest: S };
 
-type Interrupts<L extends string> =
-    IsThematic<L> extends true ? true
-        : [Setext<L>] extends [never] ? Atx<L> extends never ? L extends `\`\`\`${string}` ? true : L extends `>${string}` ? true : false : true
-            : true;
+// A paragraph ends when the next line starts a new block: a thematic break, setext underline, ATX heading, fence,
+// or blockquote. Flat `FirstMatch` of those tests rather than a nested chain.
+type Interrupts<L extends string> = FirstMatch<readonly [
+    IsThematic<L>,
+    [Setext<L>] extends [ParseError] ? false : true,
+    [Atx<L>] extends [ParseError] ? false : true,
+    L extends `\`\`\`${string}` ? true : false,
+    L extends `>${string}` ? true : false
+]>;
 
 type Para<S extends string, Acc extends string> =
     S extends "" ? { text: Acc, rest: "" }
@@ -116,17 +126,18 @@ type Para<S extends string, Acc extends string> =
                     : Interrupts<L> extends true ? { text: Acc, rest: S } : Para<R, `${Acc}\n${L}`>
             : { text: Acc, rest: "" };
 
-type Marker<L extends string> =
-    L extends `- ${infer C}` ? C
-        : L extends `* ${infer C}` ? C
-            : L extends `+ ${infer C}` ? C
-                : L extends `${number}. ${infer C}` ? C
-                    : L extends `${number}) ${infer C}` ? C
-                        : never;
+// A bullet (`-`/`*`/`+`) or ordered (`N.`/`N)`) marker, yielding the item text; flat arms over a ternary ladder.
+type Marker<L extends string> = OrError<FirstMatch<readonly [
+    L extends `- ${infer C}` ? C : false,
+    L extends `* ${infer C}` ? C : false,
+    L extends `+ ${infer C}` ? C : false,
+    L extends `${number}. ${infer C}` ? C : false,
+    L extends `${number}) ${infer C}` ? C : false
+]>, `not a list marker: '${L}'`>;
 
 type ListContent<S extends string, Texts extends ReadonlyArray<string>> =
     NextLine<S> extends { line: infer L extends string, rest: infer R extends string }
-        ? [Marker<L>] extends [never]
+        ? [Marker<L>] extends [ParseError]
             ? { items: Texts, rest: S }
             : Marker<L> extends infer C extends string ? ListContent<R, readonly [...Texts, C]> : { items: Texts, rest: S }
         : { items: Texts, rest: S };
@@ -155,7 +166,7 @@ type SetextOrPara<S extends string> =
     Para<S, ""> extends { text: infer T extends string, rest: infer R extends string }
         ? ParseInline<T> extends infer I extends Inlines
             ? NextLine<R> extends { line: infer U extends string, rest: infer R2 extends string }
-                ? [Setext<U>] extends [never]
+                ? [Setext<U>] extends [ParseError]
                     ? { block: ParagraphNode<I>, rest: R }
                     : Setext<U> extends infer Lv extends HeadingLevel ? { block: HeadingNode<Lv, I>, rest: R2 } : never
                 : { block: ParagraphNode<I>, rest: R }
@@ -177,7 +188,7 @@ type ThematicRule<S extends string> =
         : false;
 type HeadingRule<S extends string> =
     NextLine<S> extends { line: infer L extends string, rest: infer R extends string }
-        ? [Atx<L>] extends [never] ? false : HeadingBlock<Atx<L>, R>
+        ? [Atx<L>] extends [ParseError] ? false : HeadingBlock<Atx<L>, R>
         : false;
 type FenceRule<S extends string> =
     NextLine<S> extends { line: infer L extends string, rest: infer R extends string }
@@ -186,7 +197,7 @@ type FenceRule<S extends string> =
 type QuoteRule<S extends string> =
     NextLine<S> extends { line: infer L extends string } ? L extends `>${string}` ? QuoteBlock<S> : false : false;
 type ListRule<S extends string> =
-    NextLine<S> extends { line: infer L extends string } ? [Marker<L>] extends [never] ? false : ListBlock<S> : false;
+    NextLine<S> extends { line: infer L extends string } ? [Marker<L>] extends [ParseError] ? false : ListBlock<S> : false;
 
 type Block<S extends string> = FirstMatch<readonly [
     IndentRule<S>,
@@ -208,8 +219,6 @@ type ParseBlocks<S extends string, Acc extends Blocks> =
                     ? ParseBlocks<BR, readonly [...Acc, B]>
                     : Acc
             : Acc;
-
-type Normalize<S extends string> = S extends `${infer A}\r\n${infer B}` ? `${A}\n${Normalize<B>}` : S;
 
 export type Parse<S extends string> =
     string extends S ? DocumentNode : DocumentNode<ParseBlocks<Normalize<S>, readonly []>>;

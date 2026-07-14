@@ -26,14 +26,6 @@ export type {
     TextNode,
     ThematicBreakNode
 } from "./typings/nodes.js";
-export type {
-    Empty,
-    Many,
-    One,
-    Opt,
-    Seq,
-    Some
-} from "./typings/arity.js";
 export {
     blockQuote, code, codeBlock, document, emphasis, hardBreak, heading, htmlBlock, htmlInline, image, link,
     list, listItem, paragraph, softBreak, strong, text, thematicBreak

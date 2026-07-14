@@ -1,5 +1,5 @@
-import { has } from "./Support.js";
 import { ATX_LEVEL_MAX, ListDelimiter, ListMarker, NodeKind } from "./Specification.js";
+import { isAsciiLetter, isDigit, keyGuard } from "@dropdeck/common";
 import type { BlockNode, Blocks, HeadingLevel, InlineNode, Inlines, ListItemNode } from "./typings/nodes.js";
 import type { Parse } from "./typings/parse.js";
 
@@ -54,6 +54,8 @@ const ENTITIES = {
     harr: 0x2194
 } as const;
 
+const isEntity = keyGuard(ENTITIES);
+
 // CommonMark decodes entity and numeric character references in text (`&mdash;` -> em dash). An unknown name or
 // a missing `;` is left literal, so `inlineAt` falls through and the `&` stays plain text.
 function entityMatch(text: string, at: number): InlineMatch | null {
@@ -66,7 +68,7 @@ function entityMatch(text: string, at: number): InlineMatch | null {
         if (Number.isNaN(code) || code <= 0 || code > 0x10ffff) return null;
         return { node: { kind: NodeKind.Text, value: String.fromCodePoint(code) }, end: semicolon + 1 };
     }
-    if (!has(name, ENTITIES)) return null;
+    if (!isEntity(name)) return null;
     return { node: { kind: NodeKind.Text, value: String.fromCodePoint(ENTITIES[name]) }, end: semicolon + 1 };
 }
 
@@ -103,8 +105,7 @@ function autolinkMatch(text: string, at: number): InlineMatch | null {
 
 function isTagStart(ch: string | undefined): boolean {
     if (ch === undefined) return false;
-    if (ch >= "a" && ch <= "z") return true;
-    if (ch >= "A" && ch <= "Z") return true;
+    if (isAsciiLetter(ch)) return true;
     return ch === "/" || ch === "!" || ch === "?";
 }
 
@@ -177,7 +178,7 @@ function markerAt(line: string): Marker | null {
     if (line.startsWith("- ")) return { ordered: false, start: 1, delimiter: ListMarker.Dash, width: 2 };
     if (line.startsWith("* ")) return { ordered: false, start: 1, delimiter: ListMarker.Asterisk, width: 2 };
     if (line.startsWith("+ ")) return { ordered: false, start: 1, delimiter: ListMarker.Plus, width: 2 };
-    const firstOther = Array.from(line).findIndex((ch) => ch < "0" || ch > "9");
+    const firstOther = Array.from(line).findIndex((ch) => !isDigit(ch));
     const digits = firstOther < 0 ? 0 : firstOther;
     if (digits < 1 || digits > 9) return null;
     const start = Number(line.slice(0, digits));
@@ -302,12 +303,12 @@ function htmlBlockStart(line: string): boolean {
     if (!line.startsWith("<")) return false;
     if (line.startsWith("<!--")) return true;
     const after = line.charAt(line[1] === "/" ? 2 : 1);
-    return (after >= "a" && after <= "z") || (after >= "A" && after <= "Z");
+    return isAsciiLetter(after);
 }
 
 function openTagName(line: string): string {
     let index = 1;
-    while (index < line.length && ((line[index] >= "a" && line[index] <= "z") || (line[index] >= "A" && line[index] <= "Z"))) index += 1;
+    while (index < line.length && isAsciiLetter(line[index])) index += 1;
     return line.slice(1, index).toLowerCase();
 }
 

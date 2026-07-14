@@ -1,4 +1,5 @@
 import { ATX_LEVEL_MAX } from "./Specification.js";
+import { isDigit } from "@dropdeck/common";
 import type { Token } from "./typings/tokens.js";
 
 // The highlighting IR: a flat, gap-free stream of positioned tokens over the source. Every character lands in
@@ -26,7 +27,7 @@ function headingLevel(line: string): number {
 
 function listMarkerLength(line: string): number {
     if (line.startsWith("- ") || line.startsWith("* ") || line.startsWith("+ ")) return 2;
-    const firstOther = Array.from(line).findIndex((ch) => ch < "0" || ch > "9");
+    const firstOther = Array.from(line).findIndex((ch) => !isDigit(ch));
     const digits = firstOther < 0 ? line.length : firstOther;
     return digits > 0 && line.startsWith(". ", digits) ? digits + 2 : 0;
 }

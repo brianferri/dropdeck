@@ -1,7 +1,4 @@
+import type { Token as SpanToken } from "@dropdeck/common";
 import type { TokenKind } from "../Tokenizer.js";
 
-export type Token = {
-    readonly kind: TokenKind,
-    readonly start: number,
-    readonly end: number
-};
+export type Token = SpanToken<TokenKind>;
