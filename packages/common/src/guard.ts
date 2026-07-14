@@ -14,3 +14,10 @@ export function bySpelling<T extends string>(members: Iterable<T>): Record<strin
     for (const member of members) table[member] = member;
     return table;
 }
+
+/** Inverts a map, keying by value: `{ a: "x" }` becomes `{ x: "a" }` */
+export function invert<const Forward extends Record<string, PropertyKey>>(forward: Forward): { [Key in keyof Forward as Forward[Key]]: Key } {
+    const reverse: Record<PropertyKey, PropertyKey> = {};
+    for (const [key, value] of Object.entries(forward)) reverse[value] = key;
+    return reverse as { [Key in keyof Forward as Forward[Key]]: Key };
+}

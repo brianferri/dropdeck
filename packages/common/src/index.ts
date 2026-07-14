@@ -1,6 +1,6 @@
 export type { Empty, Many, One, Opt, Seq, Some } from "./typings/arity.js";
 export type { FirstMatch, OrError } from "./typings/match.js";
-export { bySpelling, keyGuard, memberGuard } from "./guard.js";
+export { bySpelling, invert, keyGuard, memberGuard } from "./guard.js";
 export type { Cursor, Parsed, ParseError, Token } from "./typings/parse.js";
 export type {
     AlphaChar, AttrOf, BySpelling, DigitChar, DoubleRule, HexDigit, HexRun, IsLetter, Lead, Lead2, LowerLetter,
