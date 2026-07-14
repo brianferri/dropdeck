@@ -2,6 +2,7 @@
 // snippet engine, not interpolated, so the template-curly lint does not apply here.
 /* eslint-disable no-template-curly-in-string */
 import { ChartKind } from "#/ir";
+import { memberGuard } from "@dropdeck/common";
 import { MathAccent, MathConstant, MathFunction } from "@dropdeck/math";
 import { LatexAccentCommand } from "@dropdeck/latex";
 import { LatexCommand } from "#/formula/latex";
@@ -339,7 +340,7 @@ const LATEX_LIMIT_COMMANDS = [
     LatexCommand.Iint,
     LatexCommand.Iiint
 ] as const satisfies ReadonlyArray<NaryCommand>;
-const LATEX_LIMIT_SET = new Set<string>(LATEX_LIMIT_COMMANDS);
+const isLatexLimitCommand = memberGuard(LATEX_LIMIT_COMMANDS);
 
 // Accents wrap their single argument (`\hat{x}`); `satisfies Record<LatexAccentCommand, ...>` keeps them covered.
 const LATEX_ACCENT_INFO = {
@@ -361,7 +362,7 @@ const LATEX_STRUCTURAL: ReadonlyArray<CompletionItem> = [
 function latexCommands(): ReadonlyArray<CompletionItem> {
     const out: Array<CompletionItem> = [];
     for (const item of LATEX_STRUCTURAL) out.push(item);
-    for (const [command, doc] of Object.entries(LATEX_COMMAND_INFO)) out.push(latexCommand(command, LATEX_LIMIT_SET.has(command) ? `${command}${LATEX_LIMIT_SNIPPET}` : command, doc));
+    for (const [command, doc] of Object.entries(LATEX_COMMAND_INFO)) out.push(latexCommand(command, isLatexLimitCommand(command) ? `${command}${LATEX_LIMIT_SNIPPET}` : command, doc));
 
     for (const [command, doc] of Object.entries(LATEX_ACCENT_INFO)) out.push(latexCommand(`\\${command}`, `\\${command}{\${1:x}} $0`, doc));
     return out;

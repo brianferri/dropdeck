@@ -1,4 +1,5 @@
 import { NodeField, element, parse, sanitize, serialize, serializeAll, text } from "@dropdeck/html";
+import { memberGuard } from "@dropdeck/common";
 import { serializeStyle } from "@dropdeck/html/css";
 import type { DomNode, ElementNode, TextNode } from "@dropdeck/html";
 import type { Declaration, MatchesStylesheet, Stylesheet } from "@dropdeck/html/css";
@@ -31,7 +32,7 @@ export type Attrs = {
     data?: Readonly<Record<string, string>>
 };
 
-const URL_ATTRS = new Set<string>([
+const isUrlAttr = memberGuard([
     "src",
     "poster",
     "href"
@@ -161,7 +162,7 @@ export function mapUrlAttrs(
 ): Array<DomNode> {
     return nodes.map((node) => {
         if (NodeField.Text in node) return node;
-        const attrs = node.attrs.map((attr) => (URL_ATTRS.has(attr[0].toLowerCase()) ? [attr[0], assets.get(attr[1]) ?? attr[1]] as const : attr));
+        const attrs = node.attrs.map((attr) => (isUrlAttr(attr[0].toLowerCase()) ? [attr[0], assets.get(attr[1]) ?? attr[1]] as const : attr));
         return element(node.tag, attrs, mapUrlAttrs(node.children, assets));
     });
 }

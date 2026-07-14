@@ -1,3 +1,5 @@
+import { memberGuard } from "@dropdeck/common";
+
 export type PathFile = {
     path: string,
     file: File
@@ -5,7 +7,7 @@ export type PathFile = {
 
 const FILE_COUNT_MAX = 5000;
 const DIRECTORY_BATCH_MAX = 1000;
-const MARKDOWN_EXTENSIONS = new Set<string>([".md", ".markdown", ".mdown", ".mkd"]);
+const isMarkdownExtension = memberGuard([".md", ".markdown", ".mdown", ".mkd"]);
 
 async function readEntriesOnce(reader: FileSystemDirectoryReader): Promise<Array<FileSystemEntry>> {
     return new Promise((resolve, reject) => { reader.readEntries(resolve, reject); });
@@ -78,7 +80,7 @@ export function basenameOf(path: string): string {
 export function isMarkdown(path: string): boolean {
     const dot = path.lastIndexOf(".");
     if (dot < 0) return false;
-    return MARKDOWN_EXTENSIONS.has(path.slice(dot).toLowerCase());
+    return isMarkdownExtension(path.slice(dot).toLowerCase());
 }
 
 export function directoryOf(path: string): string {

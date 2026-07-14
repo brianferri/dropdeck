@@ -1,14 +1,11 @@
 import { RawBlockKind, tokenize } from "#/front/lexer";
 import { BlockKind, ChartKind, FormulaNotation } from "#/ir";
+import { isWhitespace, memberGuard } from "@dropdeck/common";
 import type { BarRow, Block, ChartData, ChartSeries, MetricRow, Slide } from "#/ir";
 import type { DeckConfig } from "#/config";
 import type { ParseDeck } from "#/front/Parse";
 
 const HTML_BLOCK_TAGS = ["div", "section", "video", "table", "figure", "aside", "header", "footer", "main", "article", "iframe"];
-
-function isSpace(ch: string): boolean {
-    return ch === " " || ch === "\t" || ch === "\n" || ch === "\r" || ch === "\f" || ch === "\v";
-}
 
 function isKeyStart(ch: string): boolean {
     if (ch >= "a" && ch <= "z") return true;
@@ -29,7 +26,7 @@ function hasHtmlBlock(text: string): boolean {
         let at = lower.indexOf(opener);
         while (at >= 0) {
             const after = lower.charAt(at + opener.length);
-            if (isSpace(after) || after === "/" || after === ">") return true;
+            if (isWhitespace(after) || after === "/" || after === ">") return true;
             at = lower.indexOf(opener, at + 1);
         }
     }
@@ -48,7 +45,7 @@ function isKeyColon(line: string): number {
     if (!isKeyStart(line.charAt(0))) return -1;
     let at = 1;
     while (at < line.length && isKeyChar(line[at])) at += 1;
-    while (at < line.length && isSpace(line[at])) at += 1;
+    while (at < line.length && isWhitespace(line[at])) at += 1;
     return line[at] === ":" ? at : -1;
 }
 
@@ -64,7 +61,7 @@ function parseYaml(text: string): DeckConfig {
 
 function looksYaml(text: string): boolean {
     const lines = text.split("\n").filter((line) => line.trim());
-    return lines.length > 0 && lines.every((line) => isKeyColon(line) >= 0 || isSpace(line.charAt(0)));
+    return lines.length > 0 && lines.every((line) => isKeyColon(line) >= 0 || isWhitespace(line.charAt(0)));
 }
 
 function hasAsciiAlnum(text: string): boolean {
@@ -99,7 +96,7 @@ function isEmojiOnly(text: string): boolean {
 function headingTitle(line: string): string | null {
     let hashes = 0;
     while (line[hashes] === "#") hashes += 1;
-    if (hashes < 1 || hashes > 2 || !isSpace(line[hashes] ?? "")) return null;
+    if (hashes < 1 || hashes > 2 || !isWhitespace(line[hashes] ?? "")) return null;
     return line.slice(hashes).trim();
 }
 
@@ -150,11 +147,7 @@ function parseBarRows(content: string): Array<BarRow> {
 }
 
 // `ChartKind`'s values are exactly the fence tags (```chart line), so the enum is the list of supported types.
-const CHART_KINDS = new Set<string>(Object.values(ChartKind));
-
-function isChartKind(tag: string): tag is ChartKind {
-    return CHART_KINDS.has(tag);
-}
+const isChartKind = memberGuard<ChartKind>(Object.values(ChartKind));
 
 // A chart fence is bare `chart` (grouped bars) or `chart <type>` for a known `ChartKind`. A different fence lang or
 // an unknown type is `null` -- not a chart -- so the caller renders it as a code block rather than guessing bars.
@@ -168,11 +161,7 @@ function chartFenceKind(lang: string): ChartKind | null {
     return kind;
 }
 
-const FORMULA_NOTATIONS = new Set<string>(Object.values(FormulaNotation));
-
-function isFormulaNotation(lang: string): lang is FormulaNotation {
-    return FORMULA_NOTATIONS.has(lang);
-}
+const isFormulaNotation = memberGuard<FormulaNotation>(Object.values(FormulaNotation));
 
 // The header row names the series (its leading cell is the axis corner, dropped); each later row is a category
 // followed by one numeric cell per series.

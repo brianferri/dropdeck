@@ -1,4 +1,5 @@
 import { HtmlTag, NodeField, attribute, childElements, findAll, findFirst, hasClass, parse, serialize, textContent } from "@dropdeck/html";
+import { memberGuard } from "@dropdeck/common";
 import { CssProperty, colorClass, columnSpan, gridColumns as tailwindGridColumns, resolve as resolveTailwind } from "@dropdeck/html/tailwind";
 import { decompose, matrixOf, parseStyle, parseTransform, styleValue } from "@dropdeck/html/css";
 import { Align, Anchor, fill as solidFill, idFactory, imageShape, leftBarFrame, panel, paragraphOf, pProps, relFactory, styledRun, textBox, txBodyOf } from "#/export/pptx/build";
@@ -563,7 +564,7 @@ function lowerFormula(notation: FormulaNotation, source: string, embed: Embed, x
     }
 }
 
-const HEADING_TAGS = new Set<string>([HtmlTag.H1, HtmlTag.H2, HtmlTag.H3, HtmlTag.H4, HtmlTag.H5, HtmlTag.H6]);
+const isHeadingTag = memberGuard([HtmlTag.H1, HtmlTag.H2, HtmlTag.H3, HtmlTag.H4, HtmlTag.H5, HtmlTag.H6]);
 
 function isGrid(element: ElementNode): boolean {
     for (const token of classTokens(element)) if (tailwindGridColumns(token) !== null) return true;
@@ -578,7 +579,7 @@ function isNote(element: ElementNode): boolean {
 
 // A div is flattened only when it carries one of these; a text-only div falls through to a paragraph so its text
 // is not flattened away to nothing.
-const BLOCK_LEVEL_TAGS = new Set<string>([
+const isBlockLevelTag = memberGuard([
     HtmlTag.Div,
     HtmlTag.P,
     HtmlTag.Ul,
@@ -603,7 +604,7 @@ const BLOCK_LEVEL_TAGS = new Set<string>([
 ]);
 
 function hasBlockChild(element: ElementNode): boolean {
-    for (const child of childElements(element)) if (BLOCK_LEVEL_TAGS.has(child.tag)) return true;
+    for (const child of childElements(element)) if (isBlockLevelTag(child.tag)) return true;
     return false;
 }
 
@@ -659,7 +660,7 @@ function codeLineEl(element: ElementNode, embed: Embed, x: number, y: number, wi
 
 function lowerElement(element: ElementNode, embed: Embed, x: number, y: number, width: number, align: Align): Lowered {
     const { tag } = element;
-    if (HEADING_TAGS.has(tag)) return headingEl(element, embed, x, y, width, align);
+    if (isHeadingTag(tag)) return headingEl(element, embed, x, y, width, align);
     if (tag === HtmlTag.P) return paragraphEl(element, embed, x, y, width, align);
     if (tag === HtmlTag.Ul || tag === HtmlTag.Ol) return lowerList(element, embed, x, y, width);
     if (tag === HtmlTag.Blockquote) return blockquoteEl(element, embed, x, y, width, align);

@@ -1,10 +1,8 @@
 import { AccentKind } from "#/formula/nodes";
+import { memberGuard } from "@dropdeck/common";
+import type { BySpelling } from "@dropdeck/common";
 
-type AccentByValue = { [Kind in AccentKind as `${Kind}`]: Kind };
+type AccentByValue = BySpelling<AccentKind>;
 export type AccentKindOf<Value extends string> = Value extends keyof AccentByValue ? AccentByValue[Value] : never;
 
-const ACCENT_KINDS = new Set<string>(Object.values(AccentKind));
-
-export function isAccentKind(value: string): value is AccentKind {
-    return ACCENT_KINDS.has(value);
-}
+export const isAccentKind = memberGuard<AccentKind>(Object.values(AccentKind));

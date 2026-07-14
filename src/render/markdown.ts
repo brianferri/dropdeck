@@ -1,5 +1,7 @@
+import { memberGuard } from "@dropdeck/common";
+
 // A non-void tag written self-closing (`<video ... />`) would otherwise swallow the rest of the slide.
-const VOID_TAGS = new Set([
+const isVoidTag = memberGuard([
     "area",
     "base",
     "br",
@@ -28,7 +30,7 @@ export function fixHtml(source: string): string {
     html = html.replace(/\sautoplay(=("[^"]*"|'[^']*'))?/gi, "");
     html = html.replace(
         /<([a-zA-Z][\w-]*)((?:"[^"]*"|'[^']*'|[^>"'])*?)\/>/g,
-        (match, tag: string, attrs: string) => (VOID_TAGS.has(tag.toLowerCase()) ? match : `<${tag}${attrs}></${tag}>`)
+        (match, tag: string, attrs: string) => (isVoidTag(tag.toLowerCase()) ? match : `<${tag}${attrs}></${tag}>`)
     );
     return html;
 }

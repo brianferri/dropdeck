@@ -1,4 +1,5 @@
 import { attribute, childElements } from "@dropdeck/html";
+import { memberGuard } from "@dropdeck/common";
 import { numberList } from "@dropdeck/xml/svg";
 import { customShape, presetShape } from "#/export/pptx/build";
 import { morphName } from "#/animations/spec";
@@ -6,8 +7,8 @@ import type { ElementNode } from "@dropdeck/html";
 import type { CT_Shape } from "@dropdeck/pptx";
 
 const DECK_RATIO = 1280 / 1180;
-const PRESET_TAGS = new Set(["circle", "ellipse", "rect"]);
-const PATH_TAGS = new Set(["line", "polyline", "polygon"]);
+const isPresetTag = memberGuard(["circle", "ellipse", "rect"]);
+const isPathTag = memberGuard(["line", "polyline", "polygon"]);
 
 type Frame = { originX: number, originY: number, scale: number, width: number, height: number };
 
@@ -34,7 +35,7 @@ function descendants(root: ElementNode): Array<ElementNode> {
 
 // Every drawn element must be a shape this lowers; a `path`, `text` or gradient means the SVG rasterises instead.
 function convertible(svg: ElementNode): boolean {
-    for (const element of descendants(svg)) if (!PRESET_TAGS.has(element.tag) && !PATH_TAGS.has(element.tag)) return false;
+    for (const element of descendants(svg)) if (!isPresetTag(element.tag) && !isPathTag(element.tag)) return false;
     return true;
 }
 
@@ -92,7 +93,7 @@ function shapeFor(element: ElementNode, name: string, frame: Frame, nextId: () =
     const fillColor = hexColor(attribute(element, "fill"));
     const strokeColor = hexColor(attribute(element, "stroke"));
     const strokeWidth = attrNumber(element, "stroke-width", 1) * frame.scale;
-    if (PRESET_TAGS.has(element.tag)) {
+    if (isPresetTag(element.tag)) {
         const box = presetBox(element.tag, element, frame);
         return presetShape(nextId, name, presetFor(element.tag, element), box.x, box.y, box.width, box.height, fillColor, strokeColor, strokeWidth);
     }
