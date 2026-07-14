@@ -14,6 +14,9 @@
         "build": "rm -rf dist && tsc",
         "test": "tsc --noEmit && node --test \"dist/tests/**/*.test.js\""
     },
+    "dependencies": {
+        "@dropdeck/common": "*"
+    },
     "author": "Brian Ferri",
     "license": "ISC",
     "devDependencies": {

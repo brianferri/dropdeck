@@ -11,6 +11,7 @@
         "./document": "./dist/src/document/index.js"
     },
     "dependencies": {
+        "@dropdeck/common": "*",
         "@dropdeck/xml": "*"
     },
     "scripts": {
