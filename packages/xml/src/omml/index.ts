@@ -1,2 +1,2 @@
-export { OMML_NS, acc, delimiter, frac, nary, nthRoot, oMath, oMathPara, run, sSub, sSup, sqrt } from "./builders.js";
-export type { Acc, Delimiter, Frac, Nary, OMath, OMathPara, Root, Run, SSub, SSup, Sqrt } from "../typings/omml.js";
+export { OMML_NS, OmmlTag, acc, delimiter, frac, func, limLow, nary, nthRoot, oMath, oMathPara, run, sSub, sSup, sqrt } from "./builders.js";
+export type { Acc, Delimiter, Frac, Func, LimLow, Nary, OMath, OMathPara, Root, Run, SSub, SSup, Sqrt } from "../typings/omml.js";
