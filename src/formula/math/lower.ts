@@ -1,9 +1,9 @@
 import { BinaryOperator, ExpressionKind, MathFunction, OPERATOR_PRECEDENCE } from "@dropdeck/math";
-import { accent, fenced, fraction, identifier, nary, number, operator, radical, row, subscript, superscript } from "#/formula/build";
-import { CONSTANT_GLYPH, NARY_GLYPH, OPERATOR_GLYPH, isMathFunction, isNaryFunction } from "#/formula/math/glyphs";
+import { accent, fenced, fraction, identifier, nary, number, operator, radical, root, row, subscript, superscript } from "#/formula/build";
+import { CONSTANT_GLYPH, INTEGRAL_GLYPH, LIM_OPERATOR, NARY_GLYPH, OPERATOR_GLYPH, isIntegralFunction, isLimFunction, isMathFunction, isNaryFunction } from "#/formula/math/glyphs";
 import { isAccentKind } from "#/formula/accent";
 import { keyGuard } from "@dropdeck/common";
-import type { BinaryNode, Expression } from "@dropdeck/math";
+import type { BinaryNode, Expression, MathIntegral, MathLimit } from "@dropdeck/math";
 import type { Notation } from "#/formula/typings/nodes";
 import type { LowerMath, MathContent } from "./typings/lower.js";
 
@@ -60,17 +60,40 @@ function lowerNary(callee: keyof typeof NARY_GLYPH, children: MathContent): Nota
     return nary(NARY_GLYPH[callee], row([lowerNode(index), operator("="), lowerNode(lower)]), lowerNode(upper), lowerNode(body));
 }
 
-function lowerFunction(callee: MathFunction, children: MathContent): Notation | null {
+function lowerIntegral(callee: keyof typeof INTEGRAL_GLYPH, children: MathContent): Notation | null {
+    const glyph = INTEGRAL_GLYPH[callee];
+    if (children.length === 1) return nary(glyph, row([]), row([]), lowerNode(children[0]));
+    if (children.length === 3) return nary(glyph, lowerNode(children[0]), lowerNode(children[1]), lowerNode(children[2]));
+    return null;
+}
+
+function lowerLim(callee: keyof typeof LIM_OPERATOR, children: MathContent): Notation | null {
+    if (children.length !== 2) return null;
+    return nary(LIM_OPERATOR[callee], lowerNode(children[0]), row([]), lowerNode(children[1]));
+}
+
+type BuiltinCallee = MathFunction | MathIntegral | MathLimit;
+
+function isBuiltinCallee(callee: string): callee is BuiltinCallee {
+    if (isMathFunction(callee)) return true;
+    if (isIntegralFunction(callee)) return true;
+    return isLimFunction(callee);
+}
+
+function lowerFunction(callee: BuiltinCallee, children: MathContent): Notation | null {
     if (callee === MathFunction.Sqrt && children.length === 1) return radical(lowerNode(children[0]));
+    if (callee === MathFunction.Root && children.length === 2) return root(lowerNode(children[1]), lowerNode(children[0]));
     if (callee === MathFunction.Fact && children.length === 1) return row([lowerNode(children[0]), operator("!")]);
     if (isNaryFunction(callee) && children.length === 4) return lowerNary(callee, children);
+    if (isIntegralFunction(callee)) return lowerIntegral(callee, children);
+    if (isLimFunction(callee)) return lowerLim(callee, children);
     return null;
 }
 
 function lowerCall(expression: Expression & { kind: ExpressionKind.Call }): Notation {
     const { callee } = expression;
     const { children } = expression;
-    if (isMathFunction(callee)) {
+    if (isBuiltinCallee(callee)) {
         const lowered = lowerFunction(callee, children);
         if (lowered !== null) return lowered;
     }

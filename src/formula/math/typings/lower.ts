@@ -1,7 +1,7 @@
 import type { BinaryOperator, ExpressionKind, MathConstant, MathFunction, OPERATOR_PRECEDENCE } from "@dropdeck/math";
 import type { Expression } from "@dropdeck/math";
 import type { AccentKindOf } from "#/formula/accent";
-import type { AccentFunction, CONSTANT_GLYPH, NaryFunction, NaryGlyphTable, OPERATOR_GLYPH } from "#/formula/math/glyphs";
+import type { AccentFunction, CONSTANT_GLYPH, INTEGRAL_GLYPH, LIM_OPERATOR, NARY_GLYPH, OPERATOR_GLYPH } from "#/formula/math/glyphs";
 import type { FirstMatch, LessOrEqual, LessThan } from "@dropdeck/common";
 import type {
     AccentNode, FencedNode, FractionNode, IdentifierNode, NaryNode, Notation, NumberNode, One, OperatorNode, Pair,
@@ -58,26 +58,55 @@ type LowerArgList<Children extends MathContent> =
 type LowerArgs<Children extends MathContent> = Children extends readonly [infer Only extends Expression] ? LowerMath<Only> : RowNode<LowerArgList<Children>>;
 
 type SqrtLower<Callee extends string, Children extends MathContent> =
-    Callee extends `${MathFunction.Sqrt}` ? Children extends readonly [infer Arg extends Expression] ? RadicalNode<One<LowerMath<Arg>>> : false : false;
-// `fact(n)` renders as the postfix `n!`.
+    [Callee, Children] extends [`${MathFunction.Sqrt}`, readonly [infer Arg extends Expression]]
+        ? RadicalNode<One<LowerMath<Arg>>> : false;
+
+type RootLower<Callee extends string, Children extends MathContent> =
+    [Callee, Children] extends [`${MathFunction.Root}`, readonly [infer Index extends Expression, infer Radicand extends Expression]]
+        ? RadicalNode<Pair<LowerMath<Radicand>, LowerMath<Index>>> : false;
+
 type FactLower<Callee extends string, Children extends MathContent> =
-    Callee extends `${MathFunction.Fact}` ? Children extends readonly [infer Arg extends Expression] ? RowNode<readonly [LowerMath<Arg>, OperatorNode<"!">]> : false : false;
-// `sum(i, lo, up, body)` joins the index and its start into the `i = lo` under-limit.
-type NaryLower<Callee extends string, Children extends MathContent> =
-    Callee extends infer Function extends NaryFunction
-        ? Children extends readonly [infer Index extends Expression, infer Lower extends Expression, infer Upper extends Expression, infer Body extends Expression]
-            ? NaryNode<NaryGlyphTable[Function], Triple<RowNode<readonly [LowerMath<Index>, OperatorNode<"=">, LowerMath<Lower>]>, LowerMath<Upper>, LowerMath<Body>>>
-            : false
+    [Callee, Children] extends [`${MathFunction.Fact}`, readonly [infer Arg extends Expression]]
+        ? RowNode<readonly [LowerMath<Arg>, OperatorNode<"!">]> : false;
+
+type NaryLower<Table extends object, Callee extends string, Under extends Notation, Over extends Notation, Body extends Notation> =
+    Callee extends `${infer Key extends keyof Table & string}`
+        ? NaryNode<Table[Key] & string, Triple<Under, Over, Body>>
         : false;
+
+type SumLower<Callee extends string, Children extends MathContent> =
+    Children extends readonly [infer Index extends Expression, infer Lower extends Expression, infer Upper extends Expression, infer Body extends Expression]
+        ? NaryLower<typeof NARY_GLYPH, Callee, RowNode<readonly [LowerMath<Index>, OperatorNode<"=">, LowerMath<Lower>]>, LowerMath<Upper>, LowerMath<Body>>
+        : false;
+
+type IntegralLower<Callee extends string, Children extends MathContent> =
+    Children extends readonly [infer Body extends Expression]
+        ? NaryLower<typeof INTEGRAL_GLYPH, Callee, RowNode<readonly []>, RowNode<readonly []>, LowerMath<Body>>
+        : Children extends readonly [infer Lower extends Expression, infer Upper extends Expression, infer Body extends Expression]
+            ? NaryLower<typeof INTEGRAL_GLYPH, Callee, LowerMath<Lower>, LowerMath<Upper>, LowerMath<Body>>
+            : false;
+
+type LimLower<Callee extends string, Children extends MathContent> =
+    Children extends readonly [infer Lower extends Expression, infer Body extends Expression]
+        ? NaryLower<typeof LIM_OPERATOR, Callee, LowerMath<Lower>, RowNode<readonly []>, LowerMath<Body>>
+        : false;
+
 type AccentLower<Callee extends string, Children extends MathContent> =
-    Callee extends AccentFunction ? Children extends readonly [infer Base extends Expression] ? AccentNode<AccentKindOf<Callee>, One<LowerMath<Base>>> : false : false;
-type GenericCall<Callee extends string, Children extends MathContent> = RowNode<readonly [IdentifierNode<Callee>, FencedNode<"(", ")", One<LowerArgs<Children>>>]>;
+    [Callee, Children] extends [AccentFunction, readonly [infer Base extends Expression]]
+        ? AccentNode<AccentKindOf<Callee>, One<LowerMath<Base>>> : false;
+
+type GenericCall<Callee extends string, Children extends MathContent> =
+    RowNode<readonly [IdentifierNode<Callee>, FencedNode<"(", ")", One<LowerArgs<Children>>>]>;
+
 type LowerCall<E extends Expression> =
     E extends { kind: ExpressionKind.Call, callee: infer Callee extends string, children: infer Children extends MathContent }
         ? FirstMatch<[
             SqrtLower<Callee, Children>,
+            RootLower<Callee, Children>,
             FactLower<Callee, Children>,
-            NaryLower<Callee, Children>,
+            SumLower<Callee, Children>,
+            IntegralLower<Callee, Children>,
+            LimLower<Callee, Children>,
             AccentLower<Callee, Children>,
             GenericCall<Callee, Children>
         ]>

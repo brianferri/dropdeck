@@ -1,7 +1,7 @@
-import { BinaryOperator, MathConstant, MathFunction } from "@dropdeck/math";
+import { BinaryOperator, MathConstant, MathFunction, MathIntegral, MathLimit } from "@dropdeck/math";
 import { invert, keyGuard, memberGuard } from "@dropdeck/common";
 import type { MathAccent } from "@dropdeck/math";
-import type { NaryGlyph } from "#/formula/nary";
+import type { NaryGlyph, NaryIntegralGlyph } from "#/formula/nary";
 
 export const OPERATOR_GLYPH = {
     [BinaryOperator.Add]: "+",
@@ -131,14 +131,29 @@ export const NARY_GLYPH = {
     [MathFunction.Bigsqcup]: "⨆"
 } as const satisfies Record<NaryFunctionMember, NaryGlyph>;
 
-// Callees carry their glyph by name: nary via the table above, accents straight off `MathAccent` -- so a new
-// callee is one enum entry, never a literal in the dispatch.
-export type NaryGlyphTable = { [Function in keyof typeof NARY_GLYPH as `${Function}`]: (typeof NARY_GLYPH)[Function] };
-export type NaryFunction = keyof NaryGlyphTable;
 export type AccentFunction = `${MathAccent}`;
+
+export const INTEGRAL_GLYPH = {
+    [MathIntegral.Int]: "∫",
+    [MathIntegral.Oint]: "∮",
+    [MathIntegral.Iint]: "∬",
+    [MathIntegral.Iiint]: "∭"
+} as const satisfies Record<MathIntegral, NaryIntegralGlyph>;
+
+export const LIM_OPERATOR = {
+    [MathLimit.Lim]: "lim",
+    [MathLimit.Limsup]: "lim sup",
+    [MathLimit.Liminf]: "lim inf",
+    [MathLimit.Sup]: "sup",
+    [MathLimit.Inf]: "inf",
+    [MathLimit.Limmax]: "max",
+    [MathLimit.Limmin]: "min"
+} as const satisfies Record<MathLimit, string>;
 
 export const isMathFunction = memberGuard<MathFunction>(Object.values(MathFunction));
 export const isNaryFunction = keyGuard(NARY_GLYPH);
+export const isIntegralFunction = keyGuard(INTEGRAL_GLYPH);
+export const isLimFunction = keyGuard(LIM_OPERATOR);
 
 // Every math glyph is unique, so each reverse table inverts its forward map one-to-one at the type level.
 type MathTokenTable = { [Op in keyof typeof OPERATOR_GLYPH as (typeof OPERATOR_GLYPH)[Op]]: Op };
