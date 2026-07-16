@@ -3,7 +3,7 @@
 /* eslint-disable no-template-curly-in-string */
 import { ChartKind } from "#/ir";
 import { memberGuard } from "@dropdeck/common";
-import { MathAccent, MathConstant, MathFunction } from "@dropdeck/math";
+import { MathAccent, MathConstant, MathFunction, MathIntegral, MathLimit } from "@dropdeck/math";
 import { LatexAccentCommand } from "@dropdeck/latex";
 import { LatexCommand } from "#/formula/latex";
 import type { NaryCommand } from "#/formula/latex";
@@ -101,6 +101,7 @@ const RANGE_SNIPPET = "(${1:i}, ${2:1}, ${3:n}, ${4:body})$0";
 
 const MATH_FUNCTION_INFO = {
     [MathFunction.Sqrt]: { insert: `sqrt${OPERAND_SNIPPET}`, doc: "Square root, rendered as a radical." },
+    [MathFunction.Root]: { insert: "root(${1:n}, ${2:x})$0", doc: "The nth root of x, rendered as a radical with a degree." },
     [MathFunction.Fact]: { insert: "fact(${1:n})$0", doc: "Factorial, rendered as the postfix `n!`." },
     [MathFunction.Sin]: { insert: `sin${OPERAND_SNIPPET}`, doc: "Sine, rendered as `sin(x)`." },
     [MathFunction.Cos]: { insert: `cos${OPERAND_SNIPPET}`, doc: "Cosine, rendered as `cos(x)`." },
@@ -135,6 +136,23 @@ const MATH_FUNCTION_INFO = {
     [MathFunction.Bigotimes]: { insert: `bigotimes${RANGE_SNIPPET}`, doc: "Big tensor product ⨂ from i=lo to up of body." },
     [MathFunction.Bigsqcup]: { insert: `bigsqcup${RANGE_SNIPPET}`, doc: "Big square union ⨆ from i=lo to up of body." }
 } as const satisfies Record<MathFunction, { insert: string, doc: string }>;
+
+const MATH_INTEGRAL_INFO = {
+    [MathIntegral.Int]: { insert: "int(${1:lo}, ${2:hi}, ${3:body})$0", doc: "Integral ∫ from lo to hi of body; `int(body)` for the indefinite form." },
+    [MathIntegral.Oint]: { insert: "oint(${1:lo}, ${2:hi}, ${3:body})$0", doc: "Contour integral ∮ from lo to hi of body; `oint(body)` for the indefinite form." },
+    [MathIntegral.Iint]: { insert: "iint(${1:lo}, ${2:hi}, ${3:body})$0", doc: "Double integral ∬ from lo to hi of body; `iint(body)` for the indefinite form." },
+    [MathIntegral.Iiint]: { insert: "iiint(${1:lo}, ${2:hi}, ${3:body})$0", doc: "Triple integral ∭ from lo to hi of body; `iiint(body)` for the indefinite form." }
+} as const satisfies Record<MathIntegral, { insert: string, doc: string }>;
+
+const MATH_LIMIT_INFO = {
+    [MathLimit.Lim]: { insert: "lim(${1:sub}, ${2:body})$0", doc: "Limit lim of body with sub as its under-limit (lim_{x→0} f)." },
+    [MathLimit.Limsup]: { insert: "limsup(${1:sub}, ${2:body})$0", doc: "Limit superior lim sup of body with sub beneath." },
+    [MathLimit.Liminf]: { insert: "liminf(${1:sub}, ${2:body})$0", doc: "Limit inferior lim inf of body with sub beneath." },
+    [MathLimit.Sup]: { insert: "sup(${1:sub}, ${2:body})$0", doc: "Supremum sup of body over sub." },
+    [MathLimit.Inf]: { insert: "inf(${1:sub}, ${2:body})$0", doc: "Infimum inf of body over sub." },
+    [MathLimit.Limmax]: { insert: "limmax(${1:sub}, ${2:body})$0", doc: "Maximum operator max of body over sub; plain `max(a, b)` stays an ordinary call." },
+    [MathLimit.Limmin]: { insert: "limmin(${1:sub}, ${2:body})$0", doc: "Minimum operator min of body over sub; plain `min(a, b)` stays an ordinary call." }
+} as const satisfies Record<MathLimit, { insert: string, doc: string }>;
 
 const MATH_ACCENT_INFO = {
     [MathAccent.Hat]: { insert: `hat${OPERAND_SNIPPET}`, doc: "Hat accent, rendered as x̂." },
@@ -205,6 +223,8 @@ const MATH_CONSTANT_INFO = {
 function mathTokens(): ReadonlyArray<CompletionItem> {
     const out: Array<CompletionItem> = [];
     for (const [name, info] of Object.entries(MATH_FUNCTION_INFO)) out.push(mathToken(name, info.insert, info.doc));
+    for (const [name, info] of Object.entries(MATH_INTEGRAL_INFO)) out.push(mathToken(name, info.insert, info.doc));
+    for (const [name, info] of Object.entries(MATH_LIMIT_INFO)) out.push(mathToken(name, info.insert, info.doc));
     for (const [name, info] of Object.entries(MATH_ACCENT_INFO)) out.push(mathToken(name, info.insert, info.doc));
     for (const [name, doc] of Object.entries(MATH_CONSTANT_INFO)) out.push(mathToken(name, name, doc));
     return out;
@@ -366,6 +386,8 @@ const LATEX_COMMAND_INFO = {
     [LatexCommand.Ln]: "Natural logarithm `ln`.",
     [LatexCommand.Exp]: "Exponential `exp`.",
     [LatexCommand.Lim]: "Limit `lim`.",
+    [LatexCommand.Limsup]: "Limit superior `lim sup`.",
+    [LatexCommand.Liminf]: "Limit inferior `lim inf`.",
     [LatexCommand.Max]: "Maximum `max`.",
     [LatexCommand.Min]: "Minimum `min`.",
     [LatexCommand.Sup]: "Supremum `sup`.",
