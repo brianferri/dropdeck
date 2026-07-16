@@ -152,6 +152,8 @@ export enum LatexCommand {
     Ln = "\\ln",
     Exp = "\\exp",
     Lim = "\\lim",
+    Limsup = "\\limsup",
+    Liminf = "\\liminf",
     Max = "\\max",
     Min = "\\min",
     Sup = "\\sup",
@@ -328,6 +330,8 @@ const LATEX_GLYPH = {
     [LatexCommand.Ln]: "ln",
     [LatexCommand.Exp]: "exp",
     [LatexCommand.Lim]: "lim",
+    [LatexCommand.Limsup]: "lim sup",
+    [LatexCommand.Liminf]: "lim inf",
     [LatexCommand.Max]: "max",
     [LatexCommand.Min]: "min",
     [LatexCommand.Sup]: "sup",
@@ -394,9 +398,21 @@ export type NaryIntegralCommand = Extract<
     | LatexCommand.Iiint
 >;
 
+export type LimWordCommand = Extract<
+    LatexCommand,
+    | LatexCommand.Lim
+    | LatexCommand.Limsup
+    | LatexCommand.Liminf
+    | LatexCommand.Max
+    | LatexCommand.Min
+    | LatexCommand.Sup
+    | LatexCommand.Inf
+>;
+
 export type NaryGlyph = LatexGlyphTable[`${NaryCommand}`];
 export type NaryIntegralGlyph = LatexGlyphTable[`${NaryIntegralCommand}`];
 export type NaryStackedGlyph = Exclude<NaryGlyph, NaryIntegralGlyph>;
+export type LimWord = LatexGlyphTable[`${LimWordCommand}`];
 
 const isLatexCommand = memberGuard<LatexCommand>(Object.values(LatexCommand));
 
