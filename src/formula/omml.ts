@@ -1,6 +1,6 @@
-import { acc, frac, nary, nthRoot, oMath, run, sSub, sSup, sqrt } from "@dropdeck/xml/omml";
+import { acc, frac, func, limLow, nary, nthRoot, oMath, run, sSub, sSup, sqrt } from "@dropdeck/xml/omml";
 import { AccentKind, NotationKind } from "#/formula/nodes";
-import { isNaryIntegralGlyph } from "#/formula/nary";
+import { isNaryGlyph, isNaryIntegralGlyph } from "#/formula/nary";
 import type { Node as XmlNode } from "@dropdeck/xml";
 import type { Content, Notation } from "#/formula/typings/nodes";
 import type { ToOmml } from "./typings/omml.js";
@@ -46,6 +46,9 @@ function ommlNodes(node: Notation): Array<XmlNode> {
                 ? [nthRoot(ommlNodes(node.children[1]), ommlNodes(node.children[0]))]
                 : [sqrt(ommlNodes(node.children[0]))];
         case NotationKind.Nary:
+            if (!isNaryGlyph(node.symbol))
+                return [func([limLow([run(node.symbol)], ommlNodes(node.children[0]))], ommlNodes(node.children[2]))];
+
             return [
                 nary(
                     node.symbol,

@@ -1,6 +1,6 @@
-import type { Acc, Frac, Nary, OMath, Root, Run, SSub, SSup, Sqrt } from "@dropdeck/xml/omml";
+import type { Acc, Frac, Func, LimLow, Nary, OMath, Root, Run, SSub, SSup, Sqrt } from "@dropdeck/xml/omml";
 import type { Content as XmlContent } from "@dropdeck/xml";
-import type { NaryIntegralGlyph } from "#/formula/nary";
+import type { NaryGlyph, NaryIntegralGlyph } from "#/formula/nary";
 import type { FirstMatch } from "@dropdeck/common";
 import type { AccentKind, NotationKind } from "#/formula/nodes";
 import type {
@@ -42,7 +42,10 @@ type RadicalOmml<N extends Notation> =
 type NaryLimLoc<Symbol extends string> = Symbol extends NaryIntegralGlyph ? "subSup" : "undOvr";
 type NaryOmml<N extends Notation> =
     N extends NaryNode<infer Symbol extends string, Triple<infer Lower extends Notation, infer Upper extends Notation, infer Body extends Notation>>
-        ? readonly [Nary<Symbol, NaryLimLoc<Symbol>, OmmlOf<Lower>, OmmlOf<Upper>, OmmlOf<Body>>] : false;
+        ? Symbol extends NaryGlyph
+            ? readonly [Nary<Symbol, NaryLimLoc<Symbol>, OmmlOf<Lower>, OmmlOf<Upper>, OmmlOf<Body>>]
+            : readonly [Func<readonly [LimLow<readonly [Run<Symbol>], OmmlOf<Lower>>], OmmlOf<Body>>]
+        : false;
 type AccentOmml<N extends Notation> =
     N extends AccentNode<infer Accent extends AccentKind, One<infer Base extends Notation>>
         ? readonly [Acc<(typeof ACCENT_OMML)[Accent], OmmlOf<Base>>] : false;

@@ -1,5 +1,5 @@
 import { element, text } from "@dropdeck/xml";
-import { MATHML_NS, math, mfrac, mi, mn, mo, mover, mroot, msqrt, msub, msup } from "@dropdeck/xml/mathml";
+import { MATHML_NS, MathMLTag, math, mfrac, mi, mn, mo, mover, mroot, msqrt, msub, msup } from "@dropdeck/xml/mathml";
 import { AccentKind, NotationKind } from "#/formula/nodes";
 import { isNaryIntegralGlyph } from "#/formula/nary";
 import type { Node as XmlNode } from "@dropdeck/xml";
@@ -21,7 +21,20 @@ function fenceRow(open: string, close: string, children: Content): XmlNode {
     const items: Array<XmlNode> = [mo([], text(open))];
     for (const child of children) items.push(mathmlNode(child));
     items.push(mo([], text(close)));
-    return element("mrow", [], items);
+    return element(MathMLTag.Row, [], items);
+}
+
+function isEmptyRow(node: Notation): boolean {
+    return node.kind === NotationKind.Row && node.children.length === 0;
+}
+
+function naryScript(symbol: string, lower: Notation, upper: Notation): XmlNode {
+    const beside = isNaryIntegralGlyph(symbol);
+    const sign = mo([], text(symbol));
+    if (isEmptyRow(lower) && isEmptyRow(upper)) return sign;
+    if (isEmptyRow(upper)) return element(beside ? MathMLTag.Subscript : MathMLTag.Under, [], [sign, mathmlNode(lower)]);
+    if (isEmptyRow(lower)) return element(beside ? MathMLTag.Superscript : MathMLTag.Over, [], [sign, mathmlNode(upper)]);
+    return element(beside ? MathMLTag.SubSup : MathMLTag.UnderOver, [], [sign, mathmlNode(lower), mathmlNode(upper)]);
 }
 
 function mathmlNode(node: Notation): XmlNode {
@@ -29,7 +42,7 @@ function mathmlNode(node: Notation): XmlNode {
         case NotationKind.Identifier: return mi([], text(node.symbol));
         case NotationKind.Number: return mn([], text(String(node.value)));
         case NotationKind.Operator: return mo([], text(node.symbol));
-        case NotationKind.Row: return element("mrow", [], node.children.map(mathmlNode));
+        case NotationKind.Row: return element(MathMLTag.Row, [], node.children.map(mathmlNode));
         case NotationKind.Fenced: return fenceRow(node.open, node.close, node.children);
         case NotationKind.Fraction: return mfrac([], mathmlNode(node.children[0]), mathmlNode(node.children[1]));
         case NotationKind.Superscript: return msup([], mathmlNode(node.children[0]), mathmlNode(node.children[1]));
@@ -39,16 +52,8 @@ function mathmlNode(node: Notation): XmlNode {
                 ? mroot([], mathmlNode(node.children[0]), mathmlNode(node.children[1]))
                 : msqrt([], mathmlNode(node.children[0]));
         case NotationKind.Nary:
-            return element("mrow", [], [
-                element(
-                    isNaryIntegralGlyph(node.symbol) ? "msubsup" : "munderover",
-                    [],
-                    [
-                        mo([], text(node.symbol)),
-                        mathmlNode(node.children[0]),
-                        mathmlNode(node.children[1])
-                    ]
-                ),
+            return element(MathMLTag.Row, [], [
+                naryScript(node.symbol, node.children[0], node.children[1]),
                 mathmlNode(node.children[2])
             ]);
         case NotationKind.Accent:
