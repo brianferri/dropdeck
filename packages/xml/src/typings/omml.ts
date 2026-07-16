@@ -8,7 +8,8 @@ export type Run<Value extends string> = Slot<OmmlTag.Run, readonly [Slot<OmmlTag
 export type Frac<Numerator extends Content, Denominator extends Content> = Slot<OmmlTag.Fraction, readonly [Slot<OmmlTag.Numerator, Numerator>, Slot<OmmlTag.Denominator, Denominator>]>;
 export type SSup<Base extends Content, Superscript extends Content> = Slot<OmmlTag.Superscript, readonly [Slot<OmmlTag.Base, Base>, Slot<OmmlTag.Sup, Superscript>]>;
 export type SSub<Base extends Content, Subscript extends Content> = Slot<OmmlTag.Subscript, readonly [Slot<OmmlTag.Base, Base>, Slot<OmmlTag.Sub, Subscript>]>;
-export type Sqrt<Radicand extends Content> = Slot<OmmlTag.Radical, readonly [Slot<OmmlTag.RadicalPr, readonly [Property<OmmlTag.DegreeHide, "1">]>, Slot<OmmlTag.Degree, readonly []>, Slot<OmmlTag.Base, Radicand>]>;
+export type Sqrt<Radicand extends Content> =
+    Slot<OmmlTag.Radical, readonly [Slot<OmmlTag.RadicalPr, readonly [Property<OmmlTag.DegreeHide, "1">]>, Slot<OmmlTag.Degree, readonly []>, Slot<OmmlTag.Base, Radicand>]>;
 export type Root<Degree extends Content, Radicand extends Content> = Slot<OmmlTag.Radical, readonly [Slot<OmmlTag.Degree, Degree>, Slot<OmmlTag.Base, Radicand>]>;
 type DelimiterProps<Open extends string, Close extends string> = Slot<OmmlTag.DelimiterPr, readonly [Property<OmmlTag.BeginChar, Open>, Property<OmmlTag.EndChar, Close>]>;
 export type Delimiter<Open extends string, Close extends string, Inner extends Content> = Slot<OmmlTag.Delimiter, readonly [DelimiterProps<Open, Close>, Slot<OmmlTag.Base, Inner>]>;
