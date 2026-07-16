@@ -113,6 +113,7 @@ export enum MathConstant {
 
 export enum MathFunction {
     Sqrt = "sqrt",
+    Root = "root",
     Fact = "fact",
     Sin = "sin",
     Cos = "cos",
@@ -146,6 +147,23 @@ export enum MathFunction {
     Bigoplus = "bigoplus",
     Bigotimes = "bigotimes",
     Bigsqcup = "bigsqcup"
+}
+
+export enum MathIntegral {
+    Int = "int",
+    Oint = "oint",
+    Iint = "iint",
+    Iiint = "iiint"
+}
+
+export enum MathLimit {
+    Lim = "lim",
+    Limsup = "limsup",
+    Liminf = "liminf",
+    Sup = "sup",
+    Inf = "inf",
+    Limmax = "limmax",
+    Limmin = "limmin"
 }
 
 export enum MathAccent {

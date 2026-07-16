@@ -1,10 +1,11 @@
-import type { MathAccent, MathFunction } from "../Specification.js";
+import type { MathAccent, MathFunction, MathIntegral, MathLimit } from "../Specification.js";
 import type { Expression, One, Pair, VariableNode } from "./nodes.js";
 
-export type MathCallee = MathFunction | MathAccent;
+export type MathCallee = MathFunction | MathIntegral | MathLimit | MathAccent;
 
 export type MathArguments = {
     [MathFunction.Sqrt]: One<Expression>,
+    [MathFunction.Root]: Pair<Expression, Expression>,
     [MathFunction.Fact]: One<Expression>,
     [MathFunction.Sin]: One<Expression>,
     [MathFunction.Cos]: One<Expression>,
@@ -38,6 +39,17 @@ export type MathArguments = {
     [MathFunction.Bigoplus]: readonly [VariableNode, Expression, Expression, Expression],
     [MathFunction.Bigotimes]: readonly [VariableNode, Expression, Expression, Expression],
     [MathFunction.Bigsqcup]: readonly [VariableNode, Expression, Expression, Expression],
+    [MathIntegral.Int]: One<Expression> | readonly [Expression, Expression, Expression],
+    [MathIntegral.Oint]: One<Expression> | readonly [Expression, Expression, Expression],
+    [MathIntegral.Iint]: One<Expression> | readonly [Expression, Expression, Expression],
+    [MathIntegral.Iiint]: One<Expression> | readonly [Expression, Expression, Expression],
+    [MathLimit.Lim]: Pair<Expression, Expression>,
+    [MathLimit.Limsup]: Pair<Expression, Expression>,
+    [MathLimit.Liminf]: Pair<Expression, Expression>,
+    [MathLimit.Sup]: Pair<Expression, Expression>,
+    [MathLimit.Inf]: Pair<Expression, Expression>,
+    [MathLimit.Limmax]: Pair<Expression, Expression>,
+    [MathLimit.Limmin]: Pair<Expression, Expression>,
     [MathAccent.Hat]: One<Expression>,
     [MathAccent.Vec]: One<Expression>,
     [MathAccent.Bar]: One<Expression>,

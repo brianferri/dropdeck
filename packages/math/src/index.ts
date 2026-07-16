@@ -1,5 +1,6 @@
 export {
-    ExpressionKind, BinaryOperator, UnaryOperator, MathConstant, MathFunction, MathAccent, OPERATOR_PRECEDENCE
+    ExpressionKind, BinaryOperator, UnaryOperator, MathConstant, MathFunction, MathIntegral, MathLimit, MathAccent,
+    OPERATOR_PRECEDENCE
 } from "./Specification.js";
 export type {
     BinaryNode, CallNode, Content, ConstantNode, Expression, NegateNode, NotNode, NumberNode, One, Pair, VariableNode
