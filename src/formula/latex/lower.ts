@@ -4,40 +4,39 @@ import {
 } from "#/formula/build";
 import { latexGlyph } from "#/formula/latex/glyphs";
 import { isAccentKind } from "#/formula/accent";
-import { isNaryGlyph } from "#/formula/nary";
+import { isLimitOperatorGlyph } from "#/formula/nary";
 import type { Notation as LatexNotation } from "@dropdeck/latex";
-import type { NaryGlyph } from "#/formula/nary";
+import type { LimitOperatorGlyph } from "#/formula/nary";
 import type { AccentKind } from "#/formula/nodes";
 import type { Notation } from "#/formula/typings/nodes";
 import type { LowerLatex } from "./typings/lower.js";
 
-// A big operator (which the parser scripts with limits) is recognised by its glyph, whatever node kind carries it.
-function naryGlyph(node: LatexNotation): NaryGlyph | null {
+function limitOperatorGlyph(node: LatexNotation): LimitOperatorGlyph | null {
     if (node.kind !== LatexKind.Operator && node.kind !== LatexKind.Identifier) return null;
     const glyph = latexGlyph(node.symbol);
-    return isNaryGlyph(glyph) ? glyph : null;
+    return isLimitOperatorGlyph(glyph) ? glyph : null;
 }
 
-type NarySpec = { symbol: NaryGlyph, lower: Notation, upper: Notation };
+type NarySpec = { symbol: LimitOperatorGlyph, lower: Notation, upper: Notation };
 
-// A big operator scripted with `_`/`^` limits (in either order); the scripts become its lower/upper slots.
+// A limit operator scripted with `_`/`^` limits (in either order); the scripts become its lower/upper slots.
 function detectNary(node: LatexNotation): NarySpec | null {
     if (node.kind === LatexKind.Superscript) {
         const [base] = node.children;
         if (base.kind === LatexKind.Subscript) {
-            const glyph = naryGlyph(base.children[0]);
+            const glyph = limitOperatorGlyph(base.children[0]);
             if (glyph !== null) return { symbol: glyph, lower: lowerLatexNode(base.children[1]), upper: lowerLatexNode(node.children[1]) };
         }
-        const glyph = naryGlyph(base);
+        const glyph = limitOperatorGlyph(base);
         if (glyph !== null) return { symbol: glyph, lower: row([]), upper: lowerLatexNode(node.children[1]) };
     }
     if (node.kind === LatexKind.Subscript) {
         const [base] = node.children;
         if (base.kind === LatexKind.Superscript) {
-            const glyph = naryGlyph(base.children[0]);
+            const glyph = limitOperatorGlyph(base.children[0]);
             if (glyph !== null) return { symbol: glyph, lower: lowerLatexNode(node.children[1]), upper: lowerLatexNode(base.children[1]) };
         }
-        const glyph = naryGlyph(base);
+        const glyph = limitOperatorGlyph(base);
         if (glyph !== null) return { symbol: glyph, lower: lowerLatexNode(node.children[1]), upper: row([]) };
     }
     return null;
