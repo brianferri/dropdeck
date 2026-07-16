@@ -2,7 +2,7 @@ import type { BinaryOperator, ExpressionKind, MathConstant, MathFunction, OPERAT
 import type { Expression } from "@dropdeck/math";
 import type { AccentKindOf } from "#/formula/accent";
 import type { AccentFunction, CONSTANT_GLYPH, INTEGRAL_GLYPH, LIM_OPERATOR, NARY_GLYPH, OPERATOR_GLYPH } from "#/formula/math/glyphs";
-import type { FirstMatch, LessOrEqual, LessThan } from "@dropdeck/common";
+import type { ByName, FirstMatch, LessOrEqual, LessThan } from "@dropdeck/common";
 import type {
     AccentNode, FencedNode, FractionNode, IdentifierNode, NaryNode, Notation, NumberNode, One, OperatorNode, Pair,
     RadicalNode, RowNode, SubscriptNode, SuperscriptNode, Triple
@@ -70,8 +70,8 @@ type FactLower<Callee extends string, Children extends MathContent> =
         ? RowNode<readonly [LowerMath<Arg>, OperatorNode<"!">]> : false;
 
 type NaryLower<Table extends object, Callee extends string, Under extends Notation, Over extends Notation, Body extends Notation> =
-    Callee extends `${infer Key extends keyof Table & string}`
-        ? NaryNode<Table[Key] & string, Triple<Under, Over, Body>>
+    Callee extends keyof ByName<Table>
+        ? NaryNode<ByName<Table>[Callee] & string, Triple<Under, Over, Body>>
         : false;
 
 type SumLower<Callee extends string, Children extends MathContent> =
