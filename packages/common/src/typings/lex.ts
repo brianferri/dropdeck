@@ -28,6 +28,9 @@ export type HexRun<Source extends string, Count extends ReadonlyArray<0>> =
 /** Maps each member of a string enum to its own spelling, so a scanned run indexes straight to the member. */
 export type BySpelling<Member extends string> = { [Value in Member as `${Value}`]: Value };
 
+/** Re-keys a table by the string spelling of its keys, so an enum-keyed table indexes by a plain string literal. */
+export type ByName<Table> = { [Key in keyof Table as `${Extract<Key, string>}`]: Table[Key] };
+
 /** Maps an attribute table to the union of its `[name, value]` tuples, dropping the optional-ness of each value. */
 export type AttrOf<Table> = { [Key in keyof Table & string]: readonly [Key, NonNullable<Table[Key]>] }[keyof Table & string];
 
