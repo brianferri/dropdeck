@@ -29,7 +29,7 @@ export function ctext<const Local extends string, const S extends string>(local:
     return element(`c:${local}`, [], [text(content)]);
 }
 
-export function point<const S extends string>(index: number, content: S): Pt<S> {
+export function point<const S extends string, const I extends number>(index: I, content: S): Pt<S, I> {
     return element("c:pt", [["idx", index]], [ctext("v", content)]);
 }
 
