@@ -4,8 +4,8 @@ import type {
 } from "./nodes.js";
 import type { PayloadKind, PunctKind } from "../Tokenizer.js";
 import type {
-    AlphaChar as Letter, BySpelling, DigitChar, FirstMatch, LeadN, LongestRule, NumberOf, OrError, ParseError,
-    Repeat, Step, TakeNumber, TakeRun, Whitespace
+    AlphaChar as Letter, BySpelling, DigitChar, FirstMatch, LeadN, LongestRule, NumberOf, OrError, Parsed as ParsedOf,
+    ParseError, Repeat, Step, TakeNumber, TakeRun, Whitespace
 } from "@dropdeck/common";
 
 type Operator = BinaryOperator | UnaryOperator;
@@ -57,7 +57,7 @@ type Tokenize<Source extends string, Acc extends Tokens = []> =
             ? Tokenize<Rest, [...Acc, ...Produced]>
             : ParseError<`Unexpected character at <${Source}>`>;
 
-type Parsed<Node extends Expression, Rest extends Tokens> = { node: Node, rest: Rest };
+type Parsed<Node extends Expression, Rest extends Tokens> = ParsedOf<Node, Rest>;
 
 type ShowNumber<Head> = Head extends NumberToken<infer Value> ? `${Value}` : false;
 type ShowName<Head> = Head extends NameToken<infer Name> ? Name : false;
