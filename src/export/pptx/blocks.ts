@@ -539,8 +539,8 @@ function lowerCode(content: string, embed: Embed, x: number, y: number, width: n
     return lowered([surface, text], height);
 }
 
-const FORMULA_HEIGHT = 60;
-const FORMULA_SIZE_PX = 24;
+const FORMULA_HEIGHT = 48;
+const FORMULA_SIZE_PX = 18;
 const FORMULA_ERROR_COLOR = "e5484d";
 const MARKUP_COMPAT_NS = "http://schemas.openxmlformats.org/markup-compatibility/2006";
 const DRAWING_2010_NS = "http://schemas.microsoft.com/office/drawing/2010/main";
