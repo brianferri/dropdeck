@@ -1,5 +1,5 @@
-import { NotationKind } from "#/formula/nodes";
-import { latexSymbol } from "#/formula/latex/glyphs";
+import { NotationKind, StyleKind } from "#/formula/nodes";
+import { ColorCommand, VARIANT_COMMAND, latexSymbol } from "#/formula/latex/glyphs";
 import type { Notation } from "#/formula/typings/nodes";
 import type { ToLatex } from "./typings/serialize.js";
 
@@ -21,9 +21,13 @@ function toLatexNode(node: Notation): string {
             return node.children.length === 2
                 ? `\\sqrt[${toLatexNode(node.children[1])}]{${toLatexNode(node.children[0])}}`
                 : `\\sqrt{${toLatexNode(node.children[0])}}`;
-        case NotationKind.Nary:
+        case NotationKind.LimitOperator:
             return `${latexSymbol(node.symbol)}_{${toLatexNode(node.children[0])}}^{${toLatexNode(node.children[1])}} ${toLatexNode(node.children[2])}`;
         case NotationKind.Accent: return `\\${node.accent}{${toLatexNode(node.children[0])}}`;
+        case NotationKind.Styled:
+            return node.style.kind === StyleKind.Variant
+                ? `${VARIANT_COMMAND[node.style.variant]}{${toLatexNode(node.children[0])}}`
+                : `${ColorCommand.TextColor}{${node.style.color}}{${toLatexNode(node.children[0])}}`;
     }
 }
 

@@ -1,11 +1,12 @@
 import type { BinaryOperator, ExpressionKind, MathConstant, MathFunction, OPERATOR_PRECEDENCE } from "@dropdeck/math";
 import type { Expression } from "@dropdeck/math";
 import type { AccentKindOf } from "#/formula/accent";
-import type { AccentFunction, CONSTANT_GLYPH, INTEGRAL_GLYPH, LIM_OPERATOR, NARY_GLYPH, OPERATOR_GLYPH } from "#/formula/math/glyphs";
+import type { LimitPlacement } from "#/formula/nodes";
+import type { AccentFunction, BIG_OPERATOR_GLYPH, ColorFunction, CONSTANT_GLYPH, INTEGRAL_GLYPH, LIM_OPERATOR, LIMITS_PLACEMENT, MATH_VARIANT, OPERATOR_GLYPH } from "#/formula/math/glyphs";
 import type { ByName, FirstMatch, LessOrEqual, LessThan } from "@dropdeck/common";
 import type {
-    AccentNode, FencedNode, FractionNode, IdentifierNode, NaryNode, Notation, NumberNode, One, OperatorNode, Pair,
-    RadicalNode, RowNode, SubscriptNode, SuperscriptNode, Triple
+    AccentNode, ColorStyle, Content, FencedNode, FractionNode, IdentifierNode, LimitOperatorNode, Notation, NumberNode,
+    One, OperatorNode, Pair, RadicalNode, RowNode, StyledNode, SubscriptNode, SuperscriptNode, Triple, VariantStyle
 } from "#/formula/typings/nodes";
 
 export type MathContent = ReadonlyArray<Expression>;
@@ -69,31 +70,50 @@ type FactLower<Callee extends string, Children extends MathContent> =
     [Callee, Children] extends [`${MathFunction.Fact}`, readonly [infer Arg extends Expression]]
         ? RowNode<readonly [LowerMath<Arg>, OperatorNode<"!">]> : false;
 
-type NaryLower<Table extends object, Callee extends string, Under extends Notation, Over extends Notation, Body extends Notation> =
+type LimitOperatorLower<Table extends object, Callee extends string, Placement extends LimitPlacement, Under extends Notation, Over extends Notation, Body extends Notation> =
     Callee extends keyof ByName<Table>
-        ? NaryNode<ByName<Table>[Callee] & string, Triple<Under, Over, Body>>
+        ? LimitOperatorNode<ByName<Table>[Callee] & string, Triple<Under, Over, Body>, Placement>
         : false;
 
 type SumLower<Callee extends string, Children extends MathContent> =
     Children extends readonly [infer Index extends Expression, infer Lower extends Expression, infer Upper extends Expression, infer Body extends Expression]
-        ? NaryLower<typeof NARY_GLYPH, Callee, RowNode<readonly [LowerMath<Index>, OperatorNode<"=">, LowerMath<Lower>]>, LowerMath<Upper>, LowerMath<Body>>
+        ? LimitOperatorLower<typeof BIG_OPERATOR_GLYPH, Callee, LimitPlacement.Stacked, RowNode<readonly [LowerMath<Index>, OperatorNode<"=">, LowerMath<Lower>]>, LowerMath<Upper>, LowerMath<Body>>
         : false;
 
 type IntegralLower<Callee extends string, Children extends MathContent> =
     Children extends readonly [infer Body extends Expression]
-        ? NaryLower<typeof INTEGRAL_GLYPH, Callee, RowNode<readonly []>, RowNode<readonly []>, LowerMath<Body>>
+        ? LimitOperatorLower<typeof INTEGRAL_GLYPH, Callee, LimitPlacement.Beside, RowNode<readonly []>, RowNode<readonly []>, LowerMath<Body>>
         : Children extends readonly [infer Lower extends Expression, infer Upper extends Expression, infer Body extends Expression]
-            ? NaryLower<typeof INTEGRAL_GLYPH, Callee, LowerMath<Lower>, LowerMath<Upper>, LowerMath<Body>>
+            ? LimitOperatorLower<typeof INTEGRAL_GLYPH, Callee, LimitPlacement.Beside, LowerMath<Lower>, LowerMath<Upper>, LowerMath<Body>>
             : false;
 
 type LimLower<Callee extends string, Children extends MathContent> =
     Children extends readonly [infer Lower extends Expression, infer Body extends Expression]
-        ? NaryLower<typeof LIM_OPERATOR, Callee, LowerMath<Lower>, RowNode<readonly []>, LowerMath<Body>>
+        ? LimitOperatorLower<typeof LIM_OPERATOR, Callee, LimitPlacement.Stacked, LowerMath<Lower>, RowNode<readonly []>, LowerMath<Body>>
         : false;
 
 type AccentLower<Callee extends string, Children extends MathContent> =
     [Callee, Children] extends [AccentFunction, readonly [infer Base extends Expression]]
         ? AccentNode<AccentKindOf<Callee>, One<LowerMath<Base>>> : false;
+type VariantLower<Callee extends string, Children extends MathContent> =
+    Callee extends keyof ByName<typeof MATH_VARIANT>
+        ? Children extends readonly [infer Arg extends Expression]
+            ? StyledNode<VariantStyle<ByName<typeof MATH_VARIANT>[Callee]>, One<LowerMath<Arg>>> : false
+        : false;
+type ColorLower<Callee extends string, Children extends MathContent> =
+    Callee extends `${ColorFunction}`
+        ? Children extends readonly [{ kind: ExpressionKind.Variable, name: infer Color extends string }, infer Argument extends Expression]
+            ? StyledNode<ColorStyle<Color>, One<LowerMath<Argument>>> : false
+        : false;
+// `limits(...)`/`nolimits(...)` re-emit their operator argument with an overridden placement -- a non-operator fails.
+type LimitsLower<Callee extends string, Children extends MathContent> =
+    Callee extends keyof ByName<typeof LIMITS_PLACEMENT>
+        ? Children extends readonly [infer Arg extends Expression]
+            ? LowerMath<Arg> extends LimitOperatorNode<infer Symbol extends string, infer Body extends Content>
+                ? LimitOperatorNode<Symbol, Body, ByName<typeof LIMITS_PLACEMENT>[Callee]>
+                : false
+            : false
+        : false;
 
 type GenericCall<Callee extends string, Children extends MathContent> =
     RowNode<readonly [IdentifierNode<Callee>, FencedNode<"(", ")", One<LowerArgs<Children>>>]>;
@@ -108,6 +128,9 @@ type LowerCall<E extends Expression> =
             IntegralLower<Callee, Children>,
             LimLower<Callee, Children>,
             AccentLower<Callee, Children>,
+            VariantLower<Callee, Children>,
+            ColorLower<Callee, Children>,
+            LimitsLower<Callee, Children>,
             GenericCall<Callee, Children>
         ]>
         : false;

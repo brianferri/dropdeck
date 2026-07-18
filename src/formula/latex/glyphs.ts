@@ -1,4 +1,6 @@
-import { memberGuard } from "@dropdeck/common";
+import { invert, keyGuard, memberGuard } from "@dropdeck/common";
+import type { ByName } from "@dropdeck/common";
+import { LimitPlacement, MathVariant } from "#/formula/nodes";
 
 // The command spelling (with its backslash) is the enum value, so the parser's symbols and this table share one
 // vocabulary; `LATEX_GLYPH` is keyed by these members and `satisfies` proves every command carries a glyph.
@@ -358,7 +360,7 @@ const LATEX_GLYPH = {
     [LatexCommand.Iiint]: "∭"
 } as const satisfies Record<LatexCommand, string>;
 
-type LatexGlyphTable = { [Command in keyof typeof LATEX_GLYPH as `${Command}`]: (typeof LATEX_GLYPH)[Command] };
+type LatexGlyphTable = ByName<typeof LATEX_GLYPH>;
 
 type UnknownCommand<Symbol extends string> = `unknown LaTeX command '${Symbol}'`;
 
@@ -368,12 +370,12 @@ export type LatexGlyph<Symbol extends string> =
         : Symbol extends `\\${string}` ? UnknownCommand<Symbol>
             : Symbol;
 
-// Every glyph this frontend can emit; the shared IR narrows its nary glyphs out of this so they trace to the table.
+// Every glyph this frontend can emit; the shared IR narrows its big-operator glyphs out of this so they trace here.
 export type Glyphs = typeof LATEX_GLYPH[keyof typeof LATEX_GLYPH];
 
-// The nary classification is declared as enum members -- `Extract<LatexCommand, ...>` rejects a non-member -- and
-// the glyphs flip out of the table via `${Command}`, so no glyph string is ever spelled out by hand.
-export type NaryCommand = Extract<
+// The big-operator classification is declared as enum members -- `Extract<LatexCommand, ...>` rejects a non-member --
+// and the glyphs flip out of the table via `${Command}`, so no glyph string is ever spelled out by hand.
+export type BigOperatorCommand = Extract<
     LatexCommand,
     | LatexCommand.Sum
     | LatexCommand.Prod
@@ -390,7 +392,7 @@ export type NaryCommand = Extract<
     | LatexCommand.Iint
     | LatexCommand.Iiint
 >;
-export type NaryIntegralCommand = Extract<
+export type IntegralCommand = Extract<
     LatexCommand,
     | LatexCommand.Int
     | LatexCommand.Oint
@@ -409,9 +411,9 @@ export type LimWordCommand = Extract<
     | LatexCommand.Inf
 >;
 
-export type NaryGlyph = LatexGlyphTable[`${NaryCommand}`];
-export type NaryIntegralGlyph = LatexGlyphTable[`${NaryIntegralCommand}`];
-export type NaryStackedGlyph = Exclude<NaryGlyph, NaryIntegralGlyph>;
+export type BigOperatorGlyph = LatexGlyphTable[`${BigOperatorCommand}`];
+export type IntegralGlyph = LatexGlyphTable[`${IntegralCommand}`];
+export type StackedOperatorGlyph = Exclude<BigOperatorGlyph, IntegralGlyph>;
 export type LimWord = LatexGlyphTable[`${LimWordCommand}`];
 
 const isLatexCommand = memberGuard<LatexCommand>(Object.values(LatexCommand));
@@ -432,6 +434,49 @@ export function latexGlyph(symbol: string): string {
     if (isLatexCommand(symbol)) return LATEX_GLYPH[symbol];
     throw new Error(`unknown LaTeX command '${symbol}'`);
 }
+
+/** `\limits`/`\nolimits` follow a big operator to force its bounds stacked or beside; they render no glyph. */
+export enum LimitsCommand {
+    Limits = "\\limits",
+    Nolimits = "\\nolimits"
+}
+export const LIMITS_PLACEMENT = {
+    [LimitsCommand.Limits]: LimitPlacement.Stacked,
+    [LimitsCommand.Nolimits]: LimitPlacement.Beside
+} as const satisfies Record<LimitsCommand, LimitPlacement>;
+export const isLimitsCommand = keyGuard(LIMITS_PLACEMENT);
+
+/** Font-variant commands (`\mathbf{x}`, `\mathbb{R}`), each mapping to a shared `MathVariant` via `VARIANT`. */
+export enum VariantCommand {
+    Mathrm = "\\mathrm",
+    Mathbf = "\\mathbf",
+    Mathit = "\\mathit",
+    Boldsymbol = "\\boldsymbol",
+    Mathbb = "\\mathbb",
+    Mathcal = "\\mathcal",
+    Mathfrak = "\\mathfrak",
+    Mathsf = "\\mathsf",
+    Mathtt = "\\mathtt"
+}
+export const VARIANT = {
+    [VariantCommand.Mathrm]: MathVariant.Normal,
+    [VariantCommand.Mathbf]: MathVariant.Bold,
+    [VariantCommand.Mathit]: MathVariant.Italic,
+    [VariantCommand.Boldsymbol]: MathVariant.BoldItalic,
+    [VariantCommand.Mathbb]: MathVariant.DoubleStruck,
+    [VariantCommand.Mathcal]: MathVariant.Script,
+    [VariantCommand.Mathfrak]: MathVariant.Fraktur,
+    [VariantCommand.Mathsf]: MathVariant.SansSerif,
+    [VariantCommand.Mathtt]: MathVariant.Monospace
+} as const satisfies Record<VariantCommand, MathVariant>;
+export const isVariantCommand = keyGuard(VARIANT);
+export const VARIANT_COMMAND = invert(VARIANT);
+
+/** `\textcolor{c}{x}` colors `x` the color named by `c`. */
+export enum ColorCommand {
+    TextColor = "\\textcolor"
+}
+export const isColorCommand = memberGuard<ColorCommand>(Object.values(ColorCommand));
 
 // A few glyphs carry an alias command (`≤` is both `\le` and `\leq`), so the reverse of the glyph table is a union
 // there. Excluding the alias spellings leaves one canonical command per glyph, single-valued for the type level.

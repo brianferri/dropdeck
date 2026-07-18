@@ -1,9 +1,9 @@
-import type { LatexCommandOf } from "#/formula/latex/glyphs";
-import type { AccentKind } from "#/formula/nodes";
+import type { ColorCommand, LatexCommandOf, VARIANT_COMMAND } from "#/formula/latex/glyphs";
+import type { AccentKind, MathVariant } from "#/formula/nodes";
 import type { FirstMatch } from "@dropdeck/common";
 import type {
-    AccentNode, Content, FencedNode, FractionNode, IdentifierNode, NaryNode, Notation, NumberNode, One,
-    OperatorNode, Pair, RadicalNode, RowNode, SubscriptNode, SuperscriptNode, Triple
+    AccentNode, AttributeStyle, ColorStyle, Content, FencedNode, FractionNode, IdentifierNode, LimitOperatorNode, Notation,
+    NumberNode, One, OperatorNode, Pair, RadicalNode, RowNode, StyledNode, SubscriptNode, SuperscriptNode, Triple, VariantStyle
 } from "#/formula/typings/nodes";
 
 type JoinLatex<Children extends Content> =
@@ -34,12 +34,17 @@ type RadicalLatexText<N extends Notation> =
         ? `\\sqrt[${ToLatex<Index>}]{${ToLatex<Radicand>}}`
         : N extends RadicalNode<One<infer Radicand extends Notation>>
             ? `\\sqrt{${ToLatex<Radicand>}}` : false;
-type NaryLatexText<N extends Notation> =
-    N extends NaryNode<infer Symbol extends string, Triple<infer Lower extends Notation, infer Upper extends Notation, infer Body extends Notation>>
+type LimitOperatorLatexText<N extends Notation> =
+    N extends LimitOperatorNode<infer Symbol extends string, Triple<infer Lower extends Notation, infer Upper extends Notation, infer Body extends Notation>>
         ? `${LatexCommandOf<Symbol>}_{${ToLatex<Lower>}}^{${ToLatex<Upper>}} ${ToLatex<Body>}` : false;
 type AccentLatexText<N extends Notation> =
     N extends AccentNode<infer Accent extends AccentKind, One<infer Base extends Notation>>
         ? `\\${Accent}{${ToLatex<Base>}}` : false;
+type StyledLatexText<N extends Notation> =
+    N extends StyledNode<infer S extends AttributeStyle, One<infer Child extends Notation>>
+        ? S extends VariantStyle<infer Variant extends MathVariant> ? `${(typeof VARIANT_COMMAND)[Variant]}{${ToLatex<Child>}}`
+            : S extends ColorStyle<infer Color extends string> ? `${ColorCommand.TextColor}{${Color}}{${ToLatex<Child>}}` : false
+        : false;
 
 export type ToLatex<N extends Notation> = Extract<FirstMatch<[
     IdentifierLatexText<N>,
@@ -51,6 +56,7 @@ export type ToLatex<N extends Notation> = Extract<FirstMatch<[
     SuperscriptLatexText<N>,
     SubscriptLatexText<N>,
     RadicalLatexText<N>,
-    NaryLatexText<N>,
-    AccentLatexText<N>
+    LimitOperatorLatexText<N>,
+    AccentLatexText<N>,
+    StyledLatexText<N>
 ]>, string>;

@@ -1,8 +1,8 @@
-import { NotationKind } from "#/formula/nodes";
-import type { AccentKind } from "#/formula/nodes";
+import { NotationKind, StyleKind } from "#/formula/nodes";
+import type { AccentKind, LimitPlacement } from "#/formula/nodes";
 import type {
-    AccentNode, Content, FencedNode, FractionNode, IdentifierNode, NaryNode, Notation, NumberNode, One,
-    OperatorNode, Pair, RadicalNode, RowNode, SubscriptNode, SuperscriptNode, Triple
+    AccentNode, AttributeStyle, Content, FencedNode, FractionNode, IdentifierNode, LimitOperatorNode, Notation,
+    NumberNode, One, OperatorNode, Pair, RadicalNode, RowNode, StyledNode, SubscriptNode, SuperscriptNode, Triple
 } from "#/formula/typings/nodes";
 
 export function identifier<const Symbol extends string>(symbol: Symbol): IdentifierNode<Symbol> {
@@ -61,13 +61,32 @@ export function root<const Radicand extends Notation, const Index extends Notati
     return { kind: NotationKind.Radical, children: [radicand, index] as const };
 }
 
-export function nary<
+export function styled<const S extends AttributeStyle, const Child extends Notation>(style: S, content: Child): StyledNode<S, One<Child>> {
+    return { kind: NotationKind.Styled, style, children: [content] as const };
+}
+
+export function limitOperator<
     const Symbol extends string,
+    const Placement extends LimitPlacement,
     const Lower extends Notation,
     const Upper extends Notation,
     const Body extends Notation
->(symbol: Symbol, lower: Lower, upper: Upper, body: Body): NaryNode<Symbol, Triple<Lower, Upper, Body>> {
-    return { kind: NotationKind.Nary, symbol, children: [lower, upper, body] as const };
+>(
+    symbol: Symbol,
+    placement: Placement,
+    lower: Lower,
+    upper: Upper,
+    body: Body
+): LimitOperatorNode<Symbol, Triple<Lower, Upper, Body>, Placement> {
+    return {
+        kind: NotationKind.LimitOperator,
+        symbol,
+        style: {
+            kind: StyleKind.Placement,
+            placement
+        },
+        children: [lower, upper, body] as const
+    };
 }
 
 export function accent<const Accent extends AccentKind, const Base extends Notation>(

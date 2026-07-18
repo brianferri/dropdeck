@@ -6,10 +6,8 @@ import { xml } from "@dropdeck/xml";
 import type { Expression, Parse } from "@dropdeck/math";
 import type { Notation as LatexNotation, Parse as LatexParse } from "@dropdeck/latex";
 import type { Serialize } from "@dropdeck/xml";
+import type { Equal, Expect } from "@dropdeck/common";
 import type { LowerLatex, LowerMath, ToMathML, ToOmml } from "#/formula";
-
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;
-type Expect<T extends true> = T;
 
 type MathAst<S extends string> = Extract<Parse<S>, Expression>;
 type LatexAst<S extends string> = Extract<LatexParse<S>, LatexNotation>;
@@ -35,7 +33,14 @@ export type Rendered = [
     Expect<Equal<
         MathToOmml<"lim(x, f)">,
         `<m:oMath xmlns:m="${Om}"><m:func><m:fName><m:limLow><m:e><m:r><m:t>lim</m:t></m:r></m:e><m:lim><m:r><m:t>x</m:t></m:r></m:lim></m:limLow></m:fName><m:e><m:r><m:t>f</m:t></m:r></m:e></m:func></m:oMath>`
-    >>
+    >>,
+    Expect<Equal<LatexToMathML<"\\int\\limits_a^b f">, `<math xmlns="${Ns}"><mrow><munderover><mo>∫</mo><mi>a</mi><mi>b</mi></munderover><mi>f</mi></mrow></math>`>>,
+    Expect<Equal<
+        LatexToMathML<"\\sum\\nolimits_{i=1}^n i">,
+        `<math xmlns="${Ns}"><mrow><msubsup><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>n</mi></msubsup><mi>i</mi></mrow></math>`
+    >>,
+    Expect<Equal<MathToMathML<"bold(x)">, `<math xmlns="${Ns}"><mstyle mathvariant="bold"><mi>x</mi></mstyle></math>`>>,
+    Expect<Equal<LatexToMathML<"\\textcolor{red}{x}">, `<math xmlns="${Ns}"><mstyle mathcolor="red"><mi>x</mi></mstyle></math>`>>
 ];
 export type Parity = [
     Expect<Equal<MathToMathML<"root(3, x)">, LatexToMathML<"\\sqrt[3]{x}">>>,
@@ -45,7 +50,10 @@ export type Parity = [
     Expect<Equal<MathToMathML<"lim(x, f)">, LatexToMathML<"\\lim_{x} f">>>,
     Expect<Equal<MathToOmml<"lim(x, f)">, LatexToOmml<"\\lim_{x} f">>>,
     Expect<Equal<MathToMathML<"limmax(x, f)">, LatexToMathML<"\\max_{x} f">>>,
-    Expect<Equal<MathToMathML<"limsup(n, a)">, LatexToMathML<"\\limsup_{n} a">>>
+    Expect<Equal<MathToMathML<"limsup(n, a)">, LatexToMathML<"\\limsup_{n} a">>>,
+    Expect<Equal<MathToMathML<"bold(x)">, LatexToMathML<"\\mathbf{x}">>>,
+    Expect<Equal<MathToMathML<"bb(R)">, LatexToMathML<"\\mathbb{R}">>>,
+    Expect<Equal<MathToMathML<"color(red, x)">, LatexToMathML<"\\textcolor{red}{x}">>>
 ];
 
 function mathML<const Source extends string>(source: Source): MathToMathML<Source> {
@@ -110,4 +118,22 @@ test("a bare latex max is an ordinary word, not a limit operator", () => {
     // `\max(a, b)` scripts nothing, so it stays the plain word applied to its argument -- no under-limit.
     expect(latexML("\\max(a,b)")).toContain("<mi>max</mi>");
     expect(latexML("\\max(a,b)")).not.toContain("munder");
+});
+
+test("limits and nolimits override a big operator's default placement", () => {
+    expect(latexML("\\int\\limits_a^b f")).toContain("<munderover><mo>∫</mo>");
+    expect(latexML("\\sum\\nolimits_{i=1}^n i")).toContain("<msubsup><mo>∑</mo>");
+    expect(latexML("\\int_a^b f")).toContain("<msubsup><mo>∫</mo>");
+    expect(latexML("\\sum_{i=1}^n i")).toContain("<munderover><mo>∑</mo>");
+});
+
+test("variant directives style a group, and math mirrors the latex commands", () => {
+    expect(mathML("bold(x)")).toBe(latexML("\\mathbf{x}"));
+    expect(mathML("bb(R)")).toContain("<mstyle mathvariant=\"double-struck\"><mi>R</mi></mstyle>");
+    expect(latexML("\\mathcal{L}")).toContain("<mstyle mathvariant=\"script\"><mi>L</mi></mstyle>");
+});
+
+test("colour directives carry the name onto mathcolor across both frontends", () => {
+    expect(mathML("color(red, x)")).toBe(latexML("\\textcolor{red}{x}"));
+    expect(latexML("\\textcolor{blue}{x + y}")).toContain("<mstyle mathcolor=\"blue\">");
 });

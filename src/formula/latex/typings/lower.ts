@@ -1,11 +1,12 @@
 import type { Content as LatexContent, NotationKind as LatexKind, Notation as LatexNotation } from "@dropdeck/latex";
-import type { LatexGlyph } from "#/formula/latex/glyphs";
+import type { ColorCommand, LIMITS_PLACEMENT, LatexGlyph, VARIANT } from "#/formula/latex/glyphs";
 import type { AccentKindOf } from "#/formula/accent";
-import type { LimitOperatorGlyph } from "#/formula/nary";
-import type { FirstMatch } from "@dropdeck/common";
+import type { IntegralGlyph, LimitOperatorGlyph } from "#/formula/limit_operator";
+import type { LimitPlacement } from "#/formula/nodes";
+import type { FirstMatch, Lookup } from "@dropdeck/common";
 import type {
-    AccentNode, FencedNode, FractionNode, IdentifierNode, NaryNode, Notation, NumberNode, One, OperatorNode, Pair,
-    RadicalNode, RowNode, SubscriptNode, SuperscriptNode, Triple
+    AccentNode, AttributeStyle, ColorStyle, FencedNode, FractionNode, IdentifierNode, LimitOperatorNode, Notation,
+    NumberNode, One, OperatorNode, Pair, RadicalNode, RowNode, StyledNode, SubscriptNode, SuperscriptNode, Triple, VariantStyle
 } from "#/formula/typings/nodes";
 
 type LowerLatexList<Children extends LatexContent> =
@@ -23,33 +24,92 @@ type LimitGlyphOf<Node extends LatexNotation> =
         ? LatexGlyph<Symbol> extends infer Glyph extends LimitOperatorGlyph ? Glyph : never
         : never;
 
-type DetectSup<Base extends LatexNotation, Upper extends LatexNotation> =
-    Base extends { kind: LatexKind.Subscript, children: readonly [infer Inner extends LatexNotation, infer Lower extends LatexNotation] }
-        ? [LimitGlyphOf<Inner>] extends [never] ? false : readonly [LimitGlyphOf<Inner>, LowerLatex<Lower>, LowerLatex<Upper>]
-        : [LimitGlyphOf<Base>] extends [never] ? false : readonly [LimitGlyphOf<Base>, EmptyRow, LowerLatex<Upper>];
+type DefaultPlacement<Glyph extends string> = Glyph extends IntegralGlyph ? LimitPlacement.Beside : LimitPlacement.Stacked;
 
-type DetectSub<Base extends LatexNotation, Lower extends LatexNotation> =
-    Base extends { kind: LatexKind.Superscript, children: readonly [infer Inner extends LatexNotation, infer Upper extends LatexNotation] }
-        ? [LimitGlyphOf<Inner>] extends [never] ? false : readonly [LimitGlyphOf<Inner>, LowerLatex<Lower>, LowerLatex<Upper>]
-        : [LimitGlyphOf<Base>] extends [never] ? false : readonly [LimitGlyphOf<Base>, LowerLatex<Lower>, EmptyRow];
-
-// A limit operator scripted with `_`/`^` (in either order) collapses with the term after it into a `NaryNode`, the
-// runtime `detectNary`/`lowerLatexRow` mirrored: `[symbol, lower, upper]` when the head is a scripted operator.
-type DetectNary<Node extends LatexNotation> =
+// The innermost base and lowered `_`/`^` limits of a scripted node (in either order); `false` when it is not scripted.
+type ScriptPartsOf<Node extends LatexNotation> =
     Node extends { kind: LatexKind.Superscript, children: readonly [infer Base extends LatexNotation, infer Upper extends LatexNotation] }
-        ? DetectSup<Base, Upper>
+        ? Base extends { kind: LatexKind.Subscript, children: readonly [infer Inner extends LatexNotation, infer Lower extends LatexNotation] }
+            ? readonly [Inner, LowerLatex<Lower>, LowerLatex<Upper>]
+            : readonly [Base, EmptyRow, LowerLatex<Upper>]
         : Node extends { kind: LatexKind.Subscript, children: readonly [infer Base extends LatexNotation, infer Lower extends LatexNotation] }
-            ? DetectSub<Base, Lower>
+            ? Base extends { kind: LatexKind.Superscript, children: readonly [infer Inner extends LatexNotation, infer Upper extends LatexNotation] }
+                ? readonly [Inner, LowerLatex<Lower>, LowerLatex<Upper>]
+                : readonly [Base, LowerLatex<Lower>, EmptyRow]
             : false;
 
-type LowerLatexRow<Children extends LatexContent> =
+// A recognized limit-operator glyph with its placement and lowered limits, or `false` when either is absent.
+type LimitSpec<Glyph extends string, Placement extends LimitPlacement, Lower extends Notation, Upper extends Notation> =
+    [Glyph] extends [never] ? false : [Placement] extends [never] ? false : readonly [Glyph, Placement, Lower, Upper];
+type DefaultLimitSpec<Glyph extends string, Lower extends Notation, Upper extends Notation> =
+    LimitSpec<Glyph, DefaultPlacement<Glyph>, Lower, Upper>;
+
+// A scripted limit operator (`\int_a^b`); the placement follows the glyph's default.
+type DetectLimitOperator<Node extends LatexNotation> =
+    ScriptPartsOf<Node> extends readonly [infer Base extends LatexNotation, infer Lower extends Notation, infer Upper extends Notation]
+        ? DefaultLimitSpec<LimitGlyphOf<Base>, Lower, Upper>
+        : false;
+
+// The symbol of an identifier command (`\mathbf`, `\limits`), or `never` for anything else -- the key a directive
+// table is looked up by.
+type IdentifierSymbol<Node extends LatexNotation> =
+    Node extends { kind: LatexKind.Identifier, symbol: infer Symbol extends string } ? Symbol : never;
+
+type LimitsPlacementOf<Base extends LatexNotation> = Lookup<IdentifierSymbol<Base>, typeof LIMITS_PLACEMENT>;
+type VariantOf<Node extends LatexNotation> = Lookup<IdentifierSymbol<Node>, typeof VARIANT>;
+
+type IsColorCommand<Node extends LatexNotation> =
+    Node extends { kind: LatexKind.Identifier, symbol: infer Symbol extends string } ? Symbol extends `${ColorCommand}` ? true : false : false;
+
+// `\textcolor{red}{x}` parses its color group as separate letter identifiers, so rejoin their symbols into the name.
+type JoinIdentifiers<Children extends LatexContent> =
     Children extends readonly [infer Head extends LatexNotation, ...infer Rest extends LatexContent]
-        ? DetectNary<Head> extends readonly [infer Symbol extends string, infer Lower extends Notation, infer Upper extends Notation]
-            ? Rest extends readonly [infer Body extends LatexNotation, ...infer Tail extends LatexContent]
-                ? readonly [NaryNode<Symbol, Triple<Lower, Upper, LowerLatex<Body>>>, ...LowerLatexRow<Tail>]
-                : readonly [NaryNode<Symbol, Triple<Lower, Upper, EmptyRow>>]
-            : readonly [LowerLatex<Head>, ...LowerLatexRow<Rest>]
-        : readonly [];
+        ? Head extends { kind: LatexKind.Identifier, symbol: infer Symbol extends string } ? `${Symbol}${JoinIdentifiers<Rest>}` : never
+        : "";
+type ColorNameOf<Node extends LatexNotation> =
+    Node extends { kind: LatexKind.Identifier, symbol: infer Symbol extends string } ? Symbol
+        : Node extends { kind: LatexKind.Row, children: infer Children extends LatexContent } ? JoinIdentifiers<Children> : never;
+
+// The parser folds a trailing script onto a directive's group; peel it back so the style wraps only the base.
+type StyleContent<S extends AttributeStyle, Node extends LatexNotation> =
+    Node extends { kind: LatexKind.Superscript, children: readonly [infer Base extends LatexNotation, infer Exp extends LatexNotation] }
+        ? SuperscriptNode<Pair<StyleContent<S, Base>, LowerLatex<Exp>>>
+        : Node extends { kind: LatexKind.Subscript, children: readonly [infer Base extends LatexNotation, infer Index extends LatexNotation] }
+            ? SubscriptNode<Pair<StyleContent<S, Base>, LowerLatex<Index>>>
+            : StyledNode<S, One<LowerLatex<Node>>>;
+
+// `\int\limits_a^b`: a bare operator head, then a `\limits`/`\nolimits` carrying the limits, overriding the placement.
+type OverrideLimitOperator<Head extends LatexNotation, Next extends LatexNotation> =
+    ScriptPartsOf<Next> extends readonly [infer Base extends LatexNotation, infer Lower extends Notation, infer Upper extends Notation]
+        ? LimitSpec<LimitGlyphOf<Head>, LimitsPlacementOf<Base>, Lower, Upper>
+        : false;
+
+type DefaultRow<Head extends LatexNotation, Rest extends LatexContent> =
+    DetectLimitOperator<Head> extends readonly [infer Symbol extends string, infer Placement extends LimitPlacement, infer Lower extends Notation, infer Upper extends Notation]
+        ? Rest extends readonly [infer Body extends LatexNotation, ...infer Tail extends LatexContent]
+            ? readonly [LimitOperatorNode<Symbol, Triple<Lower, Upper, LowerLatex<Body>>, Placement>, ...LowerLatexRow<Tail>]
+            : readonly [LimitOperatorNode<Symbol, Triple<Lower, Upper, EmptyRow>, Placement>]
+        : readonly [LowerLatex<Head>, ...LowerLatexRow<Rest>];
+
+type LowerLatexRow<Children extends LatexContent> =
+    Children extends readonly [infer Head extends LatexNotation, infer Group extends LatexNotation, infer Content extends LatexNotation, ...infer Tail extends LatexContent]
+        ? IsColorCommand<Head> extends true
+            ? readonly [StyleContent<ColorStyle<ColorNameOf<Group>>, Content>, ...LowerLatexRow<Tail>]
+            : StyleLimitRow<Children>
+        : StyleLimitRow<Children>;
+
+type StyleLimitRow<Children extends LatexContent> =
+    Children extends readonly [infer Head extends LatexNotation, infer Next extends LatexNotation, ...infer After extends LatexContent]
+        ? [VariantOf<Head>] extends [never]
+            ? OverrideLimitOperator<Head, Next> extends readonly [infer Symbol extends string, infer Placement extends LimitPlacement, infer Lower extends Notation, infer Upper extends Notation]
+                ? After extends readonly [infer Body extends LatexNotation, ...infer Tail extends LatexContent]
+                    ? readonly [LimitOperatorNode<Symbol, Triple<Lower, Upper, LowerLatex<Body>>, Placement>, ...LowerLatexRow<Tail>]
+                    : readonly [LimitOperatorNode<Symbol, Triple<Lower, Upper, EmptyRow>, Placement>]
+                : DefaultRow<Head, readonly [Next, ...After]>
+            : readonly [StyleContent<VariantStyle<VariantOf<Head>>, Next>, ...LowerLatexRow<After>]
+        : Children extends readonly [infer Head extends LatexNotation, ...infer Rest extends LatexContent]
+            ? DefaultRow<Head, Rest>
+            : readonly [];
 
 type RowLatex<N extends LatexNotation> =
     N extends { kind: LatexKind.Row, children: infer Children extends LatexContent }

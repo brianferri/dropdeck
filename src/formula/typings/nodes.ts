@@ -1,4 +1,4 @@
-import type { AccentKind, NotationKind } from "../nodes.js";
+import type { AccentKind, LimitPlacement, MathVariant, NotationKind, StyleKind } from "../nodes.js";
 
 export type IdentifierNode<Symbol extends string = string> = {
     kind: NotationKind.Identifier,
@@ -51,12 +51,14 @@ export type RadicalNode<Children extends Content = Content> = {
     children: Children
 };
 
-export type NaryNode<
+export type LimitOperatorNode<
     Symbol extends string = string,
-    Children extends Content = Content
+    Children extends Content = Content,
+    Placement extends LimitPlacement = LimitPlacement
 > = {
-    kind: NotationKind.Nary,
+    kind: NotationKind.LimitOperator,
     symbol: Symbol,
+    style: PlacementStyle<Placement>,
     children: Children
 };
 
@@ -66,6 +68,24 @@ export type AccentNode<
 > = {
     kind: NotationKind.Accent,
     accent: Accent,
+    children: Children
+};
+
+export type VariantStyle<Variant extends MathVariant = MathVariant> = { kind: StyleKind.Variant, variant: Variant };
+export type ColorStyle<Color extends string = string> = { kind: StyleKind.Color, color: Color };
+export type PlacementStyle<Placement extends LimitPlacement = LimitPlacement> = { kind: StyleKind.Placement, placement: Placement };
+
+// The two ways a style attaches: an attribute style wraps a subexpression in a `StyledNode`; a placement style
+// configures a big operator's own layout in place. `Style` is the umbrella over every facet.
+export type AttributeStyle = VariantStyle | ColorStyle;
+export type Style = AttributeStyle | PlacementStyle;
+
+export type StyledNode<
+    S extends AttributeStyle = AttributeStyle,
+    Children extends Content = Content
+> = {
+    kind: NotationKind.Styled,
+    style: S,
     children: Children
 };
 
@@ -79,8 +99,9 @@ export type Notation =
     | SuperscriptNode
     | SubscriptNode
     | RadicalNode
-    | NaryNode
-    | AccentNode;
+    | LimitOperatorNode
+    | AccentNode
+    | StyledNode;
 
 export type Content = ReadonlyArray<Notation>;
 export type One<Operand extends Notation> = readonly [Operand];

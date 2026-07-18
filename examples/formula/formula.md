@@ -203,3 +203,59 @@ a_1 + cdots + a_n
 ```latex
 a_1 + \cdots + a_n
 ```
+
+---
+
+# Weight and shape
+
+A directive restyles the group it wraps. `bold`, `italic`, `roman`, `bolditalic` in math map to `\mathbf`, `\mathit`, `\mathrm`, `\boldsymbol` in LaTeX.
+
+```math
+bold(a) + italic(b) + roman(c) + bolditalic(d)
+```
+
+```latex
+\mathbf{a} + \mathit{b} + \mathrm{c} + \boldsymbol{d}
+```
+
+---
+
+# Alphabets
+
+The named alphabets: `bb`, `cal`, `frak`, `sans`, `mono` in math; `\mathbb`, `\mathcal`, `\mathfrak`, `\mathsf`, `\mathtt` in LaTeX.
+
+```math
+bb(N) + cal(F) + frak(g) + sans(x) + mono(k)
+```
+
+```latex
+\mathbb{N} + \mathcal{F} + \mathfrak{g} + \mathsf{x} + \mathtt{k}
+```
+
+---
+
+# Color
+
+`color(name, expr)` in math, `\textcolor{name}{expr}` in LaTeX -- both color the same group with any CSS color name, and a trailing power stays its own color.
+
+```math
+color(red, E) == color(blue, m) * color(green, c)^2
+```
+
+```latex
+\textcolor{red}{E} = \textcolor{blue}{m} \cdot \textcolor{green}{c}^2
+```
+
+---
+
+# Limit placement
+
+Placement is a style too. `limits(...)` / `nolimits(...)` in math, `\limits` / `\nolimits` in LaTeX, stack a big operator's bounds above and below or set them beside -- overriding each operator's default.
+
+```math
+limits(int(0, 1, f)) + nolimits(sum(i, 1, n, i))
+```
+
+```latex
+\int\limits_0^1 f + \sum\nolimits_{i=1}^{n} i
+```

@@ -1,9 +1,10 @@
 export { AccentKind, NotationKind } from "#/formula/nodes";
+export { COLOR_HEX, isColorName } from "#/formula/color";
 export type {
-    AccentNode, Content, FencedNode, FractionNode, IdentifierNode, NaryNode, Notation, NumberNode, One, OperatorNode,
-    Pair, RadicalNode, RowNode, SubscriptNode, SuperscriptNode, Triple
+    AccentNode, Content, FencedNode, FractionNode, IdentifierNode, LimitOperatorNode, Notation, NumberNode, One,
+    OperatorNode, Pair, RadicalNode, RowNode, SubscriptNode, SuperscriptNode, Triple
 } from "#/formula/typings/nodes";
-export { accent, fenced, fraction, identifier, nary, number, operator, radical, root, row, subscript, superscript } from "#/formula/build";
+export { accent, fenced, fraction, identifier, limitOperator, number, operator, radical, root, row, subscript, superscript } from "#/formula/build";
 export { lowerMath, toMath } from "#/formula/math";
 export type { LowerMath, ToMath } from "#/formula/math";
 export { lowerLatex, toLatex } from "#/formula/latex";

@@ -1,9 +1,9 @@
-import type { MathCalleeTable, MathConstantName, MathToken } from "#/formula/math/glyphs";
-import type { AccentKind } from "#/formula/nodes";
+import type { ColorFunction, MathCalleeTable, MathConstantName, MathToken, VARIANT_CALLEE } from "#/formula/math/glyphs";
+import type { AccentKind, MathVariant } from "#/formula/nodes";
 import type { FirstMatch } from "@dropdeck/common";
 import type {
-    AccentNode, Content, FencedNode, FractionNode, IdentifierNode, NaryNode, Notation, NumberNode, One,
-    OperatorNode, Pair, RadicalNode, RowNode, SubscriptNode, SuperscriptNode, Triple
+    AccentNode, AttributeStyle, ColorStyle, Content, FencedNode, FractionNode, IdentifierNode, LimitOperatorNode,
+    Notation, NumberNode, One, OperatorNode, Pair, RadicalNode, RowNode, StyledNode, SubscriptNode, SuperscriptNode, Triple, VariantStyle
 } from "#/formula/typings/nodes";
 
 type JoinMath<Children extends Content, Separator extends string> =
@@ -33,14 +33,22 @@ type RadicalMath<N extends Notation> =
     N extends RadicalNode<readonly [infer Radicand extends Notation, ...Content]>
         ? `sqrt(${ToMath<Radicand>})` : false;
 // `sum(i, 1, n, body)` recovers its index and start from the `i = 1` lower row the lowering built.
-type NaryMath<N extends Notation> =
-    N extends NaryNode<infer Symbol extends string, Triple<RowNode<Triple<infer Index extends Notation, OperatorNode, infer Start extends Notation>>, infer Upper extends Notation, infer Body extends Notation>>
+type LimitOperatorMath<N extends Notation> =
+    N extends LimitOperatorNode<
+        infer Symbol extends string,
+        Triple<RowNode<Triple<infer Index extends Notation, OperatorNode, infer Start extends Notation>>, infer Upper extends Notation, infer Body extends Notation>
+    >
         ? Symbol extends keyof MathCalleeTable
             ? `${MathCalleeTable[Symbol]}(${ToMath<Index>}, ${ToMath<Start>}, ${ToMath<Upper>}, ${ToMath<Body>})` : false
         : false;
 type AccentMath<N extends Notation> =
     N extends AccentNode<infer Accent extends AccentKind, One<infer Base extends Notation>>
         ? `${Accent}(${ToMath<Base>})` : false;
+type StyledMath<N extends Notation> =
+    N extends StyledNode<infer S extends AttributeStyle, One<infer Child extends Notation>>
+        ? S extends VariantStyle<infer Variant extends MathVariant> ? `${(typeof VARIANT_CALLEE)[Variant]}(${ToMath<Child>})`
+            : S extends ColorStyle<infer Color extends string> ? `${ColorFunction.Color}(${Color}, ${ToMath<Child>})` : false
+        : false;
 
 export type ToMath<N extends Notation> = Extract<FirstMatch<[
     NumberMath<N>,
@@ -52,6 +60,7 @@ export type ToMath<N extends Notation> = Extract<FirstMatch<[
     SuperscriptMath<N>,
     SubscriptMath<N>,
     RadicalMath<N>,
-    NaryMath<N>,
-    AccentMath<N>
+    LimitOperatorMath<N>,
+    AccentMath<N>,
+    StyledMath<N>
 ]>, string>;

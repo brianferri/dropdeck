@@ -1,10 +1,9 @@
 import { element, text } from "@dropdeck/xml";
 import { MATHML_NS, MathMLTag, math, mfrac, mi, mn, mo, mover, mroot, msqrt, msub, msup } from "@dropdeck/xml/mathml";
-import { AccentKind, NotationKind } from "#/formula/nodes";
-import { isNaryIntegralGlyph } from "#/formula/nary";
+import { AccentKind, LimitPlacement, NotationKind, StyleKind } from "#/formula/nodes";
 import type { Node as XmlNode } from "@dropdeck/xml";
-import type { Content, Notation } from "#/formula/typings/nodes";
-import type { ToMathML } from "./typings/mathml.js";
+import type { AttributeStyle, Content, Notation } from "#/formula/typings/nodes";
+import type { StyleAttrML, ToMathML } from "./typings/mathml.js";
 
 export const ACCENT_MATHML = {
     [AccentKind.Hat]: "^",
@@ -28,13 +27,21 @@ function isEmptyRow(node: Notation): boolean {
     return node.kind === NotationKind.Row && node.children.length === 0;
 }
 
-function naryScript(symbol: string, lower: Notation, upper: Notation): XmlNode {
-    const beside = isNaryIntegralGlyph(symbol);
+function limitScripts(symbol: string, placement: LimitPlacement, lower: Notation, upper: Notation): XmlNode {
+    const beside = placement === LimitPlacement.Beside;
     const sign = mo([], text(symbol));
     if (isEmptyRow(lower) && isEmptyRow(upper)) return sign;
     if (isEmptyRow(upper)) return element(beside ? MathMLTag.Subscript : MathMLTag.Under, [], [sign, mathmlNode(lower)]);
     if (isEmptyRow(lower)) return element(beside ? MathMLTag.Superscript : MathMLTag.Over, [], [sign, mathmlNode(upper)]);
     return element(beside ? MathMLTag.SubSup : MathMLTag.UnderOver, [], [sign, mathmlNode(lower), mathmlNode(upper)]);
+}
+
+/** Builds the `<mstyle>` presentation attribute for a styled group: the variant on `mathvariant`, the color on `mathcolor`. */
+function styleAttrs(style: AttributeStyle): StyleAttrML<AttributeStyle> {
+    switch (style.kind) {
+        case StyleKind.Variant: return [["mathvariant", style.variant]];
+        case StyleKind.Color: return [["mathcolor", style.color]];
+    }
 }
 
 function mathmlNode(node: Notation): XmlNode {
@@ -51,13 +58,15 @@ function mathmlNode(node: Notation): XmlNode {
             return node.children.length === 2
                 ? mroot([], mathmlNode(node.children[0]), mathmlNode(node.children[1]))
                 : msqrt([], mathmlNode(node.children[0]));
-        case NotationKind.Nary:
+        case NotationKind.LimitOperator:
             return element(MathMLTag.Row, [], [
-                naryScript(node.symbol, node.children[0], node.children[1]),
+                limitScripts(node.symbol, node.style.placement, node.children[0], node.children[1]),
                 mathmlNode(node.children[2])
             ]);
         case NotationKind.Accent:
             return mover([["accent", true]], mathmlNode(node.children[0]), mo([], text(ACCENT_MATHML[node.accent])));
+        case NotationKind.Styled:
+            return element(MathMLTag.Style, styleAttrs(node.style), node.children.map(mathmlNode));
     }
 }
 
