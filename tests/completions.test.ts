@@ -3,7 +3,9 @@
 /* eslint-disable no-template-curly-in-string */
 import { test, expect } from "vitest";
 import { completionsAt, parseSnippet } from "#/host/cmp";
-import { describe } from "#/host/language";
+import { COLORS, describe } from "#/host/language";
+import { completionItemView } from "#/host/components/editor.component";
+import { serializeAll } from "#/dom";
 
 // The caret is marked with `|`; returns the completion at that offset with the marker stripped.
 function at(marked: string): ReturnType<typeof completionsAt> {
@@ -64,4 +66,30 @@ test("inside a latex fence, a backslash offers commands; a bare word offers noth
 
 test("outside any formula fence, math/latex tokens are not offered", () => {
     expect(at("# T\n\nsq|\n")).toBe(null);
+});
+
+test("a math color directive offers the supported palette, each with its hex swatch", () => {
+    expect(labels("# T\n\n```math\ncolor(|\n```\n")).toEqual(expect.arrayContaining(["red", "blue", "green", "grey"]));
+    expect(labels("# T\n\n```math\ncolor(re|\n```\n")).toEqual(["red"]);
+    const first = at("# T\n\n```math\ncolor(red|\n```\n")?.items[0];
+    expect(first?.color).toBe("#FF0000");
+    expect(first?.detail).toBe("#FF0000");
+});
+
+test("a latex color directive offers the same palette inside its braces", () => {
+    expect(labels("# T\n\n```latex\n\\textcolor{|\n```\n")).toEqual(expect.arrayContaining(["red", "blue"]));
+    expect(labels("# T\n\n```latex\n\\textcolor{gr|\n```\n")).toEqual(expect.arrayContaining(["green", "gray", "grey"]));
+});
+
+test("once the color name is committed, the palette gives way to the ordinary tokens", () => {
+    expect(at("# T\n\n```math\ncolor(red, |\n```\n")).toBe(null);
+    expect(labels("# T\n\n```math\ncolor(red, sq|\n```\n")).toEqual(["sqrt"]);
+});
+
+test("a color completion renders a swatch painted with its hex", () => {
+    const red = COLORS.find((item) => item.label === "red");
+    if (red === undefined) throw new Error("expected a red color completion");
+    const html = serializeAll([completionItemView(red, 0, false)]);
+    expect(html).toContain("completion-swatch");
+    expect(html).toMatch(/background-color:\s*#FF0000/);
 });

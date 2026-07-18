@@ -195,6 +195,16 @@ export const editorPopupCss = [
     ]),
     rule([".completion-label"], [declaration("color", "#e6edf3")]),
     rule([".completion-detail"], [declaration("color", "#7e8ca0")]),
+    rule([".completion-swatch"], [
+        declaration("display", "inline-block"),
+        declaration("width", "0.75em"),
+        declaration("height", "0.75em"),
+        declaration("margin-right", "0.4rem"),
+        declaration("border-radius", "0.2rem"),
+        declaration("vertical-align", "middle"),
+        // A hairline keeps a white or near-background swatch from vanishing into the popup surface.
+        declaration("border", "1px solid rgba(255, 255, 255, 0.25)")
+    ]),
     rule([".tooltip-title"], [
         declaration("display", "block"),
         declaration("margin-bottom", "0.25rem"),
@@ -208,17 +218,29 @@ export const editorPopupCss = [
     ])
 ] as const;
 
+function swatch(color: string): DomNode {
+    return span({ class: "completion-swatch", style: [declaration("background-color", color)] });
+}
+
+function labelView(item: CompletionItem): DomNode {
+    if (item.color === undefined) return span({ class: "completion-label" }, item.label);
+    return span({ class: "completion-label" }, swatch(item.color), item.label);
+}
+
 export function completionItemView(item: CompletionItem, index: number, active: boolean): DomNode {
     return div(
         { class: active ? "completion-item active" : "completion-item", data: { index: String(index) } },
-        span({ class: "completion-label" }, item.label),
+        labelView(item),
         span({ class: "completion-detail" }, item.detail)
     );
 }
 
 export function tooltipView(item: CompletionItem): ReadonlyArray<DomNode> {
+    const title = item.color === undefined
+        ? span({ class: "tooltip-title" }, item.label)
+        : span({ class: "tooltip-title" }, swatch(item.color), item.label);
     return [
-        span({ class: "tooltip-title" }, item.label),
+        title,
         span({ class: "tooltip-doc" }, item.doc)
     ];
 }

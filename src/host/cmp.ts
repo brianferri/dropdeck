@@ -1,7 +1,9 @@
 import { serializeAll } from "#/dom";
 import { completionItemView, tooltipView } from "#/host/components/editor.component";
 import { requireElement } from "#/host/dom";
-import { CompletionKind, DIRECTIVES, FENCES, FRONTMATTER, FRONTMATTER_VALUES, LATEX_COMMANDS, MATH_TOKENS, SNIPPETS } from "#/host/language";
+import { COLORS, CompletionKind, DIRECTIVES, FENCES, FRONTMATTER, FRONTMATTER_VALUES, LATEX_COMMANDS, MATH_TOKENS, SNIPPETS } from "#/host/language";
+import { ColorFunction } from "#/formula/math";
+import { ColorCommand } from "#/formula/latex";
 import { FormulaNotation, isFormulaNotation } from "#/ir";
 import { has } from "#/support";
 import { isAsciiLetter, isDigit } from "@dropdeck/common";
@@ -71,13 +73,29 @@ function enclosingFormula(source: string, lineStart: number): FormulaNotation | 
     return isFormulaNotation(lang) ? lang : null;
 }
 
+// The name being typed as a color directive's first argument, or null when the caret is not in one. A separator or
+// close means the name is already committed, so the palette no longer applies; a non-letter rules out a color name.
+function colorArgument(prefix: string, opener: string): string | null {
+    const at = prefix.lastIndexOf(opener);
+    if (at < 0) return null;
+    const inner = prefix.slice(at + opener.length);
+    if (inner.includes(",") || inner.includes(")") || inner.includes("}")) return null;
+    const typed = inner.trimStart();
+    for (const ch of typed) if (!isAsciiLetter(ch)) return null;
+    return typed;
+}
+
 function formulaCompletions(notation: FormulaNotation, linePrefix: string, caret: number): Completion | null {
     switch (notation) {
         case FormulaNotation.Latex: {
+            const color = colorArgument(linePrefix, `${ColorCommand.TextColor}{`);
+            if (color !== null) return filterFrom(COLORS, color, caret - color.length, caret);
             const command = trailingLatexCommand(linePrefix);
             return command === null ? null : filterFrom(LATEX_COMMANDS, command, caret - command.length, caret);
         }
         case FormulaNotation.Math: {
+            const color = colorArgument(linePrefix, `${ColorFunction.Color}(`);
+            if (color !== null) return filterFrom(COLORS, color, caret - color.length, caret);
             const token = trailingWord(linePrefix);
             return token === "" ? null : filterFrom(MATH_TOKENS, token, caret - token.length, caret);
         }

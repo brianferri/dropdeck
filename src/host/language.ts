@@ -2,11 +2,13 @@
 // snippet engine, not interpolated, so the template-curly lint does not apply here.
 /* eslint-disable no-template-curly-in-string */
 import { ChartKind } from "#/ir";
+import { COLOR_HEX } from "#/formula";
 import { memberGuard } from "@dropdeck/common";
 import { MathAccent, MathConstant, MathFunction, MathIntegral, MathLimit } from "@dropdeck/math";
 import { LatexAccentCommand } from "@dropdeck/latex";
-import { LatexCommand } from "#/formula/latex";
-import type { NaryCommand } from "#/formula/latex";
+import { ColorFunction, LimitsFunction, MathVariantFunction } from "#/formula/math";
+import { ColorCommand, LatexCommand, LimitsCommand, VariantCommand } from "#/formula/latex";
+import type { BigOperatorCommand } from "#/formula/latex";
 import type { SlideTransition } from "#/animations/spec";
 import type { LayoutHint } from "#/config";
 
@@ -17,15 +19,18 @@ export enum CompletionKind {
     Snippet = "snippet",
     Asset = "asset",
     Math = "math",
-    Latex = "latex"
+    Latex = "latex",
+    Color = "color"
 }
 
+// `color` holds a CSS color the editor paints as a swatch beside the label; only color completions set it.
 export type CompletionItem = {
     readonly label: string,
     readonly insert: string,
     readonly detail: string,
     readonly doc: string,
-    readonly kind: CompletionKind
+    readonly kind: CompletionKind,
+    readonly color?: string
 };
 
 export const DIRECTIVES = [
@@ -220,12 +225,38 @@ const MATH_CONSTANT_INFO = {
     [MathConstant.Ddots]: "A diagonal ellipsis ⋱"
 } as const satisfies Record<MathConstant, string>;
 
+// Font-variant directives restyle their single argument; each maps to a shared `MathVariant` the renderer emits.
+const MATH_VARIANT_INFO = {
+    [MathVariantFunction.Bold]: "Bold weight.",
+    [MathVariantFunction.Italic]: "Italic shape.",
+    [MathVariantFunction.Roman]: "Upright roman shape.",
+    [MathVariantFunction.Bolditalic]: "Bold italic.",
+    [MathVariantFunction.Bb]: "Blackboard bold, for number sets (ℝ).",
+    [MathVariantFunction.Cal]: "Calligraphic script (𝓛).",
+    [MathVariantFunction.Frak]: "Fraktur (𝔤).",
+    [MathVariantFunction.Sans]: "Sans-serif.",
+    [MathVariantFunction.Mono]: "Monospace."
+} as const satisfies Record<MathVariantFunction, string>;
+
+const MATH_COLOR_INFO = {
+    [ColorFunction.Color]: "Color the second argument the color named by the first (`color(red, x)`)."
+} as const satisfies Record<ColorFunction, string>;
+
+// Placement is a style too: these wrap a big operator to override where its bounds sit.
+const MATH_LIMITS_INFO = {
+    [LimitsFunction.Limits]: "Stack the wrapped big operator's bounds above and below it (`limits(int(a, b, f))`).",
+    [LimitsFunction.Nolimits]: "Set the wrapped big operator's bounds beside the sign (`nolimits(sum(i, 1, n, x))`)."
+} as const satisfies Record<LimitsFunction, string>;
+
 function mathTokens(): ReadonlyArray<CompletionItem> {
     const out: Array<CompletionItem> = [];
     for (const [name, info] of Object.entries(MATH_FUNCTION_INFO)) out.push(mathToken(name, info.insert, info.doc));
     for (const [name, info] of Object.entries(MATH_INTEGRAL_INFO)) out.push(mathToken(name, info.insert, info.doc));
     for (const [name, info] of Object.entries(MATH_LIMIT_INFO)) out.push(mathToken(name, info.insert, info.doc));
     for (const [name, info] of Object.entries(MATH_ACCENT_INFO)) out.push(mathToken(name, info.insert, info.doc));
+    for (const [name, doc] of Object.entries(MATH_VARIANT_INFO)) out.push(mathToken(name, `${name}${OPERAND_SNIPPET}`, doc));
+    out.push(mathToken(ColorFunction.Color, "color(${1:red}, ${2:x})$0", MATH_COLOR_INFO[ColorFunction.Color]));
+    for (const [name, doc] of Object.entries(MATH_LIMITS_INFO)) out.push(mathToken(name, `${name}(\${1:op})$0`, doc));
     for (const [name, doc] of Object.entries(MATH_CONSTANT_INFO)) out.push(mathToken(name, name, doc));
     return out;
 }
@@ -415,7 +446,7 @@ const LATEX_COMMAND_INFO = {
 } as const satisfies Record<LatexCommand, string>;
 
 // Big operators take under/over limits, so they insert with a limit snippet; every other command inserts bare.
-// `satisfies ReadonlyArray<NaryCommand>` rejects any command whose glyph the shared IR does not classify as nary.
+// `satisfies ReadonlyArray<BigOperatorCommand>` rejects any command the shared IR does not classify as a big operator.
 const LATEX_LIMIT_SNIPPET = "_{${1:i=1}}^{${2:n}} $0";
 const LATEX_LIMIT_COMMANDS = [
     LatexCommand.Sum,
@@ -432,7 +463,7 @@ const LATEX_LIMIT_COMMANDS = [
     LatexCommand.Oint,
     LatexCommand.Iint,
     LatexCommand.Iiint
-] as const satisfies ReadonlyArray<NaryCommand>;
+] as const satisfies ReadonlyArray<BigOperatorCommand>;
 const isLatexLimitCommand = memberGuard(LATEX_LIMIT_COMMANDS);
 
 // Accents wrap their single argument (`\hat{x}`); `satisfies Record<LatexAccentCommand, ...>` keeps them covered.
@@ -452,19 +483,61 @@ const LATEX_STRUCTURAL: ReadonlyArray<CompletionItem> = [
     latexCommand("\\sqrt", "\\sqrt{${1:x}}$0", "A square root; `\\sqrt[n]{x}` for an nth root.")
 ];
 
+// Font-variant commands restyle their braced argument; each maps to the same `MathVariant` as its math directive.
+const LATEX_VARIANT_INFO = {
+    [VariantCommand.Mathrm]: "Upright roman shape.",
+    [VariantCommand.Mathbf]: "Bold weight.",
+    [VariantCommand.Mathit]: "Italic shape.",
+    [VariantCommand.Boldsymbol]: "Bold italic.",
+    [VariantCommand.Mathbb]: "Blackboard bold, for number sets (ℝ).",
+    [VariantCommand.Mathcal]: "Calligraphic script (𝓛).",
+    [VariantCommand.Mathfrak]: "Fraktur (𝔤).",
+    [VariantCommand.Mathsf]: "Sans-serif.",
+    [VariantCommand.Mathtt]: "Monospace."
+} as const satisfies Record<VariantCommand, string>;
+
+const LATEX_COLOR_INFO = {
+    [ColorCommand.TextColor]: "Color the second group the color named by the first (`\\textcolor{red}{x}`)."
+} as const satisfies Record<ColorCommand, string>;
+
+// `\limits`/`\nolimits` follow a big operator to force its bounds stacked or beside, overriding the glyph default.
+const LATEX_LIMITS_INFO = {
+    [LimitsCommand.Limits]: "Force the preceding big operator's limits to stack above and below it.",
+    [LimitsCommand.Nolimits]: "Force the preceding big operator's limits beside the sign."
+} as const satisfies Record<LimitsCommand, string>;
+
 function latexCommands(): ReadonlyArray<CompletionItem> {
     const out: Array<CompletionItem> = [];
     for (const item of LATEX_STRUCTURAL) out.push(item);
     for (const [command, doc] of Object.entries(LATEX_COMMAND_INFO)) out.push(latexCommand(command, isLatexLimitCommand(command) ? `${command}${LATEX_LIMIT_SNIPPET}` : command, doc));
 
     for (const [command, doc] of Object.entries(LATEX_ACCENT_INFO)) out.push(latexCommand(`\\${command}`, `\\${command}{\${1:x}} $0`, doc));
+    for (const [command, doc] of Object.entries(LATEX_VARIANT_INFO)) out.push(latexCommand(command, `${command}{\${1:x}}$0`, doc));
+    out.push(latexCommand(ColorCommand.TextColor, `${ColorCommand.TextColor}{\${1:red}}{\${2:x}}$0`, LATEX_COLOR_INFO[ColorCommand.TextColor]));
+    for (const [command, doc] of Object.entries(LATEX_LIMITS_INFO)) out.push(latexCommand(command, command, doc));
     return out;
 }
 
 export const LATEX_COMMANDS: ReadonlyArray<CompletionItem> = latexCommands();
 
+// The color-directive argument (`color(<here>, x)`, `\textcolor{<here>}{x}`) draws from the portable palette, so
+// the editor suggests exactly the names that render in both HTML and PowerPoint, each shown with its swatch.
+function colorItem(name: string, hex: string): CompletionItem {
+    const value = `#${hex}`;
+    return {
+        label: name,
+        insert: name,
+        detail: value,
+        doc: `The color \`${name}\` (${value}).`,
+        kind: CompletionKind.Color,
+        color: value
+    };
+}
+
+export const COLORS: ReadonlyArray<CompletionItem> = Object.entries(COLOR_HEX).map(([name, hex]) => colorItem(name, hex));
+
 function colorKey(label: string, doc: string): CompletionItem {
-    return { label, insert: `${label}: \${0:#5cd0b3}`, detail: "colour", doc, kind: CompletionKind.Frontmatter };
+    return { label, insert: `${label}: \${0:#5cd0b3}`, detail: "color", doc, kind: CompletionKind.Frontmatter };
 }
 
 const LAYOUT_DOC = {
@@ -486,17 +559,17 @@ function keyList(docs: Record<string, string>): string {
 
 // Mirror `theme.ts`'s keys -- a key the theme ignores would be a misleading suggestion.
 export const FRONTMATTER = [
-    colorKey("accent", "Primary accent colour -- headings, links, the particle hue."),
-    colorKey("accent2", "Secondary accent colour."),
-    colorKey("accent3", "Tertiary accent colour (alias of `highlight`)."),
-    colorKey("highlight", "Highlight colour, used as the tertiary accent."),
-    colorKey("bg", "Slide background colour."),
-    colorKey("text", "Primary text colour."),
-    colorKey("textSecondary", "Secondary text colour."),
-    colorKey("muted", "Muted text colour."),
-    colorKey("surface", "Card/surface fill colour."),
-    colorKey("border", "Surface border colour."),
-    colorKey("track", "Bar/progress track colour."),
+    colorKey("accent", "Primary accent color -- headings, links, the particle hue."),
+    colorKey("accent2", "Secondary accent color."),
+    colorKey("accent3", "Tertiary accent color (alias of `highlight`)."),
+    colorKey("highlight", "Highlight color, used as the tertiary accent."),
+    colorKey("bg", "Slide background color."),
+    colorKey("text", "Primary text color."),
+    colorKey("textSecondary", "Secondary text color."),
+    colorKey("muted", "Muted text color."),
+    colorKey("surface", "Card/surface fill color."),
+    colorKey("border", "Surface border color."),
+    colorKey("track", "Bar/progress track color."),
     {
         label: "dark",
         insert: "dark: ${0:true}",
@@ -563,7 +636,7 @@ function enumItems(docs: Record<string, string>): ReadonlyArray<CompletionItem> 
     return Object.entries(docs).map(([value, doc]) => valueItem(value, doc));
 }
 
-// Keys whose value is a fixed set; the editor offers these once the caret is past the `key:`. Colour keys are
+// Keys whose value is a fixed set; the editor offers these once the caret is past the `key:`. Color keys are
 // absent on purpose -- a hex is free-form, and the editor swatches it rather than suggesting from a list.
 export const FRONTMATTER_VALUES = {
     layout: enumItems(LAYOUT_DOC),
