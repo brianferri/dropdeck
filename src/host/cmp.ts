@@ -2,7 +2,7 @@ import { serializeAll } from "#/dom";
 import { completionItemView, tooltipView } from "#/host/components/editor.component";
 import { requireElement } from "#/host/dom";
 import { CompletionKind, DIRECTIVES, FENCES, FRONTMATTER, FRONTMATTER_VALUES, LATEX_COMMANDS, MATH_TOKENS, SNIPPETS } from "#/host/language";
-import { FormulaNotation } from "#/ir";
+import { FormulaNotation, isFormulaNotation } from "#/ir";
 import { has } from "#/support";
 import { memberGuard } from "@dropdeck/common";
 import type { CompletionItem } from "#/host/language";
@@ -61,8 +61,6 @@ function filterFrom(items: ReadonlyArray<CompletionItem>, typed: string, from: n
     if (matched.length === 0) return null;
     return { items: matched, from, to };
 }
-
-const isFormulaNotation = memberGuard<FormulaNotation>(Object.values(FormulaNotation));
 
 // Each ``` toggles in or out of a fence, so the last state before the line says which body -- if any -- holds the caret.
 function enclosingFormula(source: string, lineStart: number): FormulaNotation | null {

@@ -1,5 +1,5 @@
 import { RawBlockKind, tokenize } from "#/front/lexer";
-import { BlockKind, ChartKind, FormulaNotation } from "#/ir";
+import { BlockKind, ChartKind, isFormulaNotation } from "#/ir";
 import { isWhitespace, memberGuard } from "@dropdeck/common";
 import type { BarRow, Block, ChartData, ChartSeries, MetricRow, Slide } from "#/ir";
 import type { DeckConfig } from "#/config";
@@ -160,8 +160,6 @@ function chartFenceKind(lang: string): ChartKind | null {
     if (!isChartKind(kind)) return null;
     return kind;
 }
-
-const isFormulaNotation = memberGuard<FormulaNotation>(Object.values(FormulaNotation));
 
 // The header row names the series (its leading cell is the axis corner, dropped); each later row is a category
 // followed by one numeric cell per series.

@@ -1,3 +1,4 @@
+import { memberGuard } from "@dropdeck/common";
 import type { DeckConfig } from "#/config";
 
 export enum BlockKind {
@@ -16,6 +17,7 @@ export enum FormulaNotation {
     Math = "math",
     Latex = "latex"
 }
+export const isFormulaNotation = memberGuard<FormulaNotation>(Object.values(FormulaNotation));
 
 export enum SlideLayout {
     Cover = "cover",
