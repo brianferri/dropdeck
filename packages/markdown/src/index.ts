@@ -35,3 +35,4 @@ export type { Token } from "./typings/tokens.js";
 export { parse, parseBlockLines, parseInlines } from "./Parser.js";
 export type { Parse, ParseInline } from "./typings/parse.js";
 export { serialize } from "./Serializer.js";
+export type { Serialize } from "./typings/serialize.js";

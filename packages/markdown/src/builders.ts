@@ -50,7 +50,7 @@ export function heading<const L extends HeadingLevel, const C extends Inlines>(l
     return { kind: NodeKind.Heading, level, children };
 }
 
-export function codeBlock<const Info extends string, const Literal extends string>(fenced: boolean, info: Info, literal: Literal): CodeBlockNode<Info, Literal> {
+export function codeBlock<const Info extends string, const Literal extends string, const Fenced extends boolean>(fenced: Fenced, info: Info, literal: Literal): CodeBlockNode<Info, Literal, Fenced> {
     return { kind: NodeKind.CodeBlock, fenced, info, literal };
 }
 
@@ -70,7 +70,13 @@ export function listItem<const C extends Blocks>(children: C): ListItemNode<C> {
     return { kind: NodeKind.ListItem, children };
 }
 
-export function list<const Items extends ReadonlyArray<ListItemNode>>(ordered: boolean, start: number, tight: boolean, marker: ListMarker | ListDelimiter, children: Items): ListNode<Items> {
+export function list<
+    const Items extends ReadonlyArray<ListItemNode>,
+    const Ordered extends boolean,
+    const Start extends number,
+    const Tight extends boolean,
+    const Marker extends ListMarker | ListDelimiter
+>(ordered: Ordered, start: Start, tight: Tight, marker: Marker, children: Items): ListNode<Items, Ordered, Start, Tight, Marker> {
     return { kind: NodeKind.List, ordered, start, tight, marker, children };
 }
 

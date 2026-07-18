@@ -1,5 +1,6 @@
 import { NodeKind } from "./Specification.js";
 import type { BlockNode, Blocks, DocumentNode, InlineNode, Inlines, ListNode } from "./typings/nodes.js";
+import type { Serialize } from "./typings/serialize.js";
 
 function serializeInline(node: InlineNode): string {
     switch (node.kind) {
@@ -48,6 +49,6 @@ function serializeBlocks(nodes: Blocks): string {
     return nodes.map(serializeBlock).join("\n\n");
 }
 
-export function serialize(document: DocumentNode): string {
-    return serializeBlocks(document.children);
+export function serialize<const N extends DocumentNode>(document: N): Serialize<N> {
+    return serializeBlocks(document.children) as Serialize<N>;
 }

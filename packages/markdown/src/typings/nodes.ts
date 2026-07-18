@@ -29,14 +29,19 @@ export type Inlines = ReadonlyArray<InlineNode>;
 export type ThematicBreakNode = { readonly kind: NodeKind.ThematicBreak };
 export type HeadingNode<L extends HeadingLevel = HeadingLevel, C extends Inlines = Inlines> =
     { readonly kind: NodeKind.Heading, readonly level: L, readonly children: C };
-export type CodeBlockNode<Info extends string = string, Literal extends string = string> =
-    { readonly kind: NodeKind.CodeBlock, readonly fenced: boolean, readonly info: Info, readonly literal: Literal };
+export type CodeBlockNode<Info extends string = string, Literal extends string = string, Fenced extends boolean = boolean> =
+    { readonly kind: NodeKind.CodeBlock, readonly fenced: Fenced, readonly info: Info, readonly literal: Literal };
 export type HtmlBlockNode<Literal extends string = string> = { readonly kind: NodeKind.HtmlBlock, readonly literal: Literal };
 export type ParagraphNode<C extends Inlines = Inlines> = { readonly kind: NodeKind.Paragraph, readonly children: C };
 export type BlockQuoteNode<C extends Blocks = Blocks> = { readonly kind: NodeKind.BlockQuote, readonly children: C };
 export type ListItemNode<C extends Blocks = Blocks> = { readonly kind: NodeKind.ListItem, readonly children: C };
-export type ListNode<Items extends ReadonlyArray<ListItemNode> = ReadonlyArray<ListItemNode>> =
-    { readonly kind: NodeKind.List, readonly ordered: boolean, readonly start: number, readonly tight: boolean, readonly marker: ListMarker | ListDelimiter, readonly children: Items };
+export type ListNode<
+    Items extends ReadonlyArray<ListItemNode> = ReadonlyArray<ListItemNode>,
+    Ordered extends boolean = boolean,
+    Start extends number = number,
+    Tight extends boolean = boolean,
+    Marker extends ListMarker | ListDelimiter = ListMarker | ListDelimiter
+> = { readonly kind: NodeKind.List, readonly ordered: Ordered, readonly start: Start, readonly tight: Tight, readonly marker: Marker, readonly children: Items };
 
 export type BlockNode =
     | ThematicBreakNode
