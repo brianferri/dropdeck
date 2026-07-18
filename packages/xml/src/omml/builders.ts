@@ -3,6 +3,7 @@ import type { Content } from "../typings/nodes.js";
 import type { Acc, Delimiter, Frac, Func, LimLow, Nary, OMath, OMathPara, Root, Run, SSub, SSup, Sqrt } from "../typings/omml.js";
 
 export const OMML_NS = "http://schemas.openxmlformats.org/officeDocument/2006/math";
+export const WML_NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
 
 export enum OmmlTag {
     Run = "m:r",
@@ -23,6 +24,11 @@ export enum OmmlTag {
     DelimiterPr = "m:dPr",
     BeginChar = "m:begChr",
     EndChar = "m:endChr",
+    RunProps = "m:rPr",
+    MathStyle = "m:sty",
+    Script = "m:scr",
+    WordProps = "w:rPr",
+    Color = "w:color",
     Nary = "m:nary",
     NaryPr = "m:naryPr",
     Char = "m:chr",

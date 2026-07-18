@@ -18,7 +18,8 @@ export enum MathMLTag {
     Under = "munder",
     Over = "mover",
     UnderOver = "munderover",
-    SubSup = "msubsup"
+    SubSup = "msubsup",
+    Style = "mstyle"
 }
 
 function mathTag<const Tag extends MathMLTag>(tag: Tag) {
@@ -42,3 +43,4 @@ export const munder = mathTag(MathMLTag.Under);
 export const mover = mathTag(MathMLTag.Over);
 export const munderover = mathTag(MathMLTag.UnderOver);
 export const msubsup = mathTag(MathMLTag.SubSup);
+export const mstyle = mathTag(MathMLTag.Style);
