@@ -1,4 +1,5 @@
 import { TokenKind, tokenize } from "@dropdeck/markdown";
+import { isAsciiLetter, isHexDigit } from "@dropdeck/common";
 import { serializeAll, span, text as textNode } from "#/dom";
 import { declaration } from "@dropdeck/html/css";
 import { parseHex } from "#/hex";
@@ -23,26 +24,14 @@ function isDirective(value: string): boolean {
 // A `color` hit carries its hex so the overlay can paint that swatch behind the code; the rest only need a class.
 type InlineHit = { readonly end: number, readonly cls: TokenClass, readonly color?: string };
 
-function isHexDigit(ch: string | undefined): boolean {
-    if (ch === undefined) return false;
-    if (ch >= "0" && ch <= "9") return true;
-    if (ch >= "a" && ch <= "f") return true;
-    return ch >= "A" && ch <= "F";
-}
-
-function isLetter(ch: string | undefined): boolean {
-    if (ch === undefined) return false;
-    if (ch >= "a" && ch <= "z") return true;
-    return ch >= "A" && ch <= "Z";
-}
-
 // A `#rgb`/`#rrggbb` colour, but only when it stands alone -- a non-hex letter right after means a longer word
-// (e.g. an id like `#header`), not a colour, so it falls through to plain text.
+// (e.g. an id like `#header`), not a colour, so it falls through to plain text. The hex scan stays in-bounds
+// because `isHexDigit` reads past the string end as a throw, not a miss.
 function hexColor(value: string, at: number): InlineHit | null {
     let count = 0;
-    while (isHexDigit(value[at + 1 + count])) count += 1;
+    while (at + 1 + count < value.length && isHexDigit(value[at + 1 + count])) count += 1;
     if (count !== 3 && count !== 6) return null;
-    if (isLetter(value[at + 1 + count])) return null;
+    if (isAsciiLetter(value[at + 1 + count])) return null;
     return { end: at + 1 + count, cls: "color", color: value.slice(at, at + 1 + count) };
 }
 

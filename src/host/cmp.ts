@@ -4,7 +4,7 @@ import { requireElement } from "#/host/dom";
 import { CompletionKind, DIRECTIVES, FENCES, FRONTMATTER, FRONTMATTER_VALUES, LATEX_COMMANDS, MATH_TOKENS, SNIPPETS } from "#/host/language";
 import { FormulaNotation, isFormulaNotation } from "#/ir";
 import { has } from "#/support";
-import { memberGuard } from "@dropdeck/common";
+import { isAsciiLetter, isDigit } from "@dropdeck/common";
 import type { CompletionItem } from "#/host/language";
 
 export type Completion = {
@@ -14,9 +14,7 @@ export type Completion = {
 };
 
 function isWordChar(ch: string): boolean {
-    if (ch >= "a" && ch <= "z") return true;
-    if (ch >= "A" && ch <= "Z") return true;
-    if (ch >= "0" && ch <= "9") return true;
+    if (isAsciiLetter(ch) || isDigit(ch)) return true;
     return ch === "-" || ch === "_";
 }
 
@@ -146,7 +144,7 @@ function bracedStop(insert: string, at: number): { order: number, placeholder: s
     if (insert[at + 1] !== "{") return null;
     let cursor = at + 2;
     let digits = "";
-    while (cursor < insert.length && insert[cursor] >= "0" && insert[cursor] <= "9") {
+    while (cursor < insert.length && isDigit(insert[cursor])) {
         digits += insert[cursor];
         cursor += 1;
     }

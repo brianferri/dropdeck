@@ -4,7 +4,7 @@
 import type { BlockKind, ChartKind } from "#/ir";
 import type { Block, Card, Deck, Slide } from "#/ir";
 import type { DeckConfig } from "#/config";
-import type { Cell, Contains, FromEntries, Normalize, SplitOn, Trim, TrimEnd, TrimStart } from "#/front/strings";
+import type { AlphaChar, Cell, Contains, FromEntries, Normalize, SplitOn, Trim, TrimEnd, TrimStart } from "#/front/strings";
 
 // Aliased because a backtick cannot appear inside a template-literal type.
 type Fence = "```";
@@ -19,12 +19,7 @@ type HeadingTitle<Line extends string> =
 
 // A per-slide front-matter chunk (`ident:`) is the signal to widen the whole deck, since the runtime pairs the
 // chunk with the next slide rather than treating it as a slide of its own.
-type IdentChar =
-    | "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p"
-    | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z"
-    | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O" | "P"
-    | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z"
-    | "_";
+type IdentChar = AlphaChar | "_";
 type LooksKeyValue<Line extends string> =
     Line extends `${infer First}${string}:${string}`
         ? First extends IdentChar ? (Contains<Line, " "> extends true ? Contains<Line, ": "> : true) : false

@@ -1,6 +1,6 @@
 import { RawBlockKind, tokenize } from "#/front/lexer";
 import { BlockKind, ChartKind, isFormulaNotation } from "#/ir";
-import { isWhitespace, memberGuard } from "@dropdeck/common";
+import { isAsciiLetter, isDigit, isWhitespace, memberGuard } from "@dropdeck/common";
 import type { BarRow, Block, ChartData, ChartSeries, MetricRow, Slide } from "#/ir";
 import type { DeckConfig } from "#/config";
 import type { ParseDeck } from "#/front/Parse";
@@ -8,14 +8,11 @@ import type { ParseDeck } from "#/front/Parse";
 const HTML_BLOCK_TAGS = ["div", "section", "video", "table", "figure", "aside", "header", "footer", "main", "article", "iframe"];
 
 function isKeyStart(ch: string): boolean {
-    if (ch >= "a" && ch <= "z") return true;
-    if (ch >= "A" && ch <= "Z") return true;
-    return ch === "_";
+    return isAsciiLetter(ch) || ch === "_";
 }
 
 function isKeyChar(ch: string): boolean {
-    if (isKeyStart(ch)) return true;
-    if (ch >= "0" && ch <= "9") return true;
+    if (isKeyStart(ch) || isDigit(ch)) return true;
     return ch === "-";
 }
 
@@ -65,11 +62,7 @@ function looksYaml(text: string): boolean {
 }
 
 function hasAsciiAlnum(text: string): boolean {
-    for (const ch of text) {
-        if (ch >= "a" && ch <= "z") return true;
-        if (ch >= "A" && ch <= "Z") return true;
-        if (ch >= "0" && ch <= "9") return true;
-    }
+    for (const ch of text) if (isAsciiLetter(ch) || isDigit(ch)) return true;
     return false;
 }
 
