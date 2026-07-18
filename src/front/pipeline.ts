@@ -1,4 +1,5 @@
 import { parse } from "#/front/parser";
+import type { ParseDeck } from "#/front/Parse";
 import type { Deck } from "#/ir";
 
 export enum DiagnosticSeverity {
@@ -11,12 +12,12 @@ export type Diagnostic = {
     message: string
 };
 
-export type CompileResult = {
-    deck: Deck,
+export type CompileResult<D extends Deck = Deck> = {
+    deck: D,
     diagnostics: Array<Diagnostic>
 };
 
-export function compile(source: string): CompileResult {
+export function compile<const S extends string>(source: S): CompileResult<ParseDeck<S>> {
     const deck = parse(source);
     const diagnostics: Array<Diagnostic> = [];
     if (deck.slides.length === 0)
