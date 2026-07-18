@@ -1,6 +1,7 @@
 // CSS surfaces are translucent (rgba over the page); OOXML fills are opaque, so those are flattened against the
 // background here.
 
+import { isDarkConfig } from "#/config";
 import type { DeckConfig } from "#/config";
 
 type Rgb = readonly [number, number, number];
@@ -32,7 +33,7 @@ const SLATE: Rgb = [15, 23, 42];
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type -- inferred from the returned object so `Palette` cannot drift
 export function resolvePalette(config: DeckConfig) {
-    const dark = config.dark === "true" || config.theme === "dark" || config.colorSchema === "dark";
+    const dark = isDarkConfig(config);
     const bgHex = pick(config.bg, "#0b1220", "#f8fafc", dark);
     const bg = parseHex(bgHex, dark ? [11, 18, 32] : [248, 250, 252]);
     const accent1 = parseHex(pick(config.accent, "#5cd0b3", "#0f766e", dark), WHITE);

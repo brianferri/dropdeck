@@ -1,4 +1,5 @@
 import { declaration } from "@dropdeck/html/css";
+import { isDarkConfig } from "#/config";
 import type { DeckConfig } from "#/config";
 import type { Declaration } from "@dropdeck/html/css";
 
@@ -35,7 +36,7 @@ function loadFont(name: string | undefined): void {
 }
 
 function themeValues(config: DeckConfig): ThemeValues {
-    const dark = config.dark === "true" || config.theme === "dark" || config.colorSchema === "dark";
+    const dark = isDarkConfig(config);
     const vars: Array<readonly [string, string]> = [];
     function set(key: string, value: string | null | undefined): void {
         if (value) vars.push([key, value]);
