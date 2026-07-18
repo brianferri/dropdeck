@@ -1,4 +1,5 @@
 import { declaration } from "@dropdeck/html/css";
+import { parseHex } from "#/hex";
 import { isDarkConfig } from "#/config";
 import type { DeckConfig } from "#/config";
 import type { Declaration } from "@dropdeck/html/css";
@@ -17,10 +18,8 @@ type ThemeValues = {
 };
 
 export function hexToRgb(hex: string | undefined): string | null {
-    const match = (/^#?([0-9a-f]{6})$/i).exec((hex ?? "").trim());
-    if (match?.[1] === undefined) return null;
-    const value = parseInt(match[1], 16);
-    return `${value >> 16},${(value >> 8) & 255},${value & 255}`;
+    const rgb = parseHex((hex ?? "").trim());
+    return rgb === null ? null : rgb.join(",");
 }
 
 function loadFont(name: string | undefined): void {

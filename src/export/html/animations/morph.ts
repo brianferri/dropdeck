@@ -1,5 +1,6 @@
 import { numberList } from "@dropdeck/xml/svg";
 import { flipRest, flipTransform, origin, rgbColor, transitionOf } from "#/export/html/animations/css";
+import { parseHex } from "#/hex";
 import { TRANSITION_MS, morphKey } from "#/animations/spec";
 
 type Morphable = HTMLElement | SVGElement;
@@ -108,19 +109,9 @@ function clearHintOn(el: Morphable): void {
     el.addEventListener("transitionend", clear);
 }
 
-function parseHexColor(value: string): [number, number, number] | null {
-    if (!value.startsWith("#")) return null;
-    const hex = value.length === 4 ? value[1] + value[1] + value[2] + value[2] + value[3] + value[3] : value.slice(1);
-    if (hex.length !== 6) return null;
-    const packed = parseInt(hex, 16);
-    if (Number.isNaN(packed)) return null;
-    return [(packed >> 16) & 255, (packed >> 8) & 255, packed & 255];
-}
-
 // Handles both the hex an author writes and the `rgb(..)` a running tween leaves on the attribute mid-flight.
 function parseColor(value: string): [number, number, number] | null {
-    const hex = parseHexColor(value);
-    if (hex !== null) return hex;
+    if (value.startsWith("#")) return parseHex(value);
     if (!value.startsWith("rgb")) return null;
     const parts = value.slice(value.indexOf("(") + 1, value.indexOf(")")).split(",");
     if (parts.length < 3) return null;

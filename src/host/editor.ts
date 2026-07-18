@@ -1,6 +1,7 @@
 import { TokenKind, tokenize } from "@dropdeck/markdown";
 import { serializeAll, span, text as textNode } from "#/dom";
 import { declaration } from "@dropdeck/html/css";
+import { parseHex } from "#/hex";
 import { slideStarts } from "#/front";
 import { mountCompletions } from "#/host/cmp";
 import { tooltipView } from "#/host/components/editor.component";
@@ -46,14 +47,8 @@ function hexColor(value: string, at: number): InlineHit | null {
 }
 
 function hexToRgb(hex: string): { r: number, g: number, b: number } | null {
-    let body = hex.slice(1);
-    if (body.length === 3) body = body[0] + body[0] + body[1] + body[1] + body[2] + body[2];
-    if (body.length !== 6) return null;
-    const r = parseInt(body.slice(0, 2), 16);
-    const g = parseInt(body.slice(2, 4), 16);
-    const b = parseInt(body.slice(4, 6), 16);
-    if (Number.isNaN(r) || Number.isNaN(g) || Number.isNaN(b)) return null;
-    return { r, g, b };
+    const rgb = parseHex(hex);
+    return rgb === null ? null : { r: rgb[0], g: rgb[1], b: rgb[2] };
 }
 
 // YIQ brightness picks black ink on light swatches and white on dark ones, so the hex code stays legible on it.

@@ -1,6 +1,7 @@
 import { attribute, childElements } from "@dropdeck/html";
 import { memberGuard } from "@dropdeck/common";
 import { numberList } from "@dropdeck/xml/svg";
+import { expandHex } from "#/hex";
 import { customShape, presetShape } from "#/export/pptx/build";
 import { morphName } from "#/animations/spec";
 import type { ElementNode } from "@dropdeck/html";
@@ -20,8 +21,7 @@ function attrNumber(element: ElementNode, name: string, fallback: number): numbe
 // `#5cd0b3` and `#5cb` both become the 6-hex `srgbClr` wants; a non-hex colour (a name, `none`) has no fill.
 function hexColor(value: string | null): string | null {
     if (value?.startsWith("#") !== true) return null;
-    const hex = value.length === 4 ? value[1] + value[1] + value[2] + value[2] + value[3] + value[3] : value.slice(1);
-    return hex.length === 6 ? hex : null;
+    return expandHex(value);
 }
 
 function descendants(root: ElementNode): Array<ElementNode> {

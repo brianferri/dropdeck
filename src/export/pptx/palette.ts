@@ -1,16 +1,14 @@
 // CSS surfaces are translucent (rgba over the page); OOXML fills are opaque, so those are flattened against the
 // background here.
 
+import { parseHex as parseHexRgb } from "#/hex";
 import { isDarkConfig } from "#/config";
 import type { DeckConfig } from "#/config";
 
 type Rgb = readonly [number, number, number];
 
 function parseHex(value: string, fallback: Rgb): Rgb {
-    const match = (/^#?([0-9a-f]{6})$/i).exec(value.trim());
-    if (!match) return fallback;
-    const packed = parseInt(match[1], 16);
-    return [(packed >> 16) & 255, (packed >> 8) & 255, packed & 255];
+    return parseHexRgb(value.trim()) ?? fallback;
 }
 
 function toHex(rgb: Rgb): string {
