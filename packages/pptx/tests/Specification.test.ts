@@ -3,10 +3,7 @@ import assert from "node:assert/strict";
 import { NamespaceByPrefix, Namespace } from "../src/oox.js";
 import type { ParseQName, QName } from "../src/oox.js";
 import type { CT_Point2D, CT_Transform2D, ValidateHexColor } from "../src/typings/drawingml.js";
-
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends
-(<T>() => T extends B ? 1 : 2) ? true : false;
-type Expect<T extends true> = T;
+import type { Equal, Expect } from "@dropdeck/common";
 
 export type TypeLevelChecks = [
     Expect<Equal<QName<"a", "off">, "a:off">>,

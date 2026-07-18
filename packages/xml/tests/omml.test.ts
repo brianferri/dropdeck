@@ -3,9 +3,7 @@ import assert from "node:assert/strict";
 import { xml } from "../src/index.js";
 import { delimiter, frac, nthRoot, oMath, oMathPara, run, sSub, sSup, sqrt } from "../src/omml/index.js";
 import type { Serialize } from "../src/index.js";
-
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;
-type Expect<T extends true> = T;
+import type { Equal, Expect } from "@dropdeck/common";
 
 const token = run("x");
 const fraction = frac([run("a")], [run("b")]);

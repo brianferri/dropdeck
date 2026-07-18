@@ -5,10 +5,7 @@ import type { Serialize } from "../src/oox.js";
 import { bodyPr, ext, off, paragraph, prstGeom, run, solidFill, srgbClr, xfrm } from "../src/drawingml/builders.js";
 import { cNvPr, cSld, grpSpPr, nvGrpSpPr, nvSpPr, slide, sp, spPr, spTree, txBody } from "../src/presentationml/builders.js";
 import type { CT_Slide } from "../src/typings/presentationml.js";
-
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends
-(<T>() => T extends B ? 1 : 2) ? true : false;
-type Expect<T extends true> = T;
+import type { Equal, Expect } from "@dropdeck/common";
 
 type TitleCNvPr = ReturnType<typeof cNvPr<2, "Title">>;
 

@@ -21,10 +21,7 @@ import {
 } from "../src/drawingml/chart/builders.js";
 import { ST_BarDir } from "../src/drawingml/chart/Specification.js";
 import type { Serialize } from "../src/oox.js";
-
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends
-(<T>() => T extends B ? 1 : 2) ? true : false;
-type Expect<T extends true> = T;
+import type { Equal, Expect } from "@dropdeck/common";
 
 // A leaf builder keeps its literal `val` and `local` through to the serializer -- narrow, not `<c:barDir val="${string}">`.
 const barDirNode = cval("barDir", ST_BarDir.Col);

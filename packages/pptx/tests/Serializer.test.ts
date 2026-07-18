@@ -3,10 +3,7 @@ import assert from "node:assert/strict";
 import { text, xml } from "../src/oox.js";
 import type { Element, Serialize, Text } from "../src/oox.js";
 import { ext, off, solidFill, srgbClr, xfrm } from "../src/drawingml/builders.js";
-
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends
-(<T>() => T extends B ? 1 : 2) ? true : false;
-type Expect<T extends true> = T;
+import type { Equal, Expect } from "@dropdeck/common";
 
 // Derived from the builders, not hand-written, so these prove what `off`/`srgbClr`/`solidFill` actually infer.
 type OffNode = ReturnType<typeof off<914400, 0>>;

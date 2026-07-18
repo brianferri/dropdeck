@@ -3,9 +3,7 @@ import assert from "node:assert/strict";
 import { text, xml } from "../src/index.js";
 import { circle, g, path, rect, svg, svgText, SVG_NS } from "../src/svg/index.js";
 import type { Serialize } from "../src/index.js";
-
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;
-type Expect<T extends true> = T;
+import type { Equal, Expect } from "@dropdeck/common";
 
 const dot = circle([["cx", 40], ["cy", 40], ["r", 20], ["fill", "red"]]);
 const box = rect([["x", 0], ["y", 0], ["width", 100], ["height", 50]]);

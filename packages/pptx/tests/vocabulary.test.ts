@@ -5,10 +5,7 @@ import type { Serialize } from "../src/oox.js";
 import { bodyPr, ext, gridCol, latin, off, paragraph, prstGeom, roundRect, rPr, run, solidFill, srgbClr, tbl, tblGrid, tc, tr, txBodyA, xfrm } from "../src/drawingml/builders.js";
 import { cNvPr, fade, nvPicPr, pic, picBlipFill, spPr, transition, wipe } from "../src/presentationml/builders.js";
 import { ST_TransitionSideDirectionType, ST_TransitionSpeed } from "../src/presentationml/Specification.js";
-
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends
-(<T>() => T extends B ? 1 : 2) ? true : false;
-type Expect<T extends true> = T;
+import type { Equal, Expect } from "@dropdeck/common";
 
 const accent = "7BEFEB";
 const colWidth = 4000000;

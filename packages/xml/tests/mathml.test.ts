@@ -3,9 +3,7 @@ import assert from "node:assert/strict";
 import { text, xml } from "../src/index.js";
 import { MATHML_NS, math, mfrac, mi, mn, mo, mroot, mrow, msqrt, msub, msup } from "../src/mathml/index.js";
 import type { Serialize } from "../src/index.js";
-
-type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends (<T>() => T extends B ? 1 : 2) ? true : false;
-type Expect<T extends true> = T;
+import type { Equal, Expect } from "@dropdeck/common";
 
 const frac = mfrac([], mi([], text("a")), mi([], text("b")));
 const power = msup([], mi([], text("x")), mn([], text("2")));
