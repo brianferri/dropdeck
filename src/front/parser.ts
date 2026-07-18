@@ -220,24 +220,29 @@ function parseBlocks(text: string): Array<Block> {
 
     const blocks: Array<Block> = [];
     for (const raw of tokenize(text)) {
-        if (raw.kind === RawBlockKind.Cards)
-            blocks.push({ kind: BlockKind.Cards, cards: raw.cards });
-        else if (raw.kind === RawBlockKind.Fence) {
-            if (raw.lang === "metrics") blocks.push({ kind: BlockKind.Metrics, rows: parseMetricRows(raw.content) });
-            else if (raw.lang === "bars") blocks.push({ kind: BlockKind.Bars, rows: parseBarRows(raw.content) });
-            else if (isFormulaNotation(raw.lang)) {
-                blocks.push({
-                    kind: BlockKind.Formula,
-                    notation: raw.lang,
-                    source: raw.content.trim()
-                });
-            } else {
-                const chartKind = chartFenceKind(raw.lang);
-                if (chartKind !== null) blocks.push({ kind: BlockKind.Chart, chart: parseChartData(chartKind, raw.content) });
-                else blocks.push({ kind: BlockKind.Code, lang: raw.lang, content: raw.content });
-            }
-        } else
-            blocks.push({ kind: BlockKind.Prose, markdown: raw.content });
+        switch (raw.kind) {
+            case RawBlockKind.Cards:
+                blocks.push({ kind: BlockKind.Cards, cards: raw.cards });
+                break;
+            case RawBlockKind.Fence:
+                if (raw.lang === "metrics") blocks.push({ kind: BlockKind.Metrics, rows: parseMetricRows(raw.content) });
+                else if (raw.lang === "bars") blocks.push({ kind: BlockKind.Bars, rows: parseBarRows(raw.content) });
+                else if (isFormulaNotation(raw.lang)) {
+                    blocks.push({
+                        kind: BlockKind.Formula,
+                        notation: raw.lang,
+                        source: raw.content.trim()
+                    });
+                } else {
+                    const chartKind = chartFenceKind(raw.lang);
+                    if (chartKind !== null) blocks.push({ kind: BlockKind.Chart, chart: parseChartData(chartKind, raw.content) });
+                    else blocks.push({ kind: BlockKind.Code, lang: raw.lang, content: raw.content });
+                }
+                break;
+            case RawBlockKind.Text:
+                blocks.push({ kind: BlockKind.Prose, markdown: raw.content });
+                break;
+        }
     }
     return blocks;
 }

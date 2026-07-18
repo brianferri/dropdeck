@@ -20,7 +20,14 @@ function stackTotalMax(data: ChartData): number {
 // Round the axis maximum up to a clean value (e.g. 240 -> 300) so bars read against a sensible scale. A stacked
 // chart scales to the tallest column total rather than the tallest single value.
 export function chartMax(data: ChartData): number {
-    if (data.kind === ChartKind.Stacked) return niceCeil(stackTotalMax(data));
+    switch (data.kind) {
+        case ChartKind.Stacked: return niceCeil(stackTotalMax(data));
+        case ChartKind.Bars:
+        case ChartKind.Line:
+        case ChartKind.Area:
+        case ChartKind.Pie:
+            break;
+    }
     let valueMax = 0;
     for (const series of data.series) for (const value of series.values) valueMax = Math.max(valueMax, value);
     return niceCeil(valueMax);

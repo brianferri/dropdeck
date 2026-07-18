@@ -489,10 +489,15 @@ function headingEl(element: ElementNode, embed: Embed, x: number, y: number, wid
     const content = textContent(element);
     // The slide's own `#` title is extracted earlier, so a body `<h1>` is an authored hero line that always
     // centres in the accent colour rather than following the slide's alignment.
-    if (tag === HtmlTag.H1) {
-        const sizePx = fontSizePx(element, 44);
-        const height = Math.round(sizePx * 1.2);
-        return lowered([runBox(nextId, x, y, width, height, Anchor.Center, Align.Center, content, { sizePx, bold: true, color: palette.accent1, font: palette.display }, undefined, morphName(content))], height);
+    switch (tag) {
+        case HtmlTag.H1: {
+            const sizePx = fontSizePx(element, 44);
+            const height = Math.round(sizePx * 1.2);
+            const style: RunStyle = { sizePx, bold: true, color: palette.accent1, font: palette.display };
+            return lowered([runBox(nextId, x, y, width, height, Anchor.Center, Align.Center, content, style, undefined, morphName(content))], height);
+        }
+        default:
+            break;
     }
     const sizePx = fontSizePx(element, tag === HtmlTag.H2 ? 28 : 22);
     const color = tag === HtmlTag.H3 ? palette.accent1 : palette.text;
@@ -609,7 +614,12 @@ function hasBlockChild(element: ElementNode): boolean {
 }
 
 function isWrapper(element: ElementNode): boolean {
-    if (element.tag !== HtmlTag.Div) return false;
+    switch (element.tag) {
+        case HtmlTag.Div:
+            break;
+        default:
+            return false;
+    }
     if (isGrid(element)) return false;
     if (isNote(element)) return false;
     return hasBlockChild(element);
@@ -661,17 +671,29 @@ function codeLineEl(element: ElementNode, embed: Embed, x: number, y: number, wi
 function lowerElement(element: ElementNode, embed: Embed, x: number, y: number, width: number, align: Align): Lowered {
     const { tag } = element;
     if (isHeadingTag(tag)) return headingEl(element, embed, x, y, width, align);
-    if (tag === HtmlTag.P) return paragraphEl(element, embed, x, y, width, align);
-    if (tag === HtmlTag.Ul || tag === HtmlTag.Ol) return lowerList(element, embed, x, y, width);
-    if (tag === HtmlTag.Blockquote) return blockquoteEl(element, embed, x, y, width, align);
-    if (tag === HtmlTag.Pre) return lowerCode(textContent(element), embed, x, y, width);
-    if (tag === HtmlTag.Code) return codeLineEl(element, embed, x, y, width, align);
-    if (tag === HtmlTag.Table) return tableEl(element, embed, x, y, width);
-    if (tag === HtmlTag.Img) return lowerImage(element, embed, x, y, width);
-    if (tag === HtmlTag.Svg) return lowerSvg(element, embed, x, y, width);
-    if (tag === HtmlTag.Div && isGrid(element)) return lowerGrid(childElements(element), gridColumns(element), embed, x, y, width, gridAlign(element, align), gapOf(element, GRID_GAP));
-    if (tag === HtmlTag.Div && isNote(element)) return noteEl(element, embed, x, y, width);
-    return paragraphEl(element, embed, x, y, width, align);
+    switch (tag) {
+        case HtmlTag.Ul:
+        case HtmlTag.Ol:
+            return lowerList(element, embed, x, y, width);
+        case HtmlTag.Blockquote:
+            return blockquoteEl(element, embed, x, y, width, align);
+        case HtmlTag.Pre:
+            return lowerCode(textContent(element), embed, x, y, width);
+        case HtmlTag.Code:
+            return codeLineEl(element, embed, x, y, width, align);
+        case HtmlTag.Table:
+            return tableEl(element, embed, x, y, width);
+        case HtmlTag.Img:
+            return lowerImage(element, embed, x, y, width);
+        case HtmlTag.Svg:
+            return lowerSvg(element, embed, x, y, width);
+        case HtmlTag.Div:
+            if (isGrid(element)) return lowerGrid(childElements(element), gridColumns(element), embed, x, y, width, gridAlign(element, align), gapOf(element, GRID_GAP));
+            if (isNote(element)) return noteEl(element, embed, x, y, width);
+            return paragraphEl(element, embed, x, y, width, align);
+        default:
+            return paragraphEl(element, embed, x, y, width, align);
+    }
 }
 
 function lowerElements(items: ReadonlyArray<Placed>, embed: Embed, x: number, y: number, width: number): Lowered {

@@ -13,8 +13,17 @@ type Block = Exclude<BlockNode, { kind: NodeKind.HtmlBlock }>;
 function inlineText(nodes: Inlines): string {
     let out = "";
     for (const node of nodes) {
-        if (node.kind === NodeKind.Text || node.kind === NodeKind.Code) out += node.value;
-        else if (node.kind === NodeKind.Emphasis || node.kind === NodeKind.Strong || node.kind === NodeKind.Link || node.kind === NodeKind.Image) out += inlineText(node.children);
+        switch (node.kind) {
+            case NodeKind.Text:
+            case NodeKind.Code: out += node.value; break;
+            case NodeKind.Emphasis:
+            case NodeKind.Strong:
+            case NodeKind.Link:
+            case NodeKind.Image: out += inlineText(node.children); break;
+            case NodeKind.SoftBreak:
+            case NodeKind.HardBreak:
+            case NodeKind.HtmlInline: break;
+        }
     }
     return out;
 }
@@ -22,8 +31,17 @@ function inlineText(nodes: Inlines): string {
 function inlineList(nodes: Inlines): Array<DomNode> {
     const out: Array<DomNode> = [];
     for (const node of nodes) {
-        if (node.kind === NodeKind.HtmlInline) for (const html of parseHtml(node.value)) out.push(html);
-        else out.push(inlineNode(node));
+        switch (node.kind) {
+            case NodeKind.HtmlInline: for (const html of parseHtml(node.value)) out.push(html); break;
+            case NodeKind.Text:
+            case NodeKind.SoftBreak:
+            case NodeKind.HardBreak:
+            case NodeKind.Code:
+            case NodeKind.Emphasis:
+            case NodeKind.Strong:
+            case NodeKind.Link:
+            case NodeKind.Image: out.push(inlineNode(node)); break;
+        }
     }
     return out;
 }
@@ -52,8 +70,16 @@ function inlineNode(node: Inline): DomNode {
 function blockList(blocks: Blocks): Array<DomNode> {
     const out: Array<DomNode> = [];
     for (const block of blocks) {
-        if (block.kind === NodeKind.HtmlBlock) for (const html of parseHtml(block.literal)) out.push(html);
-        else out.push(blockNode(block));
+        switch (block.kind) {
+            case NodeKind.HtmlBlock: for (const html of parseHtml(block.literal)) out.push(html); break;
+            case NodeKind.ThematicBreak:
+            case NodeKind.Heading:
+            case NodeKind.CodeBlock:
+            case NodeKind.Paragraph:
+            case NodeKind.BlockQuote:
+            case NodeKind.List:
+            case NodeKind.ListItem: out.push(blockNode(block)); break;
+        }
     }
     return out;
 }
@@ -63,9 +89,16 @@ function listItem(item: ListItemNode, tight: boolean): DomNode {
     if (!tight) return li({}, blockList(item.children));
     const nodes: Array<DomNode> = [];
     for (const block of item.children) {
-        if (block.kind === NodeKind.Paragraph) for (const inline of inlineList(block.children)) nodes.push(inline);
-        else if (block.kind === NodeKind.HtmlBlock) for (const html of parseHtml(block.literal)) nodes.push(html);
-        else nodes.push(blockNode(block));
+        switch (block.kind) {
+            case NodeKind.Paragraph: for (const inline of inlineList(block.children)) nodes.push(inline); break;
+            case NodeKind.HtmlBlock: for (const html of parseHtml(block.literal)) nodes.push(html); break;
+            case NodeKind.ThematicBreak:
+            case NodeKind.Heading:
+            case NodeKind.CodeBlock:
+            case NodeKind.BlockQuote:
+            case NodeKind.List:
+            case NodeKind.ListItem: nodes.push(blockNode(block)); break;
+        }
     }
     return li({}, nodes);
 }
@@ -91,8 +124,16 @@ function blockNode(node: Block): DomNode {
 function blocksHtml(blocks: Blocks): string {
     let out = "";
     for (const block of blocks) {
-        if (block.kind === NodeKind.HtmlBlock) out += block.literal;
-        else out += serialize(blockNode(block));
+        switch (block.kind) {
+            case NodeKind.HtmlBlock: out += block.literal; break;
+            case NodeKind.ThematicBreak:
+            case NodeKind.Heading:
+            case NodeKind.CodeBlock:
+            case NodeKind.Paragraph:
+            case NodeKind.BlockQuote:
+            case NodeKind.List:
+            case NodeKind.ListItem: out += serialize(blockNode(block)); break;
+        }
     }
     return out;
 }

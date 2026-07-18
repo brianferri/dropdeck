@@ -82,9 +82,17 @@ export function inlineSegments(
             continue;
         }
         const { tag } = node;
-        if (tag === HtmlTag.Code) line.push(styledRun(textContent(node), chipStyle(base, palette)));
-        else if (tag === HtmlTag.Br) segments.push([]);
-        else pushReversed(stack, node.children, frame.bold || tag === HtmlTag.Strong || tag === HtmlTag.B, frame.italic || tag === HtmlTag.Em || tag === HtmlTag.I, frame.link || tag === HtmlTag.A);
+        switch (tag) {
+            case HtmlTag.Code:
+                line.push(styledRun(textContent(node), chipStyle(base, palette)));
+                break;
+            case HtmlTag.Br:
+                segments.push([]);
+                break;
+            default:
+                pushReversed(stack, node.children, frame.bold || tag === HtmlTag.Strong || tag === HtmlTag.B, frame.italic || tag === HtmlTag.Em || tag === HtmlTag.I, frame.link || tag === HtmlTag.A);
+                break;
+        }
     }
     return segments;
 }

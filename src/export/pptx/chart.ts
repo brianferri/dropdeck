@@ -162,10 +162,17 @@ function lineShapes(nextId: () => number, palette: Palette, data: ChartData, box
 
 function plotShapes(data: ChartData, embed: Embed, box: ChartBox): Array<Node> {
     const { nextId, palette } = embed;
-    if (data.kind === ChartKind.Stacked) return stackedBars(nextId, palette, data, box);
-    if (data.kind === ChartKind.Line) return lineShapes(nextId, palette, data, box, false);
-    if (data.kind === ChartKind.Area) return lineShapes(nextId, palette, data, box, true);
-    return groupedBars(nextId, palette, data, box);
+    switch (data.kind) {
+        case ChartKind.Stacked:
+            return stackedBars(nextId, palette, data, box);
+        case ChartKind.Line:
+            return lineShapes(nextId, palette, data, box, false);
+        case ChartKind.Area:
+            return lineShapes(nextId, palette, data, box, true);
+        case ChartKind.Bars:
+        case ChartKind.Pie:
+            return groupedBars(nextId, palette, data, box);
+    }
 }
 
 // A slice is a fan of triangles to the centre, robust to the full-circle case a preset pie geometry mishandles.
@@ -196,7 +203,15 @@ function lowerPie(data: ChartData, embed: Embed, x: number, y: number, width: nu
 }
 
 export function lowerChart(data: ChartData, embed: Embed, x: number, y: number, width: number): Lowered {
-    if (data.kind === ChartKind.Pie) return lowerPie(data, embed, x, y, width);
+    switch (data.kind) {
+        case ChartKind.Pie:
+            return lowerPie(data, embed, x, y, width);
+        case ChartKind.Bars:
+        case ChartKind.Stacked:
+        case ChartKind.Line:
+        case ChartKind.Area:
+            break;
+    }
     const { nextId, palette } = embed;
     const box = chartBox(data, x, y, width);
     const marks = plotShapes(data, embed, box);

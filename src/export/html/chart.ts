@@ -112,10 +112,19 @@ function pieNode(data: ChartData): ElementNode<"div"> {
 }
 
 export function chartNode(data: ChartData): ElementNode<"div"> {
-    if (data.kind === ChartKind.Pie) return pieNode(data);
+    switch (data.kind) {
+        case ChartKind.Pie: return pieNode(data);
+        case ChartKind.Bars:
+        case ChartKind.Stacked:
+        case ChartKind.Line:
+        case ChartKind.Area:
+            break;
+    }
     const max = chartMax(data);
-    if (data.kind === ChartKind.Line) return cartesianNode(data, max, [lineSvg(data, max, false)]);
-    if (data.kind === ChartKind.Area) return cartesianNode(data, max, [lineSvg(data, max, true)]);
-    if (data.kind === ChartKind.Stacked) return cartesianNode(data, max, data.categories.map((_, index) => stackColumn(data, index, max)));
-    return cartesianNode(data, max, data.categories.map((_, index) => barColumn(data, index, max)));
+    switch (data.kind) {
+        case ChartKind.Line: return cartesianNode(data, max, [lineSvg(data, max, false)]);
+        case ChartKind.Area: return cartesianNode(data, max, [lineSvg(data, max, true)]);
+        case ChartKind.Stacked: return cartesianNode(data, max, data.categories.map((_, index) => stackColumn(data, index, max)));
+        case ChartKind.Bars: return cartesianNode(data, max, data.categories.map((_, index) => barColumn(data, index, max)));
+    }
 }

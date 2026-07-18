@@ -131,7 +131,15 @@ function counterEntrance(
 }
 
 function effectFor(shape: AnimatedShape, delay: number, nextNodeId: () => number): Node {
-    if (shape.kind === Motion.Counter) return counterEntrance(shape.frames, delay, nextNodeId);
+    switch (shape.kind) {
+        case Motion.Counter:
+            return counterEntrance(shape.frames, delay, nextNodeId);
+        case Motion.Fade:
+        case Motion.Wipe:
+        case Motion.WipeUp:
+        case Motion.Wheel:
+            break;
+    }
     return entrance(shape, delay, nextNodeId);
 }
 

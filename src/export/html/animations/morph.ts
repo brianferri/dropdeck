@@ -207,14 +207,30 @@ function svgFadeIn(el: SVGElement): void {
 
 function morphElement(el: Morphable, from: MorphFrame | undefined, scale: number): void {
     if (isSvgShape(el)) {
-        if (from?.kind === MorphKind.Svg) svgInto(el, from.props);
-        else svgFadeIn(el);
+        switch (from?.kind) {
+            case MorphKind.Svg:
+                svgInto(el, from.props);
+                break;
+            case MorphKind.Flow:
+            case MorphKind.Transform:
+            case undefined:
+                svgFadeIn(el);
+                break;
+        }
         return;
     }
     if (from === undefined) return;
     unfade(el);
-    if (from.kind === MorphKind.Transform && (el instanceof HTMLImageElement || el instanceof SVGSVGElement)) transformInto(el, from.matrix);
-    else if (from.kind === MorphKind.Flow) flowInto(el, from.rect, scale);
+    switch (from.kind) {
+        case MorphKind.Transform:
+            if (el instanceof HTMLImageElement || el instanceof SVGSVGElement) transformInto(el, from.matrix);
+            break;
+        case MorphKind.Flow:
+            flowInto(el, from.rect, scale);
+            break;
+        case MorphKind.Svg:
+            break;
+    }
 }
 
 export function morphInto(before: Map<string, MorphFrame>, next: HTMLElement): void {

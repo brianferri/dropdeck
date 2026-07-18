@@ -29,7 +29,20 @@ export function isProse(slide: Slide): boolean {
 
 export function proseText(slide: Slide): string {
     const parts: Array<string> = [];
-    for (const block of slide.blocks) if (block.kind === BlockKind.Prose) parts.push(block.markdown);
+    for (const block of slide.blocks) {
+        switch (block.kind) {
+            case BlockKind.Prose: parts.push(block.markdown); break;
+            case BlockKind.Html:
+            case BlockKind.Cards:
+            case BlockKind.Metrics:
+            case BlockKind.Bars:
+            case BlockKind.Chart:
+            case BlockKind.Code:
+            case BlockKind.Formula:
+            case BlockKind.Columns:
+                break;
+        }
+    }
 
     return parts.join("\n\n").trim();
 }

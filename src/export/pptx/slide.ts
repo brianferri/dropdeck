@@ -232,9 +232,14 @@ export function lowerSlide(
 ): SlideInput {
     const embed: Embed = { nextId: idFactory(), nextRelId: relFactory(), palette, assets, svgPngs };
     const layout = resolveLayout(slideEl, index, total);
-    if (layout === SlideLayout.Cover) return centeredSlide(slideEl, SIZE.coverTitle, true, embed);
-    if (layout === SlideLayout.Section) return centeredSlide(slideEl, SIZE.sectionTitle, false, embed);
-    return contentSlide(slideEl, embed);
+    switch (layout) {
+        case SlideLayout.Cover:
+            return centeredSlide(slideEl, SIZE.coverTitle, true, embed);
+        case SlideLayout.Section:
+            return centeredSlide(slideEl, SIZE.sectionTitle, false, embed);
+        case SlideLayout.Content:
+            return contentSlide(slideEl, embed);
+    }
 }
 
 export type { CT_Shape };

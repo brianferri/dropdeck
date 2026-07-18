@@ -66,7 +66,10 @@ function mathmlToDom(node: XmlNode): DomNode {
 }
 
 function formulaMathML(notation: FormulaNotation, source: string): XmlNode {
-    if (notation === FormulaNotation.Latex) return toMathML(lowerLatex(parseLatex(source)));
+    switch (notation) {
+        case FormulaNotation.Latex: return toMathML(lowerLatex(parseLatex(source)));
+        case FormulaNotation.Math: break;
+    }
     return toMathML(lowerMath(parseMath(source)));
 }
 

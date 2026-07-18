@@ -17,14 +17,24 @@ function svgSize(svg: ElementNode): { width: number, height: number } {
 }
 
 function blockSvgs(block: Block): Array<ElementNode> {
-    if (block.kind === BlockKind.Prose) return findAll(parse(renderMarkdown(block.markdown)), HtmlTag.Svg);
-    if (block.kind === BlockKind.Html) return findAll(parse(renderMarkdown(block.markup)), HtmlTag.Svg);
-    if (block.kind === BlockKind.Columns) {
-        const out: Array<ElementNode> = [];
-        for (const column of block.columns) for (const nested of column) for (const svg of blockSvgs(nested)) out.push(svg);
-        return out;
+    switch (block.kind) {
+        case BlockKind.Prose:
+            return findAll(parse(renderMarkdown(block.markdown)), HtmlTag.Svg);
+        case BlockKind.Html:
+            return findAll(parse(renderMarkdown(block.markup)), HtmlTag.Svg);
+        case BlockKind.Columns: {
+            const out: Array<ElementNode> = [];
+            for (const column of block.columns) for (const nested of column) for (const svg of blockSvgs(nested)) out.push(svg);
+            return out;
+        }
+        case BlockKind.Cards:
+        case BlockKind.Metrics:
+        case BlockKind.Bars:
+        case BlockKind.Chart:
+        case BlockKind.Code:
+        case BlockKind.Formula:
+            return [];
     }
-    return [];
 }
 
 // PowerPoint cannot embed SVG, so every inline SVG is rasterised to a PNG up front (async) and looked up by its

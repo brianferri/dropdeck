@@ -53,7 +53,17 @@ function fontLinkNodes(): Array<DomNode> {
 function subsetFontCss(fontCss: string, used: string, codepoints: Set<number>): string {
     const usedLower = used.toLowerCase();
     const kept: Array<StyleNode> = [];
-    for (const node of parseCss(fontCss)) if (node.kind !== CssNodeKind.AtRule || node.name !== "@font-face" || faceWanted(node, usedLower, codepoints)) kept.push(node);
+    for (const node of parseCss(fontCss)) {
+        switch (node.kind) {
+            case CssNodeKind.AtRule:
+                if (node.name !== "@font-face" || faceWanted(node, usedLower, codepoints)) kept.push(node);
+                break;
+            case CssNodeKind.Declaration:
+            case CssNodeKind.Rule:
+                kept.push(node);
+                break;
+        }
+    }
 
     return serializeCss(kept);
 }
