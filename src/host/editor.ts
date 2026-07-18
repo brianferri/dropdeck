@@ -3,6 +3,10 @@ import { isAsciiLetter, isHexDigit } from "@dropdeck/common";
 import { serializeAll, span, text as textNode } from "#/dom";
 import { declaration } from "@dropdeck/html/css";
 import { parseHex } from "#/hex";
+import { COLOR_HEX, isColorName } from "#/formula";
+import { ColorFunction } from "#/formula/math";
+import { ColorCommand } from "#/formula/latex";
+import { isFormulaNotation } from "#/ir";
 import { slideStarts } from "#/front";
 import { mountCompletions } from "#/host/cmp";
 import { tooltipView } from "#/host/components/editor.component";
@@ -76,6 +80,13 @@ function inlineMatch(value: string, at: number): InlineHit | null {
     return null;
 }
 
+const COLOR_OPENERS = [`${ColorFunction.Color}(`, `${ColorCommand.TextColor}{`] as const;
+
+// A swatch paints the color behind its own text with contrasting ink, the same treatment a hex literal gets.
+function colorSwatch(label: string, hex: string): DomNode {
+    return span({ class: "tok-color", style: [declaration("background-color", hex), declaration("color", contrastInk(hex))] }, label);
+}
+
 // `at` always advances (a hit ends past it, a miss steps one char), so the scan is bounded by the value length.
 function inlineNodes(value: string): ReadonlyArray<DomNode> {
     const nodes: Array<DomNode> = [];
@@ -90,8 +101,7 @@ function inlineNodes(value: string): ReadonlyArray<DomNode> {
         }
         if (run) nodes.push(textNode(run));
         run = "";
-        if (hit.color !== undefined)
-            nodes.push(span({ class: "tok-color", style: [declaration("background-color", hit.color), declaration("color", contrastInk(hit.color))] }, value.slice(at, hit.end)));
+        if (hit.color !== undefined) nodes.push(colorSwatch(value.slice(at, hit.end), hit.color));
         else nodes.push(span({ class: `tok-${hit.cls}` }, value.slice(at, hit.end)));
         at = hit.end;
     }
@@ -99,8 +109,53 @@ function inlineNodes(value: string): ReadonlyArray<DomNode> {
     return nodes;
 }
 
-// Code-fence interior is left literal so its `**`/`[]` are not mistaken for emphasis or links.
-function tokenNodes(source: string, token: Token, inFence: boolean): ReadonlyArray<DomNode> {
+// A color directive's argument, when it names a supported color, split from the opener that stays literal.
+function colorNameAt(value: string, at: number): { opener: string, name: string, hex: string } | null {
+    for (const opener of COLOR_OPENERS) {
+        if (!value.startsWith(opener, at)) continue;
+        let end = at + opener.length;
+        let name = "";
+        while (end < value.length && isAsciiLetter(value[end])) {
+            name += value[end];
+            end += 1;
+        }
+        if (!isColorName(name)) continue;
+        return { opener, name, hex: `#${COLOR_HEX[name]}` };
+    }
+    return null;
+}
+
+// A formula fence stays literal except for a color directive's name, which is swatched so the color reads inline.
+function formulaColorNodes(value: string): ReadonlyArray<DomNode> {
+    const nodes: Array<DomNode> = [];
+    let run = "";
+    let at = 0;
+    while (at < value.length) {
+        const hit = colorNameAt(value, at);
+        if (hit === null) {
+            run += value[at];
+            at += 1;
+            continue;
+        }
+        run += hit.opener;
+        nodes.push(textNode(run));
+        run = "";
+        nodes.push(colorSwatch(hit.name, hit.hex));
+        at += hit.opener.length + hit.name.length;
+    }
+    if (run) nodes.push(textNode(run));
+    return nodes;
+}
+
+// The language after a fence's ``` marker, or "" for a bare fence; drives whether its body is a formula.
+function fenceLangOf(fenceLine: string): string {
+    const trimmed = fenceLine.trimStart();
+    return trimmed.startsWith("```") ? trimmed.slice(3).trim() : "";
+}
+
+// A code-fence interior stays literal so its `**`/`[]` are not read as emphasis or links; a formula fence is the
+// exception, where a color directive's name is swatched. `fenceLang` is null outside any fence.
+function tokenNodes(source: string, token: Token, fenceLang: string | null): ReadonlyArray<DomNode> {
     const value = source.slice(token.start, token.end);
     switch (token.kind) {
         case TokenKind.Separator:
@@ -110,7 +165,7 @@ function tokenNodes(source: string, token: Token, inFence: boolean): ReadonlyArr
         case TokenKind.List:
             return [span({ class: `tok-${token.kind}` }, value)];
         case TokenKind.Text:
-            if (inFence) return [textNode(value)];
+            if (fenceLang !== null) return isFormulaNotation(fenceLang) ? formulaColorNodes(value) : [textNode(value)];
             return isDirective(value) ? [span({ class: "tok-directive" }, value)] : inlineNodes(value);
     }
 }
@@ -132,10 +187,20 @@ function setWidth(vw: number): void {
 // hold its own line.
 export function highlight(source: string): string {
     const nodes: Array<DomNode> = [];
-    let inFence = false;
+    let fenceLang: string | null = null;
     for (const token of tokenize(source)) {
-        for (const node of tokenNodes(source, token, inFence)) nodes.push(node);
-        if (token.kind === TokenKind.Fence) inFence = !inFence;
+        for (const node of tokenNodes(source, token, fenceLang)) nodes.push(node);
+        switch (token.kind) {
+            case TokenKind.Fence:
+                fenceLang = fenceLang === null ? fenceLangOf(source.slice(token.start, token.end)) : null;
+                break;
+            case TokenKind.Text:
+            case TokenKind.Separator:
+            case TokenKind.Heading:
+            case TokenKind.Quote:
+            case TokenKind.List:
+                break;
+        }
     }
     const overlay = serializeAll(nodes);
     return source.endsWith("\n") ? `${overlay} ` : overlay;

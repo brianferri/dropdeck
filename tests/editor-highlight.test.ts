@@ -37,3 +37,16 @@ test("a code fence tags its markers and leaves the body literal", () => {
     expect(out).toContain("tok-fence");
     expect(out).not.toContain("tok-bold");
 });
+
+test("a formula fence swatches a supported color name in a color directive", () => {
+    const math = highlight("```math\ncolor(red, x)\n```\n");
+    expect(math).toContain("tok-color");
+    expect(math).toContain("background-color: #FF0000");
+    const latex = highlight("```latex\n\\textcolor{blue}{x}\n```\n");
+    expect(latex).toContain("background-color: #0000FF");
+});
+
+test("an unsupported name, or a color call in a non-formula fence, stays literal", () => {
+    expect(highlight("```math\ncolor(mauve, x)\n```\n")).not.toContain("tok-color");
+    expect(highlight("```ts\ncolor(red)\n```\n")).not.toContain("tok-color");
+});
