@@ -57,8 +57,9 @@ function bodyStyle(palette: Palette): RunStyle {
 }
 
 // OOXML shapes have no auto-flow, so the vertical cursor advances by estimate; a coarse glyph width suffices.
-function lineCount(text: string, widthPx: number, sizePx: number): number {
-    const perLine = Math.max(1, Math.floor(widthPx / (sizePx * 0.52)));
+// `charWidth` is the per-glyph fraction of the font size; bold text runs wider, so callers can widen the estimate.
+function lineCount(text: string, widthPx: number, sizePx: number, charWidth = 0.52): number {
+    const perLine = Math.max(1, Math.floor(widthPx / (sizePx * charWidth)));
     let lines = 0;
     for (const raw of text.split("\n")) lines += Math.max(1, Math.ceil(raw.length / perLine));
     return Math.max(1, lines);
@@ -756,8 +757,7 @@ function lowerMetrics(rows: ReadonlyArray<MetricRow>, embed: Embed, x: number, y
 }
 
 function cardTitleHeight(title: string, innerWidth: number): number {
-    const perLine = Math.max(1, Math.floor(innerWidth / (CARD_TITLE_SIZE * CARD_TITLE_CHAR_WIDTH)));
-    const lines = Math.max(1, Math.ceil(title.length / perLine));
+    const lines = lineCount(title, innerWidth, CARD_TITLE_SIZE, CARD_TITLE_CHAR_WIDTH);
     return (lines * CARD_TITLE_LINE) + 8;
 }
 
