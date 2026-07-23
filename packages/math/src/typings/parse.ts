@@ -5,7 +5,7 @@ import type {
 import type { PayloadKind, PunctKind } from "../Tokenizer.js";
 import type {
     AlphaChar as Letter, BySpelling, DigitChar, FirstMatch, LeadN, LongestRule, NumberOf, OrError, Parsed as ParsedOf,
-    ParseError, Repeat, Step, TakeNumber, TakeRun, Whitespace
+    ParseError, Repeat, SpaceRule, Step, TakeNumber, TakeRun
 } from "@dropdeck/common";
 
 type Operator = BinaryOperator | UnaryOperator;
@@ -34,7 +34,6 @@ type OperatorTokens = { [Char in keyof OperatorBySpelling]: OperatorToken<Operat
 // The widest symbol operator is three characters (`===`, `~==`); longest-match tries this width down to one.
 type OperatorWidthMax = 3;
 
-type SpaceRule<S extends string> = LeadN<S, Whitespace, 1> extends { rest: infer Rest extends string } ? Step<[], Rest> : false;
 type PunctRule<S extends string> = LongestRule<S, PunctTokens, 1>;
 type NumberRule<S extends string> =
     LeadN<S, DigitChar, 1> extends false ? false

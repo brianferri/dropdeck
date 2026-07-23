@@ -5,7 +5,7 @@ export { bySpelling, invert, keyGuard, memberGuard } from "./guard.js";
 export type { Cursor, Parsed, ParseError, Token } from "./typings/parse.js";
 export type {
     AlphaChar, AttrOf, ByName, BySpelling, DigitChar, HexDigit, HexRun, IsLetter, LeadN, LongestRule, LowerLetter,
-    NumberOf, Step, TakeNumber, TakeRun, TakeThrough, TakeUntil, UpperLetter, Whitespace
+    NumberOf, SpaceRule, Step, TakeNumber, TakeRun, TakeThrough, TakeUntil, UpperLetter, Whitespace
 } from "./typings/lex.js";
 export type {
     AllChars, Contains, Normalize, ReplaceAll, SkipPast, SplitOn, StripComments, Trim, TrimEnd, TrimStart

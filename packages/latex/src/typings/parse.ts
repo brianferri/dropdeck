@@ -9,7 +9,7 @@ import type { LatexStructuralArguments } from "./functions.js";
 import type { PayloadKind, PunctKind } from "../Tokenizer.js";
 import type {
     AlphaChar, BySpelling, DigitChar, FirstMatch, LeadN, LongestRule, NumberOf, OrError, Parsed as ParsedOf, ParseError,
-    Step, TakeNumber, TakeRun, Whitespace
+    SpaceRule, Step, TakeNumber, TakeRun
 } from "@dropdeck/common";
 
 type NumberToken<Value extends number = number> = { kind: PayloadKind.Number, value: Value };
@@ -27,7 +27,6 @@ type AccentCommandName = `${LatexAccentCommand}`;
 type PunctBySpelling = BySpelling<PunctKind>;
 type OperatorCharSpelling = `${OperatorChar}`;
 
-type SpaceRule<S extends string> = LeadN<S, Whitespace, 1> extends { rest: infer Rest extends string } ? Step<[], Rest> : false;
 type NumberRule<S extends string> =
     LeadN<S, DigitChar, 1> extends false ? false
         : TakeNumber<S> extends { run: infer Run extends string, rest: infer Rest extends string } ? Step<[NumberToken<NumberOf<Run>>], Rest> : false;

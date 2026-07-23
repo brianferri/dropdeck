@@ -100,3 +100,7 @@ type LongestRun<Source extends string, Table, Width extends ReadonlyArray<unknow
  */
 export type LongestRule<Source extends string, Table, Width extends number> =
     LongestRun<Source, Table, Repeat<unknown, Width>>;
+
+/** A tokenizer rule that consumes one leading whitespace character and emits no token, leaving the rest to scan. */
+export type SpaceRule<Source extends string> =
+    LeadN<Source, Whitespace, 1> extends { rest: infer Rest extends string } ? Step<[], Rest> : false;
