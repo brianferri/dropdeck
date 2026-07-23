@@ -1,7 +1,9 @@
-import { Namespace, element } from "../oox.js";
+import { element } from "@dropdeck/xml";
+import { Namespace } from "@dropdeck/oox";
 import { blip, ext, graphic, graphicData, off, prstGeom, xfrm } from "../drawingml/builders.js";
 import { chartRef } from "../drawingml/chart/index.js";
-import type { Element, Empty, ST_String } from "../oox.js";
+import type { Element, Empty } from "@dropdeck/xml";
+import type { ST_String } from "@dropdeck/oox";
 import type {
     CT_GraphicalObject,
     CT_Point2D,
@@ -238,7 +240,7 @@ export function cSld<const T extends CT_GroupShape>(tree: T): Element<"p:cSld", 
     return element("p:cSld", [], [tree]);
 }
 
-const SLIDE_NAMESPACES = [["xmlns:a", Namespace.a], ["xmlns:p", Namespace.p], ["xmlns:r", Namespace.r]] as const;
+const SLIDE_NAMESPACES = [["xmlns:a", Namespace.DrawingML], ["xmlns:p", Namespace.PresentationML], ["xmlns:r", Namespace.OfficeRelationships]] as const;
 
 export function slide<const C extends CT_CommonSlideData>(common: C): Element<"p:sld", typeof SLIDE_NAMESPACES, readonly [C]>;
 export function slide<const C extends CT_CommonSlideData, const T extends CT_SlideTransition>(

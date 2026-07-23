@@ -49,6 +49,7 @@
         "@dropdeck/latex": "*",
         "@dropdeck/markdown": "*",
         "@dropdeck/math": "*",
+        "@dropdeck/oox": "*",
         "@dropdeck/pptx": "*",
         "@dropdeck/xml": "*",
         "@tailwindcss/browser": "^4.0.0"

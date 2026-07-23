@@ -1,5 +1,5 @@
-import { element, text } from "../oox.js";
-import type { AssertUniqueAttrs, Element, Empty, Node, Text } from "../oox.js";
+import { element, text } from "@dropdeck/xml";
+import type { AssertUniqueAttrs, Element, Empty, Node, Text } from "@dropdeck/xml";
 import type {
     BodyPropertyAttr,
     CT_AdjPoint2D,

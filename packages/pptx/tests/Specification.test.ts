@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { NamespaceByPrefix, Namespace } from "../src/oox.js";
-import type { ParseQName, QName } from "../src/oox.js";
+import { Namespace } from "@dropdeck/oox";
+import type { ParseQName, QName } from "@dropdeck/oox";
 import type { CT_Point2D, CT_Transform2D, ValidateHexColor } from "../src/typings/drawingml.js";
 import type { Equal, Expect } from "@dropdeck/common";
 
@@ -22,16 +22,8 @@ export type TypeLevelChecks = [
 ];
 
 await test("Specification: namespace registry", async (ctx) => {
-    await ctx.test("each prefix maps to its ECMA-376 namespace URI", () => {
-        assert.equal(NamespaceByPrefix.a, Namespace.a);
-        assert.equal(NamespaceByPrefix.p, Namespace.p);
-        assert.equal(
-            NamespaceByPrefix.a,
-            "http://schemas.openxmlformats.org/drawingml/2006/main"
-        );
-        assert.equal(
-            NamespaceByPrefix.p,
-            "http://schemas.openxmlformats.org/presentationml/2006/main"
-        );
+    await ctx.test("each vocabulary resolves to its ECMA-376 namespace URI", () => {
+        assert.equal(Namespace.DrawingML, "http://schemas.openxmlformats.org/drawingml/2006/main");
+        assert.equal(Namespace.PresentationML, "http://schemas.openxmlformats.org/presentationml/2006/main");
     });
 });

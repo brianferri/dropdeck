@@ -1,6 +1,8 @@
-import { Namespace, element, text } from "../../oox.js";
+import { element, text } from "@dropdeck/xml";
+import { Namespace } from "@dropdeck/oox";
 import { ST_AxPos, ST_BarDir, ST_BarGrouping, ST_Orientation } from "./Specification.js";
-import type { AttrScalar, Element, Empty, Node, QName, Text } from "../../oox.js";
+import type { AttrScalar, Element, Empty, Node, Text } from "@dropdeck/xml";
+import type { QName } from "@dropdeck/oox";
 import type { NumberOf } from "@dropdeck/common";
 
 type CV<Local extends string, V extends AttrScalar> = Element<QName<"c", Local>, readonly [readonly ["val", V]], Empty>;
@@ -133,13 +135,13 @@ export function externalData<const R extends string>(relId: R): Element<QName<"c
     return element("c:externalData", [["r:id", relId]], [cval("autoUpdate", false)]);
 }
 
-type ChartSpaceAttrs = readonly [readonly ["xmlns:c", Namespace.c], readonly ["xmlns:a", Namespace.a], readonly ["xmlns:r", Namespace.r]];
+type ChartSpaceAttrs = readonly [readonly ["xmlns:c", Namespace.Chart], readonly ["xmlns:a", Namespace.DrawingML], readonly ["xmlns:r", Namespace.OfficeRelationships]];
 export function chartSpace<const B extends Node, const D extends Node>(body: B, data: D): Element<QName<"c", "chartSpace">, ChartSpaceAttrs, readonly [B, D]> {
-    return element("c:chartSpace", [["xmlns:c", Namespace.c], ["xmlns:a", Namespace.a], ["xmlns:r", Namespace.r]], [body, data]);
+    return element("c:chartSpace", [["xmlns:c", Namespace.Chart], ["xmlns:a", Namespace.DrawingML], ["xmlns:r", Namespace.OfficeRelationships]], [body, data]);
 }
 
 // A `<c:chart r:id="...">` reference for a slide's `a:graphicData`; it points at the chart part.
-type RelIdAttrs<R extends string> = readonly [readonly ["xmlns:c", Namespace.c], readonly ["xmlns:r", Namespace.r], readonly ["r:id", R]];
+type RelIdAttrs<R extends string> = readonly [readonly ["xmlns:c", Namespace.Chart], readonly ["xmlns:r", Namespace.OfficeRelationships], readonly ["r:id", R]];
 export function chartRef<const R extends string>(relId: R): Element<QName<"c", "chart">, RelIdAttrs<R>, Empty> {
-    return element("c:chart", [["xmlns:c", Namespace.c], ["xmlns:r", Namespace.r], ["r:id", relId]], []);
+    return element("c:chart", [["xmlns:c", Namespace.Chart], ["xmlns:r", Namespace.OfficeRelationships], ["r:id", relId]], []);
 }

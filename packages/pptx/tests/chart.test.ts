@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { xml } from "../src/oox.js";
-import { Namespace } from "../src/oox.js";
+import { xml } from "@dropdeck/xml";
+import { Namespace } from "@dropdeck/oox";
 import {
     barChart,
     barSeries,
@@ -20,7 +20,7 @@ import {
     valueAxis
 } from "../src/drawingml/chart/builders.js";
 import { ST_BarDir } from "../src/drawingml/chart/Specification.js";
-import type { Serialize } from "../src/oox.js";
+import type { Serialize } from "@dropdeck/xml";
 import type { Equal, Expect } from "@dropdeck/common";
 
 // A leaf builder keeps its literal `val` and `local` through to the serializer -- narrow, not `<c:barDir val="${string}">`.
@@ -42,7 +42,7 @@ const space = chartSpace(
 
 await test("chart: chartSpace declares the chart namespaces and wraps a bar chart", () => {
     const out = xml(space);
-    assert.match(out, new RegExp(`^<c:chartSpace xmlns:c="${Namespace.c}" xmlns:a="${Namespace.a}" xmlns:r="${Namespace.r}">`));
+    assert.match(out, new RegExp(`^<c:chartSpace xmlns:c="${Namespace.Chart}" xmlns:a="${Namespace.DrawingML}" xmlns:r="${Namespace.OfficeRelationships}">`));
     assert.match(out, /<c:barChart><c:barDir val="col"\/><c:grouping val="clustered"\/>/);
     assert.match(out, /<c:autoTitleDeleted val="true"\/>.*<c:plotVisOnly val="true"\/>/);
     assert.match(out, /<c:externalData r:id="rId3"><c:autoUpdate val="false"\/><\/c:externalData>/);
@@ -63,5 +63,5 @@ await test("chart: the two axes cross-reference each other by id", () => {
 });
 
 await test("chart: the graphicData reference points at the chart part", () => {
-    assert.equal(xml(chartRef("rId2")), `<c:chart xmlns:c="${Namespace.c}" xmlns:r="${Namespace.r}" r:id="rId2"/>`);
+    assert.equal(xml(chartRef("rId2")), `<c:chart xmlns:c="${Namespace.Chart}" xmlns:r="${Namespace.OfficeRelationships}" r:id="rId2"/>`);
 });

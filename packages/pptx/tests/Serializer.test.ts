@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { text, xml } from "../src/oox.js";
-import type { Element, Serialize, Text } from "../src/oox.js";
+import { text, xml } from "@dropdeck/xml";
+import type { Element, Serialize, Text } from "@dropdeck/xml";
 import { ext, off, solidFill, srgbClr, xfrm } from "../src/drawingml/builders.js";
 import type { Equal, Expect } from "@dropdeck/common";
 

@@ -1,7 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Namespace, xml } from "../src/oox.js";
-import type { Serialize } from "../src/oox.js";
+import { xml } from "@dropdeck/xml";
+import { Namespace } from "@dropdeck/oox";
+import type { Serialize } from "@dropdeck/xml";
 import { bodyPr, ext, off, paragraph, prstGeom, run, solidFill, srgbClr, xfrm } from "../src/drawingml/builders.js";
 import { cNvPr, cSld, grpSpPr, nvGrpSpPr, nvSpPr, slide, sp, spPr, spTree, txBody } from "../src/presentationml/builders.js";
 import type { CT_Slide } from "../src/typings/presentationml.js";
@@ -21,7 +22,7 @@ const deck = slide(cSld(spTree(
 
 // Line continuations keep this newline-free so the one literal can drive both the runtime assertion and the
 // type-level `Equal<Serialize<typeof deck>, typeof expected>` check.
-const expected = `<p:sld xmlns:a="${Namespace.a}" xmlns:p="${Namespace.p}" xmlns:r="${Namespace.r}">\
+const expected = `<p:sld xmlns:a="${Namespace.DrawingML}" xmlns:p="${Namespace.PresentationML}" xmlns:r="${Namespace.OfficeRelationships}">\
 <p:cSld><p:spTree>\
 <p:nvGrpSpPr><p:cNvPr id="1" name=""/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>\
 <p:grpSpPr/>\

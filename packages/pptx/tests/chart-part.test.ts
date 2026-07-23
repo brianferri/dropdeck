@@ -1,12 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { xml } from "../src/oox.js";
+import { xml } from "@dropdeck/xml";
 import { barChart, barSeries, categories, chart, chartSpace, externalData, numbers, numRef, plotArea, seriesName, strRef, categoryAxis, valueAxis } from "../src/drawingml/chart/builders.js";
 import { cNvPr, cSld, chartFrame, grpSpPr, nvGrpSpPr, slide, spTree } from "../src/presentationml/builders.js";
 import { toParts } from "../src/document/assemble.js";
-import { pack } from "../src/package/parts.js";
-import { PartKind } from "../src/package/parts.js";
-import type { Part } from "../src/package/parts.js";
+import { PartKind, pack } from "@dropdeck/oox";
+import type { Part } from "@dropdeck/oox";
 
 const space = chartSpace(
     chart(plotArea(

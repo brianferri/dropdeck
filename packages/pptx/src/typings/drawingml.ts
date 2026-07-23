@@ -3,6 +3,7 @@
 import type { HexDigit } from "@dropdeck/common";
 import type {
     Attr,
+    AttrSeq,
     Element,
     Empty,
     Many,
@@ -10,13 +11,12 @@ import type {
     One,
     Opt,
     OptAttr,
-    AttrSeq,
-    QName,
     ReqAttr,
     Seq,
-    ST_Boolean,
     Text
-} from "../oox.js";
+} from "@dropdeck/xml";
+import type { ST_Boolean } from "@dropdeck/oox";
+import type { QName } from "@dropdeck/oox";
 import type {
     ST_LineCap,
     ST_CompoundLine,

@@ -8,11 +8,10 @@ import type {
     Many,
     Opt,
     OptAttr,
-    QName,
-    Seq,
-    ST_Boolean,
-    ST_String
-} from "../oox.js";
+    Seq
+} from "@dropdeck/xml";
+import type { ST_Boolean, ST_String } from "@dropdeck/oox";
+import type { QName } from "@dropdeck/oox";
 import type {
     CT_Blip,
     CT_GraphicalObject,

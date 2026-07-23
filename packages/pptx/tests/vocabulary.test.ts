@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { xml } from "../src/oox.js";
-import type { Serialize } from "../src/oox.js";
+import { xml } from "@dropdeck/xml";
+import type { Serialize } from "@dropdeck/xml";
 import { bodyPr, ext, gridCol, latin, off, paragraph, prstGeom, roundRect, rPr, run, solidFill, srgbClr, tbl, tblGrid, tc, tr, txBodyA, xfrm } from "../src/drawingml/builders.js";
 import { cNvPr, fade, nvPicPr, pic, picBlipFill, spPr, transition, wipe } from "../src/presentationml/builders.js";
 import { ST_TransitionSideDirectionType, ST_TransitionSpeed } from "../src/presentationml/Specification.js";

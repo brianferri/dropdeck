@@ -1,4 +1,5 @@
-import { cSld, element, Namespace } from "@dropdeck/pptx";
+import { cSld, element } from "@dropdeck/pptx";
+import { Namespace } from "@dropdeck/oox";
 import { Align, Anchor, backgroundRect, idFactory, paragraphOf, pProps, relFactory, rule, spTreeOf, styledRun, textBox, txBodyOf } from "#/export/pptx/build";
 import { meshShapes, particleShapes } from "#/export/pptx/ambient";
 import { lowerBlocks, measuredHeight } from "#/export/pptx/blocks";
@@ -15,7 +16,7 @@ import type { AssetMap, Slide } from "#/ir";
 import type { Mul, Sub } from "#/typings/arithmetic";
 
 // Mirrored from `slide()` because `animatedSlide` builds the `p:sld` element directly.
-const SLIDE_NAMESPACES = [["xmlns:a", Namespace.a], ["xmlns:p", Namespace.p], ["xmlns:r", Namespace.r]] as const;
+const SLIDE_NAMESPACES = [["xmlns:a", Namespace.DrawingML], ["xmlns:p", Namespace.PresentationML], ["xmlns:r", Namespace.OfficeRelationships]] as const;
 
 // sp/pic/graphicFrame all nest cNvPr the same way, so one path reaches a drawing prop for any of them.
 function drawingAttr(node: Node, key: string): string | null {

@@ -1,4 +1,4 @@
-export { Namespace, NamespaceByPrefix, element, text, xml } from "./oox.js";
+export { element, text, xml } from "@dropdeck/xml";
 export type {
     Attr,
     AttrList,
@@ -12,17 +12,13 @@ export type {
     One,
     Opt,
     OptAttr,
-    ParseQName,
-    Prefix,
-    QName,
     ReqAttr,
     Seq,
     Serialize,
     Some,
-    ST_Boolean,
-    ST_String,
     Text
-} from "./oox.js";
+} from "@dropdeck/xml";
+export type { ST_Boolean, ST_String } from "@dropdeck/oox";
 
 export {
     ST_CompoundLine,

@@ -12,6 +12,7 @@
     },
     "dependencies": {
         "@dropdeck/common": "*",
+        "@dropdeck/oox": "*",
         "@dropdeck/xml": "*"
     },
     "scripts": {

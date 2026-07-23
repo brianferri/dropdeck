@@ -1,18 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Namespace, element, xml } from "../src/oox.js";
-import { contentTypes, defaultType, override, relationship, relationships } from "../src/package/builders.js";
+import { element, xml } from "@dropdeck/xml";
+import { Namespace, TargetMode, buildZip, contentTypes, defaultType, override, pack, relationship, relationships, xmlPart } from "@dropdeck/oox";
 import { ContentType, RelationshipType } from "../src/package/constants.js";
-import { TargetMode } from "../src/package/Specification.js";
-import { buildZip } from "../src/package/zip.js";
-import { pack, xmlPart } from "../src/package/parts.js";
 
 await test("package: relationships serialise to the OPC .rels shape", () => {
     const part = relationships([relationship("rId1", RelationshipType.OfficeDocument, "ppt/presentation.xml")]);
     assert.equal(
         xml(part),
         [
-            `<Relationships xmlns="${Namespace.rel}">`,
+            `<Relationships xmlns="${Namespace.PackageRelationships}">`,
             `<Relationship Id="rId1" Type="${RelationshipType.OfficeDocument}" Target="ppt/presentation.xml"/>`,
             "</Relationships>"
         ].join("")
@@ -35,7 +32,7 @@ await test("package: content types list defaults and overrides", () => {
     assert.equal(
         xml(part),
         [
-            `<Types xmlns="${Namespace.ct}">`,
+            `<Types xmlns="${Namespace.ContentTypes}">`,
             `<Default Extension="rels" ContentType="${ContentType.Relationships}"/>`,
             `<Override PartName="/ppt/presentation.xml" ContentType="${ContentType.Presentation}"/>`,
             "</Types>"
@@ -61,7 +58,7 @@ await test("package: buildZip round-trips an entry through the deflated bytes", 
 });
 
 await test("package: pack writes [Content_Types].xml first and every part path", async () => {
-    const presentation = element("p:presentation", [["xmlns:p", Namespace.p]], []);
+    const presentation = element("p:presentation", [["xmlns:p", Namespace.PresentationML]], []);
     const zip = await pack([xmlPart("ppt/presentation.xml", ContentType.Presentation, presentation)]);
 
     const view = new DataView(zip.buffer, zip.byteOffset, zip.byteLength);

@@ -1,8 +1,9 @@
 // Each format-scheme style list requires at least three entries, hence the triple() repetition.
 
-import { Namespace, element } from "../oox.js";
+import { element } from "@dropdeck/xml";
+import { Namespace } from "@dropdeck/oox";
 import { srgbClr } from "../drawingml/builders.js";
-import type { Element } from "../oox.js";
+import type { Element } from "@dropdeck/xml";
 import type { CT_SRgbColor } from "../typings/drawingml.js";
 
 const ACCENTS = ["4472C4", "ED7D31", "A5A5A5", "FFC000", "5B9BD5", "70AD47"] as const;
@@ -66,7 +67,7 @@ function formatScheme(): Element<"a:fmtScheme"> {
 
 export function theme(): Element<"a:theme"> {
     const elements = element("a:themeElements", [], [colorScheme(), fontScheme(), formatScheme()]);
-    return element("a:theme", [["xmlns:a", Namespace.a], ["name", "Office"]], [
+    return element("a:theme", [["xmlns:a", Namespace.DrawingML], ["name", "Office"]], [
         elements,
         element("a:objectDefaults", [], []),
         element("a:extraClrSchemeLst", [], [])

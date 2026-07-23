@@ -1,6 +1,7 @@
-import { Namespace, element } from "../oox.js";
+import { element } from "@dropdeck/xml";
+import { Namespace } from "@dropdeck/oox";
 import { cNvPr, cSld, grpSpPr, nvGrpSpPr, spTree } from "../presentationml/builders.js";
-import type { Element } from "../oox.js";
+import type { Element } from "@dropdeck/xml";
 
 const SLIDE_WIDTH_EMU = 12192000;
 const SLIDE_HEIGHT_EMU = 6858000;
@@ -30,7 +31,7 @@ function emptyTree(): Element<"p:cSld"> {
 }
 
 export function presentationProperties(): Element<"p:presentationPr"> {
-    return element("p:presentationPr", [["xmlns:p", Namespace.p], ["xmlns:r", Namespace.r]], []);
+    return element("p:presentationPr", [["xmlns:p", Namespace.PresentationML], ["xmlns:r", Namespace.OfficeRelationships]], []);
 }
 
 export function slideMaster(layoutRelId: string): Element<"p:sldMaster"> {
@@ -40,18 +41,19 @@ export function slideMaster(layoutRelId: string): Element<"p:sldMaster"> {
         element("p:bodyStyle", [], []),
         element("p:otherStyle", [], [])
     ]);
-    return element("p:sldMaster", [["xmlns:p", Namespace.p], ["xmlns:a", Namespace.a], ["xmlns:r", Namespace.r]], [emptyTree(), CLR_MAP, layoutList, txStyles]);
+    return element("p:sldMaster", [["xmlns:p", Namespace.PresentationML], ["xmlns:a", Namespace.DrawingML], ["xmlns:r", Namespace.OfficeRelationships]], [emptyTree(), CLR_MAP, layoutList, txStyles]);
 }
 
 export function slideLayout(): Element<"p:sldLayout"> {
     const override = element("p:clrMapOvr", [], [element("a:masterClrMapping", [], [])]);
-    return element("p:sldLayout", [["xmlns:p", Namespace.p], ["xmlns:a", Namespace.a], ["xmlns:r", Namespace.r], ["type", "blank"], ["preserve", 1]], [emptyTree(), override]);
+    const attrs = [["xmlns:p", Namespace.PresentationML], ["xmlns:a", Namespace.DrawingML], ["xmlns:r", Namespace.OfficeRelationships], ["type", "blank"], ["preserve", 1]] as const;
+    return element("p:sldLayout", attrs, [emptyTree(), override]);
 }
 
 export function presentation(masterRelId: string, slideRelIds: ReadonlyArray<string>): Element<"p:presentation"> {
     const masters = element("p:sldMasterIdLst", [], [element("p:sldMasterId", [["id", MASTER_ID], ["r:id", masterRelId]], [])]);
     const slideIds = slideRelIds.map((relId, index) => element("p:sldId", [["id", FIRST_SLIDE_ID + index], ["r:id", relId]], []));
-    return element("p:presentation", [["xmlns:a", Namespace.a], ["xmlns:r", Namespace.r], ["xmlns:p", Namespace.p]], [
+    return element("p:presentation", [["xmlns:a", Namespace.DrawingML], ["xmlns:r", Namespace.OfficeRelationships], ["xmlns:p", Namespace.PresentationML]], [
         masters,
         element("p:sldIdLst", [], slideIds),
         element("p:sldSz", [["cx", SLIDE_WIDTH_EMU], ["cy", SLIDE_HEIGHT_EMU], ["type", "screen16x9"]], []),
