@@ -1,7 +1,7 @@
 import { canvas, div, h1, h2, p, parse, span } from "#/dom";
 import { renderBlocks } from "#/export/html/blocks";
 import { morphKey } from "#/animations/spec";
-import { isProse, proseText, resolveLayout } from "#/layout";
+import { RICH, isProse, paragraphsOf, proseText, resolveLayout } from "#/layout";
 import { SlideLayout } from "#/ir";
 import type { DomNode, ElementNode } from "#/dom";
 import type { Slide } from "#/ir";
@@ -16,15 +16,9 @@ const MESH_NODES = parse("<div class=\"gradient-mesh\">"
     + "<div class=\"blob\" style=\"width:340px;height:340px;bottom:-100px;left:-70px;background:var(--color-accent-1);opacity:.10\"></div>"
     + "<div class=\"blob\" style=\"width:220px;height:220px;top:38%;left:18%;background:var(--color-accent-3);opacity:.09\"></div></div>");
 
-const RICH = /<\w|[*_`[\]!>]/;
-
 function emojiNode(slide: Slide): ElementNode<"div"> | null {
     if (slide.emojis.length === 0) return null;
     return div({ class: "feature-emoji", data: { animation: "reveal" } }, slide.emojis.join(" "));
-}
-
-function plainParagraphs(text: string): Array<string> {
-    return text.split(/\n{2,}/).map((para) => para.trim()).filter(Boolean);
 }
 
 function coverShell(slide: Slide): ElementNode<"div"> {
@@ -37,7 +31,7 @@ function coverShell(slide: Slide): ElementNode<"div"> {
     }
     const text = proseText(slide);
     if (isProse(slide) && text && !RICH.test(text)) {
-        const paras = plainParagraphs(text);
+        const paras = paragraphsOf(text);
         paras.forEach((para, index) => {
             const cls = index === 0 ? "eyebrow" : (index === paras.length - 1 ? "cover-sub" : "cover-meta");
             children.push(p({ class: cls, data: { animation: "reveal" } }, para));
@@ -58,7 +52,7 @@ function sectionShell(slide: Slide): ElementNode<"div"> {
     }
     const text = proseText(slide);
     if (isProse(slide) && text && !RICH.test(text)) {
-        const paras = plainParagraphs(text).map((para) => p({ data: { animation: "reveal" } }, para));
+        const paras = paragraphsOf(text).map((para) => p({ data: { animation: "reveal" } }, para));
         children.push(div({ class: "section-block" }, paras));
     } else
         for (const node of renderBlocks(slide.blocks)) children.push(node);

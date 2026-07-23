@@ -47,6 +47,15 @@ export function proseText(slide: Slide): string {
     return parts.join("\n\n").trim();
 }
 
+// Prose is "rich" when it carries inline markdown or an HTML tag, so a cover/section renders it through the block
+// pipeline rather than as a plain centred line.
+export const RICH = /<\w|[*_`[\]!>]/;
+
+// Splits cover/section prose into paragraphs on blank-line runs, trimmed, with empties dropped.
+export function paragraphsOf(text: string): Array<string> {
+    return text.split(/\n{2,}/).map((part) => part.trim()).filter(Boolean);
+}
+
 export function resolveLayout(slide: Slide, index: number, total: number): SlideLayout {
     const { layout } = slide.frontmatter;
     if (layout === LayoutHint.Default) return SlideLayout.Content;

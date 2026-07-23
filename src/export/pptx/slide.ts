@@ -5,7 +5,7 @@ import { lowerBlocks, measuredHeight } from "#/export/pptx/blocks";
 import { Motion, slideTiming } from "#/export/pptx/animations/timing";
 import { slideTransition } from "#/export/pptx/animations/transition";
 import { morphName, resolveTransition, SlideTransition } from "#/animations/spec";
-import { isProse, proseText, resolveLayout } from "#/layout";
+import { RICH, isProse, paragraphsOf, proseText, resolveLayout } from "#/layout";
 import { SlideLayout } from "#/ir";
 import type { Palette } from "#/export/pptx/palette";
 import type { AnimatedShapeRef, Embed } from "#/export/pptx/blocks";
@@ -94,12 +94,6 @@ const SIZE = {
     coverSub: 15,
     sectionPara: 21
 } as const;
-
-const RICH = /<\w|[*_`[\]!>]/;
-
-function paragraphsOf(text: string): Array<string> {
-    return text.split(/\n{2,}/).map((part) => part.trim()).filter(Boolean);
-}
 
 function emojiParagraph(slideEl: Slide, palette: Palette): Array<CT_TextParagraph> {
     if (slideEl.emojis.length === 0) return [];
