@@ -1,5 +1,3 @@
-export { Namespace } from "./oox.js";
-
 export {
     ContentType,
     RelationshipType,

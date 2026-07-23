@@ -1,12 +1,10 @@
-import { relationship, relationships } from "../package/builders.js";
+import { pack, relationship, relationships, xmlPart } from "@dropdeck/oox";
 import { ContentType, RelationshipType } from "../package/constants.js";
-import { pack, xmlPart } from "../package/parts.js";
 import { border, cellStyle, cellXf, fill, font, inlineCell, numberCell, row, sharedCell, sharedString, sheet, sheetData, sst, styleSheet, workbook, worksheet } from "../spreadsheetml/builders.js";
-import { element } from "../oox.js";
+import { element } from "@dropdeck/xml";
 import { ST_FontScheme, ST_PatternType } from "../spreadsheetml/Specification.js";
 import type { CT_Cell, CT_Font, CT_Rst, CT_Stylesheet, CT_Worksheet, ST_CellRef, ST_Ref } from "../spreadsheetml/Specification.js";
-import type { CT_Relationship } from "../package/Specification.js";
-import type { Part } from "../package/parts.js";
+import type { CT_Relationship, Part } from "@dropdeck/oox";
 
 const RELS = ContentType.Relationships;
 

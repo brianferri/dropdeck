@@ -15,10 +15,9 @@ import type {
     OptAttr,
     ReqAttr,
     Seq,
-    ST_Boolean,
-    ST_Xstring,
     Text
-} from "../oox.js";
+} from "@dropdeck/xml";
+import type { ST_Boolean, ST_Xstring } from "@dropdeck/oox";
 import type {
     ST_BorderStyle,
     ST_CalcMode,

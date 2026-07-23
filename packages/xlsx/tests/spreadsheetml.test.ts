@@ -1,9 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Namespace, element, text, xml } from "../src/oox.js";
+import { element, text, xml } from "@dropdeck/xml";
+import { Namespace } from "@dropdeck/oox";
 import { border, cellStyle, cellXf, fill, font, inlineCell, numberCell, row, sharedCell, sharedString, sheetData, sst, styleSheet, worksheet } from "../src/spreadsheetml/builders.js";
 import { ST_PatternType } from "../src/spreadsheetml/Specification.js";
-import type { Serialize } from "../src/oox.js";
+import type { Serialize } from "@dropdeck/xml";
 
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends
 (<T>() => T extends B ? 1 : 2) ? true : false;
@@ -42,7 +43,7 @@ await test("cells serialise by type and value", () => {
 await test("shared strings serialise to the sst shape", () => {
     assert.equal(
         xml(sst([sharedString("Jan"), sharedString("Feb")])),
-        `<sst xmlns="${Namespace.main}" count="2" uniqueCount="2"><si><t xml:space="preserve">Jan</t></si><si><t xml:space="preserve">Feb</t></si></sst>`
+        `<sst xmlns="${Namespace.SpreadsheetML}" count="2" uniqueCount="2"><si><t xml:space="preserve">Jan</t></si><si><t xml:space="preserve">Feb</t></si></sst>`
     );
 });
 

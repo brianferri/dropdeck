@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { Namespace } from "../src/oox.js";
+import { Namespace } from "@dropdeck/oox";
 import type { CT_Cell, CT_Sst, CT_Stylesheet, CT_Table, CT_Workbook, CT_Worksheet, ST_CellRef, ST_Guid, ST_Ref } from "../src/spreadsheetml/Specification.js";
 
 type Equal<A, B> = (<T>() => T extends A ? 1 : 2) extends
@@ -39,6 +39,6 @@ export type TypeLevelChecks = [
 ];
 
 await test("Specification: the SpreadsheetML and relationship namespaces", () => {
-    assert.equal(Namespace.main, "http://schemas.openxmlformats.org/spreadsheetml/2006/main");
-    assert.equal(Namespace.r, "http://schemas.openxmlformats.org/officeDocument/2006/relationships");
+    assert.equal(Namespace.SpreadsheetML, "http://schemas.openxmlformats.org/spreadsheetml/2006/main");
+    assert.equal(Namespace.OfficeRelationships, "http://schemas.openxmlformats.org/officeDocument/2006/relationships");
 });

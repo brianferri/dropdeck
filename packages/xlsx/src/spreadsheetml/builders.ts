@@ -1,6 +1,7 @@
-import { Namespace, element, text } from "../oox.js";
+import { element, text } from "@dropdeck/xml";
+import { Namespace } from "@dropdeck/oox";
 import { ST_CellType } from "./Specification.js";
-import type { AttrList, Element, Empty, Node, One, Text } from "../oox.js";
+import type { AttrList, Element, Empty, Node, One, Text } from "@dropdeck/xml";
 import type { StyleSheetParts } from "../typings/spreadsheetml.js";
 import type { ST_CellRef, ST_Index, ST_PatternType, ST_Ref } from "./Specification.js";
 import type { CT_Cell, CT_Rst, CT_Row, CT_Sheet, CT_SheetData } from "./Specification.js";
@@ -16,9 +17,9 @@ export function sharedString<const S extends string>(value: S): Element<"si", Em
     return element("si", [], [element("t", T_PRESERVE, [text(value)])]);
 }
 
-type SstAttrs = readonly [readonly ["xmlns", Namespace.main], readonly ["count", number], readonly ["uniqueCount", number]];
+type SstAttrs = readonly [readonly ["xmlns", Namespace.SpreadsheetML], readonly ["count", number], readonly ["uniqueCount", number]];
 export function sst<const I extends ReadonlyArray<CT_Rst>>(items: I): Element<"sst", SstAttrs, I> {
-    return element("sst", [["xmlns", Namespace.main], ["count", items.length], ["uniqueCount", items.length]], items);
+    return element("sst", [["xmlns", Namespace.SpreadsheetML], ["count", items.length], ["uniqueCount", items.length]], items);
 }
 
 export function numberCell<const R extends ST_CellRef, const V extends number>(ref: R, value: V): ValueCell<readonly [readonly ["r", R]], `${V}`>;
@@ -64,7 +65,7 @@ export function sheetData<const R extends ReadonlyArray<CT_Row>>(rows: R): Eleme
     return element("sheetData", [], rows);
 }
 
-type WorksheetAttrs = readonly [readonly ["xmlns", Namespace.main], readonly ["xmlns:r", Namespace.r]];
+type WorksheetAttrs = readonly [readonly ["xmlns", Namespace.SpreadsheetML], readonly ["xmlns:r", Namespace.OfficeRelationships]];
 type WorksheetChildren<D extends ST_Ref, S extends CT_SheetData> = readonly [
     Element<"dimension", readonly [readonly ["ref", D]], Empty>,
     Element<"sheetViews", Empty, One<Element<"sheetView", readonly [readonly ["workbookViewId", 0]], Empty>>>,
@@ -74,7 +75,7 @@ export function worksheet<const D extends ST_Ref, const S extends CT_SheetData>(
     dimensionRef: D,
     data: S
 ): Element<"worksheet", WorksheetAttrs, WorksheetChildren<D, S>> {
-    return element("worksheet", [["xmlns", Namespace.main], ["xmlns:r", Namespace.r]], [
+    return element("worksheet", [["xmlns", Namespace.SpreadsheetML], ["xmlns:r", Namespace.OfficeRelationships]], [
         element("dimension", [["ref", dimensionRef]], []),
         element("sheetViews", [], [element("sheetView", [["workbookViewId", 0]], [])]),
         data
@@ -91,13 +92,13 @@ export function sheet<const N extends string, const I extends number, const R ex
     return element("sheet", [["name", name], ["sheetId", sheetId], ["r:id", relId]], []);
 }
 
-type WorkbookAttrs = readonly [readonly ["xmlns", Namespace.main], readonly ["xmlns:r", Namespace.r]];
+type WorkbookAttrs = readonly [readonly ["xmlns", Namespace.SpreadsheetML], readonly ["xmlns:r", Namespace.OfficeRelationships]];
 type WorkbookChildren<S extends ReadonlyArray<CT_Sheet>> = readonly [
     Element<"sheets", Empty, S>,
     Element<"calcPr", readonly [readonly ["calcId", 0]], Empty>
 ];
 export function workbook<const S extends ReadonlyArray<CT_Sheet>>(sheets: S): Element<"workbook", WorkbookAttrs, WorkbookChildren<S>> {
-    return element("workbook", [["xmlns", Namespace.main], ["xmlns:r", Namespace.r]], [
+    return element("workbook", [["xmlns", Namespace.SpreadsheetML], ["xmlns:r", Namespace.OfficeRelationships]], [
         element("sheets", [], sheets),
         element("calcPr", [["calcId", 0]], [])
     ]);
@@ -165,8 +166,8 @@ type StyleChildren<P extends StyleSheetParts> = readonly [
     Section<"cellStyles", P["cellStyles"]>
 ];
 
-export function styleSheet<const P extends StyleSheetParts>(parts: P): Element<"styleSheet", readonly [readonly ["xmlns", Namespace.main]], StyleChildren<P>> {
-    return element("styleSheet", [["xmlns", Namespace.main]], [
+export function styleSheet<const P extends StyleSheetParts>(parts: P): Element<"styleSheet", readonly [readonly ["xmlns", Namespace.SpreadsheetML]], StyleChildren<P>> {
+    return element("styleSheet", [["xmlns", Namespace.SpreadsheetML]], [
         element("fonts", [["count", parts.fonts.length]], parts.fonts),
         element("fills", [["count", parts.fills.length]], parts.fills),
         element("borders", [["count", parts.borders.length]], parts.borders),
