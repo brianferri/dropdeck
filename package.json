@@ -10,6 +10,7 @@
     "workspaces": [
         "packages/common",
         "packages/xml",
+        "packages/oox",
         "packages/html",
         "packages/pptx",
         "packages/xlsx",

@@ -1,0 +1,28 @@
+{
+    "name": "@dropdeck/oox",
+    "version": "0.0.0",
+    "description": "Shared Office Open XML layer: the ECMA-376 primitive types and the OPC packaging (zip, content types, relationships)",
+    "type": "module",
+    "exports": {
+        ".": "./dist/src/index.js"
+    },
+    "dependencies": {
+        "@dropdeck/common": "*",
+        "@dropdeck/xml": "*"
+    },
+    "scripts": {
+        "check": "tsc --noEmit && eslint .",
+        "build": "rm -rf dist && tsc",
+        "test": "tsc --noEmit && node --test \"dist/tests/**/*.test.js\""
+    },
+    "author": "Brian Ferri",
+    "license": "ISC",
+    "devDependencies": {
+        "@stylistic/eslint-plugin": "^5.10.0",
+        "@types/node": "^25.5.0",
+        "eslint": "^10.1.0",
+        "eslint-plugin-jsdoc": "^63.0.4",
+        "typescript": "^6.0.3",
+        "typescript-eslint": "^8.57.2"
+    }
+}
