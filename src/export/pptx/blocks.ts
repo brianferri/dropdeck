@@ -3,7 +3,7 @@ import { memberGuard } from "@dropdeck/common";
 import { CssProperty, colorClass, columnSpan, gridColumns as tailwindGridColumns, resolve as resolveTailwind } from "@dropdeck/html/tailwind";
 import { decompose, matrixOf, parseStyle, parseTransform, styleValue } from "@dropdeck/html/css";
 import { Align, Anchor, fill as solidFill, idFactory, imageShape, leftBarFrame, panel, paragraphOf, pProps, relFactory, styledRun, textBox, txBodyOf } from "#/export/pptx/build";
-import { fontSize } from "#/export/pptx/units";
+import { DECK_RATIO, fontSize } from "#/export/pptx/units";
 import { PANEL_PAD, PANEL_RADIUS, glassPanel, lowered, runBox } from "#/export/pptx/lower";
 import { lowerChart } from "#/export/pptx/chart";
 import { inlineRuns, inlineRunsFromNodes, inlineSegments } from "#/export/pptx/inline";
@@ -227,12 +227,10 @@ function lowerImage(image: ElementNode, embed: Embed, x: number, y: number, widt
     }
     const relationshipId = nextRelId();
     const media: SlideMedia = { relationshipId, extension: resolved.extension, contentType: resolved.contentType, data: resolved.bytes };
-    // The browser renders the deck 1180 px wide, the export lays it out 1280 px wide. Author dimensions -- the image
-    // size and the transform's translate -- are written for the browser, so they scale by this ratio to hold the
-    // same fraction of the slide. The centre is unaffected (it is the content centre plus the scaled translate).
-    const deckRatio = 1280 / 1180;
+    // The image size and the transform's translate are authored for the browser, so they scale by `DECK_RATIO` to
+    // hold the same fraction of the slide; the centre is unaffected (content centre plus the scaled translate).
     const aspect = resolved.width / resolved.height;
-    let fitWidth = imageWidthPx(image, width) * deckRatio;
+    let fitWidth = imageWidthPx(image, width) * DECK_RATIO;
     let fitHeight = fitWidth / aspect;
     if (fitHeight > IMAGE_MAX_HEIGHT) {
         fitHeight = IMAGE_MAX_HEIGHT;
@@ -243,8 +241,8 @@ function lowerImage(image: ElementNode, embed: Embed, x: number, y: number, widt
     const transform = decompose(matrixOf(parseTransform(transformValue)));
     const drawWidth = fitWidth * transform.scaleX;
     const drawHeight = fitHeight * transform.scaleY;
-    const centerX = fitX + (fitWidth / 2) + (transform.translateXPx * deckRatio);
-    const centerY = y + (fitHeight / 2) + (transform.translateYPx * deckRatio);
+    const centerX = fitX + (fitWidth / 2) + (transform.translateXPx * DECK_RATIO);
+    const centerY = y + (fitHeight / 2) + (transform.translateYPx * DECK_RATIO);
     const shape = imageShape(nextId, relationshipId, morphName(src), centerX - (drawWidth / 2), centerY - (drawHeight / 2), drawWidth, drawHeight, transform.rotateDeg);
     return lowered([shape], fitHeight, { media: [media] });
 }
@@ -265,9 +263,8 @@ function lowerSvgRaster(svg: ElementNode, embed: Embed, x: number, y: number, wi
     if (!resolved) return lowered([], 0);
     const relationshipId = nextRelId();
     const media: SlideMedia = { relationshipId, extension: resolved.extension, contentType: resolved.contentType, data: resolved.bytes };
-    const deckRatio = 1280 / 1180;
     const aspect = resolved.width / resolved.height;
-    let fitWidth = imageWidthPx(svg, width) * deckRatio;
+    let fitWidth = imageWidthPx(svg, width) * DECK_RATIO;
     let fitHeight = fitWidth / aspect;
     if (fitHeight > IMAGE_MAX_HEIGHT) {
         fitHeight = IMAGE_MAX_HEIGHT;

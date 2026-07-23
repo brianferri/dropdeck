@@ -3,11 +3,11 @@ import { memberGuard } from "@dropdeck/common";
 import { numberList } from "@dropdeck/xml/svg";
 import { expandHex } from "#/hex";
 import { customShape, presetShape } from "#/export/pptx/build";
+import { DECK_RATIO } from "#/export/pptx/units";
 import { morphName } from "#/animations/spec";
 import type { ElementNode } from "@dropdeck/html";
 import type { CT_Shape } from "@dropdeck/pptx";
 
-const DECK_RATIO = 1280 / 1180;
 const isPresetTag = memberGuard(["circle", "ellipse", "rect"]);
 const isPathTag = memberGuard(["line", "polyline", "polygon"]);
 
